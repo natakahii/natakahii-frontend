@@ -31,7 +31,7 @@ function Login() {
             const response = await loginUser(form);
             const { message, user, token } = response?.data || {};
 
-            // save auth data
+            // save auth data with token and user info
             if (token) {
                 localStorage.setItem("token", token);
             }
