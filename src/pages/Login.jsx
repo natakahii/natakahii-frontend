@@ -1,16 +1,20 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { IoMail, IoLockClosed, IoEye, IoEyeOff, IoArrowBack } from 'react-icons/io5';
 import { loginUser } from "../api/authService";
 import Swal from "sweetalert2";
-
+import { Colors } from '../constants/theme';
+import './Auth.css';
 
 function Login() {
+    const navigate = useNavigate();
     const [form, setForm] = useState({
         email: "",
         password: ""
     });
     const [errorMessage, setErrorMessage] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleChange = (e) => {
         setForm({
@@ -21,17 +25,13 @@ function Login() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        // clear previous messages
         setErrorMessage("");
-
         setIsSubmitting(true);
 
         try {
             const response = await loginUser(form);
             const { message, user, token } = response?.data || {};
 
-            // save auth data with token and user info
             if (token) {
                 localStorage.setItem("token", token);
             }
@@ -50,8 +50,11 @@ function Login() {
                 showConfirmButton: false
             });
 
+            // Redirect to home after successful login
+            setTimeout(() => navigate('/'), 1800);
+
             console.log(response.data);
-        }  catch (error) {
+        } catch (error) {
             const backendMessage = error.response?.data?.message;
             console.error(error.response?.data);
             setErrorMessage(backendMessage || "Invalid credentials");
@@ -61,67 +64,122 @@ function Login() {
     };
 
     return (
-        <form className="auth-card" onSubmit={handleSubmit}>
-            <h2 className="auth-title">Login</h2>
-            <p className="auth-subtitle">Sign in to your Nataka Hii account.</p>
-
-            <div className="form-group">
-                <label className="form-label" htmlFor="email">Email</label>
-                <input 
-                  id="email"
-                  name="email"
-                  type="email"
-                  className="form-input"
-                  placeholder="Enter your email"
-                  onChange={handleChange}
-                />
-            </div>
-
-            <div className="form-group">
-                <label className="form-label" htmlFor="password">Password</label>
-                <input 
-                  id="password"
-                  name="password"
-                  type="password"
-                  className="form-input"
-                  placeholder="Enter your password"
-                  onChange={handleChange}
-                />
-            </div>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.25rem", marginBottom: "0.75rem" }}>
-                <Link to="/forgot-password" className="link-inline" style={{ fontSize: "0.85rem" }}>
-                    Forgot your password?
+        <div className="auth-container">
+            <div className="auth-wrapper">
+                {/* Back to Home Button */}
+                <Link to="/" className="back-to-home">
+                    <IoArrowBack size={20} />
+                    <span>Back to Home</span>
                 </Link>
-            </div>
 
-            {errorMessage && (
-                <p className="error-text">{errorMessage}</p>
-            )}
+                {/* Brand Logo */}
+                <div className="auth-brand">
+                    <h1 className="brand-name-auth">
+                        <span style={{ color: Colors.primary }}>NATA</span>
+                        <span style={{ color: Colors.accent }}>KAHII</span>
+                    </h1>
+                    <p className="brand-tagline">Your African Marketplace</p>
+                </div>
 
-            <div className="form-footer">
-                <button 
-                  type="submit"
-                  className="primary-button"
-                  disabled={isSubmitting}
-                >
-                  <span className="button-label">
-                    {isSubmitting && <span className="spinner" />}
-                    {isSubmitting ? "Logging in..." : "Login"}
-                  </span>
-                </button>
+                {/* Login Card */}
+                <div className="auth-card-modern">
+                    <div className="auth-header">
+                        <h2 className="auth-title-modern">Welcome Back</h2>
+                        <p className="auth-subtitle-modern">Sign in to continue shopping</p>
+                    </div>
 
-                <div>
-                    <span style={{ fontSize: "0.85rem", color: "#6b7280", marginRight: "4px" }}>
-                        Don't have an account?
-                    </span>
-                    <Link to="/Register" className="link-inline">
-                        Register
-                    </Link>
+                    <form onSubmit={handleSubmit} className="auth-form">
+                        {/* Email Input */}
+                        <div className="form-group-modern">
+                            <label className="form-label-modern" htmlFor="email">
+                                Email Address
+                            </label>
+                            <div className="input-wrapper">
+                                <IoMail className="input-icon" size={20} />
+                                <input 
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    className="form-input-modern"
+                                    placeholder="Enter your email"
+                                    value={form.email}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        {/* Password Input */}
+                        <div className="form-group-modern">
+                            <label className="form-label-modern" htmlFor="password">
+                                Password
+                            </label>
+                            <div className="input-wrapper">
+                                <IoLockClosed className="input-icon" size={20} />
+                                <input 
+                                    id="password"
+                                    name="password"
+                                    type={showPassword ? "text" : "password"}
+                                    className="form-input-modern"
+                                    placeholder="Enter your password"
+                                    value={form.password}
+                                    onChange={handleChange}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    className="password-toggle"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <IoEyeOff size={20} /> : <IoEye size={20} />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Forgot Password Link */}
+                        <div className="forgot-password-row">
+                            <Link to="/forgot-password" className="forgot-password-link">
+                                Forgot your password?
+                            </Link>
+                        </div>
+
+                        {/* Error Message */}
+                        {errorMessage && (
+                            <div className="error-message">
+                                <p>{errorMessage}</p>
+                            </div>
+                        )}
+
+                        {/* Submit Button */}
+                        <button 
+                            type="submit"
+                            className="submit-button"
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <span className="spinner-modern" />
+                                    <span>Signing in...</span>
+                                </>
+                            ) : (
+                                <span>Sign In</span>
+                            )}
+                        </button>
+
+                        {/* Register Link */}
+                        <div className="auth-footer">
+                            <p className="auth-footer-text">
+                                Don't have an account?{' '}
+                                <Link to="/register" className="auth-footer-link">
+                                    Create Account
+                                </Link>
+                            </p>
+                        </div>
+                    </form>
                 </div>
             </div>
-        </form>
+        </div>
     );
 }
 
-export default Login
+export default Login;
