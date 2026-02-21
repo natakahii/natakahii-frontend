@@ -6,6 +6,7 @@ import {
   IoGameController, IoRestaurant, IoDiamond, IoFlash,
   IoSparkles, IoAirplane, IoStorefront
 } from 'react-icons/io5';
+import { useAuth } from '../contexts/AuthContext';
 import { Colors, Spacing, FontSizes, BorderRadius, Breakpoints } from '../constants/theme';
 import { categories, vendors, products, heroSlides } from '../constants/data';
 import './Home.css';
@@ -164,6 +165,7 @@ const VendorCard = ({ vendor }) => (
 
 // Main Home Component
 const Home = () => {
+  const { isAuthenticated, user } = useAuth();
   const featuredProducts = products.filter((p) => p.featured);
   const newArrivals = [...products]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -174,20 +176,24 @@ const Home = () => {
       {/* Header */}
       <header className="home-header">
         <div className="header-left">
-          <p className="welcome-text">Welcome to</p>
+          <p className="welcome-text">
+            {isAuthenticated ? `Hello, ${user?.name?.split(' ')[0]}` : 'Welcome to'}
+          </p>
           <h1 className="brand-name">
-            <span style={{ color: Colors.primary }}>NATAKA</span>
-            <span style={{ color: Colors.accent }}>HII</span>
+            <span style={{ color: Colors.primary }}>NATA</span>
+            <span style={{ color: Colors.accent }}>KAHII</span>
           </h1>
         </div>
         <div className="header-right">
           <Link to="/browse" className="header-icon-btn">
             <IoSearch size={20} />
           </Link>
-          <Link to="/login" className="header-login-btn">
-            <IoPerson size={16} />
-            <span>Login</span>
-          </Link>
+          {!isAuthenticated && (
+            <Link to="/login" className="header-login-btn">
+              <IoPerson size={16} />
+              <span>Login</span>
+            </Link>
+          )}
         </div>
       </header>
 

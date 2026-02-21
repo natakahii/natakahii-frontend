@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { IoMail, IoLockClosed, IoEye, IoEyeOff, IoArrowBack } from 'react-icons/io5';
 import { loginUser } from "../api/authService";
+import { useAuth } from "../contexts/AuthContext";
 import Swal from "sweetalert2";
 import { Colors } from '../constants/theme';
 import './Auth.css';
 
 function Login() {
     const navigate = useNavigate();
+    const { login: authLogin } = useAuth();
     const [form, setForm] = useState({
         email: "",
         password: ""
@@ -32,11 +34,9 @@ function Login() {
             const response = await loginUser(form);
             const { message, user, token } = response?.data || {};
 
-            if (token) {
-                localStorage.setItem("token", token);
-            }
-            if (user) {
-                localStorage.setItem("user", JSON.stringify(user));
+            // Use AuthContext to manage authentication state
+            if (token && user) {
+                authLogin(user, token);
             }
 
             const baseMessage = message || "Login successful.";
