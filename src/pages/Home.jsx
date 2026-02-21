@@ -176,8 +176,8 @@ const Home = () => {
         <div className="header-left">
           <p className="welcome-text">Welcome to</p>
           <h1 className="brand-name">
-            <span style={{ color: Colors.primary }}>NATA</span>
-            <span style={{ color: Colors.accent }}>KAHII</span>
+            <span style={{ color: Colors.primary }}>NATAKA</span>
+            <span style={{ color: Colors.accent }}>HII</span>
           </h1>
         </div>
         <div className="header-right">
