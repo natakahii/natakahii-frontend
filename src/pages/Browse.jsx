@@ -1,12 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   IoSearch, IoClose, IoStar, IoAdd,
   IoLaptop, IoShirt, IoHome, IoFootball, IoBook, 
   IoGameController, IoRestaurant, IoSparkles
 } from 'react-icons/io5';
+import { fetchCategories } from '../api/catalogApi';
 import { Colors } from '../constants/theme';
-import { categories, vendors, products } from '../constants/data';
+import { vendors, products } from '../constants/data';
 import './Browse.css';
 
 // Icon mapping helper
@@ -69,6 +70,22 @@ const Browse = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [sortBy, setSortBy] = useState('default');
+  const [categories, setCategories] = useState([]);
+
+  // Fetch categories from API
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetchCategories();
+        const apiCategories = response?.data?.categories || [];
+        setCategories(apiCategories);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        setCategories([]);
+      }
+    };
+    loadCategories();
+  }, []);
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -113,7 +130,7 @@ const Browse = () => {
     { key: 'rating', label: 'Top Rated' },
   ];
 
-  const allCategories = [{ id: null, name: 'All', icon: 'sparkles' }, ...categories];
+  const allCategories = [{ id: null, name: 'All', icon: 'sparkles' }, ...categories.map(c => ({ ...c, icon: c.icon || null }))];
 
   return (
     <div className="browse-container">

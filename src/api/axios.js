@@ -1,7 +1,9 @@
 import axios from "axios"
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.natakahii.com/api/v1";
+
 const api = axios.create({
-    baseURL: "https://api.natakahii.com/api/v1/auth",
+    baseURL: `${API_BASE_URL}/auth`,
     headers: {
         "Content-Type": "application/json",
         Accept: "application/json"

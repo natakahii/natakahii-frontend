@@ -262,6 +262,18 @@
   text-align: center;
 }
 
+.category-initial {
+  font-size: 22px;
+  font-weight: 800;
+  color: #142490;
+}
+
+.category-count {
+  font-size: 10px;
+  color: #9CA3AF;
+  text-align: center;
+}
+
 /* Products */
 .products-container {
   display: flex;

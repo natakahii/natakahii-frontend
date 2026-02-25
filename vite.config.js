@@ -6,7 +6,8 @@ export default defineConfig({
   server: {
     allowedHosts: [
       'localhost',
-      'bd9c-196-249-122-184.ngrok-free.app'
+      '217c-196-249-123-171.ngrok-free.app',
+      'api.natakahii.com'
     ],
   },
 })
