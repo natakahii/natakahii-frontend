@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   IoPerson, IoMail, IoCall, IoCheckmarkCircle,
   IoStorefront, IoCube, IoRefresh, IoHeart,
   IoLocation, IoCard, IoNotifications, IoLockClosed,
-  IoChatbubble, IoStar, IoLogOut, IoLogIn, IoChevronForward
+  IoChatbubble, IoStar, IoLogOut, IoLogIn, IoChevronForward,
+  IoAlert, IoCheckmark
 } from 'react-icons/io5';
 import { useAuth } from '../contexts/AuthContext';
 import { Colors } from '../constants/theme';
+import VendorApplicationForm from '../components/VendorApplicationForm';
+import { userApi } from '../api/userApi';
 import './Profile.css';
 
 const MenuRow = ({ icon: Icon, label, onClick, to }) => {
@@ -39,14 +42,35 @@ const MenuRow = ({ icon: Icon, label, onClick, to }) => {
 const Profile = () => {
   const { isAuthenticated, user, logout, isVendor } = useAuth();
   const navigate = useNavigate();
+  const [showVendorForm, setShowVendorForm] = useState(false);
+  const [vendorApplication, setVendorApplication] = useState(null);
+  const [loadingVendorStatus, setLoadingVendorStatus] = useState(false);
+
+  // Fetch vendor application status
+  useEffect(() => {
+    if (!isAuthenticated || isVendor()) return;
+
+    const fetchVendorStatus = async () => {
+      setLoadingVendorStatus(true);
+      try {
+        const response = await userApi.vendorApplicationStatus();
+        setVendorApplication(response.application || null);
+      } catch (error) {
+        console.error('Failed to fetch vendor application status:', error);
+      } finally {
+        setLoadingVendorStatus(false);
+      }
+    };
+
+    fetchVendorStatus();
+  }, [isAuthenticated, isVendor]);
 
   const handleLogout = () => {
     logout();
   };
 
-  const handleSwitchToVendor = () => {
-    // Navigate to vendor dashboard
-    navigate('/vendor');
+  const handleBecomeVendor = () => {
+    setShowVendorForm(true);
   };
 
   return (
@@ -92,20 +116,55 @@ const Profile = () => {
         </Link>
       )}
 
-      {/* Role Switch Banner - Only show for customers */}
+      {/* Role Switch Banner or Vendor Status - Only show for customers */}
       {isAuthenticated && !isVendor() && (
-        <button className="switch-banner" onClick={handleSwitchToVendor}>
-          <div className="switch-banner-content">
-            <div className="switch-banner-icon">
-              <IoStorefront size={28} color={Colors.white} />
+        <>
+          {vendorApplication ? (
+            <div className="switch-banner" style={{ 
+              backgroundColor: vendorApplication.status === 'pending' ? '#fff8e1' : 
+                              vendorApplication.status === 'approved' ? '#e8f8e8' :
+                              '#fee'
+            }}>
+              <div className="switch-banner-content">
+                <div className="switch-banner-icon" style={{
+                  backgroundColor: vendorApplication.status === 'pending' ? Colors.accent :
+                                  vendorApplication.status === 'approved' ? Colors.success :
+                                  Colors.error
+                }}>
+                  {vendorApplication.status === 'pending' && <IoAlert size={24} color="white" />}
+                  {vendorApplication.status === 'approved' && <IoCheckmark size={24} color="white" />}
+                  {vendorApplication.status === 'rejected' && <IoAlert size={24} color="white" />}
+                </div>
+                <div className="switch-banner-text">
+                  <h3 className="switch-banner-title" style={{ color: '#333' }}>
+                    {vendorApplication.status === 'pending' && 'Application Pending'}
+                    {vendorApplication.status === 'approved' && 'Application Approved!'}
+                    {vendorApplication.status === 'rejected' && 'Application Rejected'}
+                  </h3>
+                  <p className="switch-banner-subtitle" style={{ color: '#666' }}>
+                    {vendorApplication.status === 'pending' && 'Your vendor application is under review. We\'ll notify you soon.'}
+                    {vendorApplication.status === 'approved' && 'You can now manage your store and products as a vendor.'}
+                    {vendorApplication.status === 'rejected' && vendorApplication.rejection_reason || 'Your application was not approved.'}
+                  </p>
+                </div>
+              </div>
+              <IoChevronForward size={20} style={{ color: '#999' }} />
             </div>
-            <div className="switch-banner-text">
-              <h3 className="switch-banner-title">Switch to Vendor Mode</h3>
-              <p className="switch-banner-subtitle">Manage your store and products</p>
-            </div>
-          </div>
-          <IoChevronForward size={20} color={Colors.accent} />
-        </button>
+          ) : (
+            <button className="switch-banner" onClick={handleBecomeVendor}>
+              <div className="switch-banner-content">
+                <div className="switch-banner-icon">
+                  <IoStorefront size={28} color={Colors.white} />
+                </div>
+                <div className="switch-banner-text">
+                  <h3 className="switch-banner-title">Switch to Vendor Mode</h3>
+                  <p className="switch-banner-subtitle">Manage your store and products</p>
+                </div>
+              </div>
+              <IoChevronForward size={20} color={Colors.accent} />
+            </button>
+          )}
+        </>
       )}
 
       {/* Menu Sections */}
@@ -158,6 +217,22 @@ const Profile = () => {
         </h1>
         <p className="version-text">Version 1.0.0</p>
       </div>
+
+      {/* Vendor Application Form Modal */}
+      {showVendorForm && (
+        <VendorApplicationForm
+          onClose={() => setShowVendorForm(false)}
+          onSuccess={async () => {
+            // Refresh vendor application status
+            try {
+              const response = await userApi.vendorApplicationStatus();
+              setVendorApplication(response.application || null);
+            } catch (error) {
+              console.error('Failed to refresh vendor status:', error);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };
