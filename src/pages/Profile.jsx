@@ -70,7 +70,13 @@ const Profile = () => {
   };
 
   const handleBecomeVendor = () => {
-    setShowVendorForm(true);
+    // If application is already approved, navigate to dashboard
+    if (vendorApplication?.status === 'approved') {
+      navigate('/vendor/dashboard');
+    } else {
+      // Otherwise open the application form
+      setShowVendorForm(true);
+    }
   };
 
   return (
@@ -116,34 +122,43 @@ const Profile = () => {
         </Link>
       )}
 
-      {/* Role Switch Banner or Vendor Status - Only show for customers */}
+      {/* Show Vendor Dashboard for Vendors */}
+      {isAuthenticated && isVendor() && (
+        <Link to="/vendor/dashboard" className="vendor-dashboard-banner">
+          <div className="vendor-banner-content">
+            <div className="vendor-banner-icon">
+              <IoStorefront size={28} color={Colors.white} />
+            </div>
+            <div className="vendor-banner-text">
+              <h3 className="vendor-banner-title">Vendor Dashboard</h3>
+              <p className="vendor-banner-subtitle">View sales, orders & analytics</p>
+            </div>
+          </div>
+          <IoChevronForward size={20} color={Colors.accent} />
+        </Link>
+      )}
+
+      {/* Vendor Application Status Banner */}
       {isAuthenticated && !isVendor() && (
         <>
-          {vendorApplication ? (
+          {vendorApplication && vendorApplication.status !== 'approved' ? (
             <div className="switch-banner" style={{ 
-              backgroundColor: vendorApplication.status === 'pending' ? '#fff8e1' : 
-                              vendorApplication.status === 'approved' ? '#e8f8e8' :
-                              '#fee'
+              backgroundColor: vendorApplication.status === 'pending' ? '#fff8e1' : '#fee'
             }}>
               <div className="switch-banner-content">
                 <div className="switch-banner-icon" style={{
-                  backgroundColor: vendorApplication.status === 'pending' ? Colors.accent :
-                                  vendorApplication.status === 'approved' ? Colors.success :
-                                  Colors.error
+                  backgroundColor: vendorApplication.status === 'pending' ? Colors.accent : Colors.error
                 }}>
                   {vendorApplication.status === 'pending' && <IoAlert size={24} color="white" />}
-                  {vendorApplication.status === 'approved' && <IoCheckmark size={24} color="white" />}
                   {vendorApplication.status === 'rejected' && <IoAlert size={24} color="white" />}
                 </div>
                 <div className="switch-banner-text">
                   <h3 className="switch-banner-title" style={{ color: '#333' }}>
                     {vendorApplication.status === 'pending' && 'Application Pending'}
-                    {vendorApplication.status === 'approved' && 'Application Approved!'}
                     {vendorApplication.status === 'rejected' && 'Application Rejected'}
                   </h3>
                   <p className="switch-banner-subtitle" style={{ color: '#666' }}>
                     {vendorApplication.status === 'pending' && 'Your vendor application is under review. We\'ll notify you soon.'}
-                    {vendorApplication.status === 'approved' && 'You can now manage your store and products as a vendor.'}
                     {vendorApplication.status === 'rejected' && vendorApplication.rejection_reason || 'Your application was not approved.'}
                   </p>
                 </div>
@@ -151,14 +166,22 @@ const Profile = () => {
               <IoChevronForward size={20} style={{ color: '#999' }} />
             </div>
           ) : (
-            <button className="switch-banner" onClick={handleBecomeVendor}>
+            <button 
+              type="button"
+              className="switch-banner" 
+              onClick={handleBecomeVendor}
+            >
               <div className="switch-banner-content">
                 <div className="switch-banner-icon">
                   <IoStorefront size={28} color={Colors.white} />
                 </div>
                 <div className="switch-banner-text">
-                  <h3 className="switch-banner-title">Switch to Vendor Mode</h3>
-                  <p className="switch-banner-subtitle">Manage your store and products</p>
+                  <h3 className="switch-banner-title">
+                    {vendorApplication?.status === 'approved' ? 'Switch to Vendor Mode' : 'Ready to Start Selling?'}
+                  </h3>
+                  <p className="switch-banner-subtitle">
+                    {vendorApplication?.status === 'approved' ? 'Manage your store and products' : 'Access your vendor dashboard and control your store'}
+                  </p>
                 </div>
               </div>
               <IoChevronForward size={20} color={Colors.accent} />
@@ -212,8 +235,8 @@ const Profile = () => {
       {/* Version Info */}
       <div className="version-container">
         <h1 className="brand-name-footer">
-          <span style={{ color: Colors.primary, opacity: 0.3 }}>NATA</span>
-          <span style={{ color: Colors.accent, opacity: 0.3 }}>KAHII</span>
+          <span style={{ color: Colors.primary, opacity: 0.3 }}>NATAKA</span>
+          <span style={{ color: Colors.accent, opacity: 0.3 }}>HII</span>
         </h1>
         <p className="version-text">Version 1.0.0</p>
       </div>

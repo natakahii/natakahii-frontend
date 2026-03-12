@@ -22,6 +22,51 @@ body {
   width: 100%;
   min-height: 100vh;
   background-color: #F8F9FC;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main Content Area */
+.main-content {
+  flex: 1;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Desktop Layout - Sidebar Visible */
+@media (min-width: 1024px) {
+  .app-container {
+    width: 100%;
+    margin: 0;
+  }
+
+  .main-content {
+    width: 100%;
+    margin: 0;
+    margin-left: 280px;
+    padding-bottom: 0;
+    transition: margin-left 0.3s ease;
+  }
+
+  /* When sidebar is closed/minimized */
+  .sidebar.closed ~ .main-content {
+    margin-left: 100px;
+  }
+}
+
+/* Tablet Layout */
+@media (max-width: 1023px) and (min-width: 769px) {
+  .main-content {
+    padding-bottom: 0;
+  }
+}
+
+/* Mobile Layout - Bottom Nav Visible */
+@media (max-width: 768px) {
+  .main-content {
+    width: 100%;
+    padding-bottom: 80px;
+  }
 }
 
 /* Auth pages container */

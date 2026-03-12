@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.natakahii.com/api/v1';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.natakahii.com';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -26,7 +26,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('token');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -36,25 +36,25 @@ api.interceptors.response.use(
 export const userApi = {
   // Profile
   updateProfile(payload) {
-    return api.patch('/api/v1/profile', payload).then((r) => r.data);
+    return api.patch('/profile', payload).then((r) => r.data);
   },
 
   updatePhoto(formData) {
-    return api.post('/api/v1/profile/photo', formData, {
+    return api.post('/profile/photo', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then((r) => r.data);
   },
 
   deletePhoto() {
-    return api.delete('/api/v1/profile/photo').then((r) => r.data);
+    return api.delete('/profile/photo').then((r) => r.data);
   },
 
   // Vendor Application
   vendorApplicationStatus() {
-    return api.get('/api/v1/vendor-application/status').then((r) => r.data);
+    return api.get('/vendor-application/status').then((r) => r.data);
   },
 
   submitVendorApplication(payload) {
-    return api.post('/api/v1/vendor-application', payload).then((r) => r.data);
+    return api.post('/vendor-application', payload).then((r) => r.data);
   },
 };
