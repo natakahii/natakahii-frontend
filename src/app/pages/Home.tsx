@@ -47,9 +47,7 @@ export function Home() {
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[var(--color-info)]/20 rounded-full blur-[80px] translate-y-1/3 -translate-x-1/3 pointer-events-none" />
         
         <div className="container relative z-10 mx-auto max-w-4xl text-center flex flex-col items-center">
-          <Badge className="mb-6 bg-white/10 text-[var(--color-accent-lighter)] border border-white/20 backdrop-blur-sm px-4 py-1.5 rounded-full uppercase tracking-widest text-[12px]">
-            The New E-Commerce Standard
-          </Badge>
+          
           
           <h1 className="text-[40px] md:text-[56px] lg:text-[64px] font-bold text-white leading-[1.1] tracking-[-1.5px] mb-6">
             Nataka Hii. <br />

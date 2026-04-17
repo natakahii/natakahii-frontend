@@ -14,10 +14,12 @@ export function Navbar({ role = 'visitor' }: { role?: 'visitor' | 'customer' | '
     <header className="sticky top-0 z-50 w-full bg-white shadow-[var(--shadow-level-1)]">
       <div className="container mx-auto px-4 h-[72px] flex items-center justify-between gap-4 lg:gap-8">
         {/* Logo */}
-        <Link to={role === 'customer' ? "/customer" : "/"} className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-[22px] font-bold tracking-tight text-[var(--color-primary-darker)]">
-            NATAKA <span className="text-[var(--color-accent)]">HII</span>
-          </span>
+        <Link to={role === 'customer' ? "/customer" : "/"} className="flex items-center flex-shrink-0">
+          <img 
+            src="/natakahii-logo.png" 
+            alt="Nataka Hii" 
+            className="h-20 w-auto max-w-[180px] object-contain"
+          />
         </Link>
 
         {/* Desktop Search */}

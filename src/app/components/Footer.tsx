@@ -1,5 +1,7 @@
 import { Link } from 'react-router';
-import { Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Facebook, Instagram, Youtube } from 'lucide-react';
+import TikTokIcon from './icons/TikTok';
+
 
 export function Footer() {
   return (
@@ -9,25 +11,27 @@ export function Footer() {
           {/* Brand Col */}
           <div className="lg:col-span-2">
             <Link to="/" className="inline-block mb-6">
-              <span className="text-[28px] font-bold tracking-tight text-white">
-                NATAKA <span className="text-[var(--color-accent)]">HII</span>
-              </span>
+              <img 
+                src="/natakahii-footer-logo.png" 
+                alt="Nataka Hii" 
+                className="h-16 w-auto max-w-[240px] object-contain"
+              />
             </Link>
             <p className="text-[14px] text-[var(--color-text-muted)] leading-relaxed mb-6 max-w-sm">
               The next-generation e-commerce platform for East Africa. 
               Find what you want. Sell what you make. Trust every transaction.
             </p>
             <div className="flex items-center gap-4">
-              <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--color-accent)] transition-colors">
+              <a href="https://www.facebook.com/share/18aHYoFPCi/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--color-accent)] transition-colors">
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--color-accent)] transition-colors">
-                <Twitter className="w-5 h-5" />
+              <a href="https://www.tiktok.com/@natakahii_tz?_r=1&_t=ZS-95bDoX500Bs" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--color-accent)] transition-colors">
+                <TikTokIcon className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--color-accent)] transition-colors">
+              <a href="https://www.instagram.com/natakahii_tz?igsh=ZGU0cnM1eTh6Yngy&utm_source=qr" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--color-accent)] transition-colors">
                 <Instagram className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--color-accent)] transition-colors">
+              <a href="https://youtube.com/@natakahii_tz?si=jKXY8uFhm180URrW" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--color-accent)] transition-colors">
                 <Youtube className="w-5 h-5" />
               </a>
             </div>
