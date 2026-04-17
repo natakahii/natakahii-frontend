@@ -14,7 +14,7 @@ export function Footer() {
               <img 
                 src="/natakahii-footer-logo.png" 
                 alt="Nataka Hii" 
-                className="h-16 w-auto max-w-[240px] object-contain"
+                className="h-10 md:h-12 lg:h-14 w-auto max-w-[140px] md:max-w-[170px] lg:max-w-[200px] object-contain"
               />
             </Link>
             <p className="text-[14px] text-[var(--color-text-muted)] leading-relaxed mb-6 max-w-sm">

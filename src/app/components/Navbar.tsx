@@ -18,7 +18,7 @@ export function Navbar({ role = 'visitor' }: { role?: 'visitor' | 'customer' | '
           <img 
             src="/natakahii-logo.png" 
             alt="Nataka Hii" 
-            className="h-20 w-auto max-w-[180px] object-contain"
+            className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto max-w-[120px] sm:max-w-[140px] md:max-w-[160px] lg:max-w-[180px] object-contain"
           />
         </Link>
 
