@@ -7,6 +7,7 @@ import { useToast } from '../components/ui/toast';
 import { loginWithGoogle } from '../services/authService';
 import { CheckCircle, ArrowLeft, ArrowRight, User, Mail, Phone, ShoppingCart, Store } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import logoImage from '../../assets/Nataka Hii_1.png';
 
 export function Register() {
   const [step, setStep] = useState(1);
@@ -80,24 +81,28 @@ export function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col items-center justify-center p-4 lg:overflow-hidden">
       <div className="w-full max-w-xl bg-white rounded-[24px] shadow-[var(--shadow-level-2)] overflow-hidden relative border border-[var(--color-border)]/50">
-        <div className="p-6 md:p-8 pb-0 flex items-center justify-between z-10 relative bg-white">
-          <Link to="/login" className="text-[20px] font-bold tracking-tight text-[var(--color-primary-darker)] shrink-0">
-            NATAKA <span className="text-[var(--color-accent)]">HII</span>
+        <div className="p-6 md:p-8 pb-16 sm:pb-20 md:pb-24 lg:pb-40 flex items-center justify-between z-10 relative bg-white">
+          <Link to="/login" className="absolute left-1/2 -translate-x-1/2 shrink-0 top-2 sm:top-4 md:top-6">
+            <img
+              src={logoImage}
+              alt="Nataka Hii"
+              className="h-[96px] sm:h-[120px] md:h-[144px] lg:h-[192px] w-auto max-w-[240px] sm:max-w-[300px] md:max-w-[360px] lg:max-w-none"
+            />
           </Link>
 
-          <div className="flex gap-2">
+          <div className="flex gap-1 ml-auto">
             {[1, 2, 3].map((index) => (
               <div
                 key={index}
-                className={`w-12 h-1.5 rounded-full transition-colors duration-300 ${index <= step ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-border)]'}`}
+                className={`w-6 h-0.5 rounded-full transition-colors duration-300 ${index <= step ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-border)]'}`}
               />
             ))}
           </div>
         </div>
 
-        <div className="p-6 md:p-8 overflow-hidden relative min-h-[450px]">
+        <div className="p-4 sm:p-6 md:p-8 overflow-hidden relative min-h-[350px] sm:min-h-[400px] md:min-h-[450px]">
           <AnimatePresence mode="wait" initial={false}>
             {step === 1 && (
               <motion.div
@@ -108,9 +113,9 @@ export function Register() {
                 transition={{ duration: 0.3 }}
                 className="space-y-6"
               >
-                <div className="text-center sm:text-left mb-8">
-                  <h2 className="text-[28px] font-bold text-[var(--color-text-heading)] mb-2 tracking-tight">Create your account</h2>
-                  <p className="text-[15px] text-[var(--color-text-muted)]">Join East Africa's premier marketplace today.</p>
+                <div className="text-center mb-6 sm:mb-8">
+                  <h2 className="text-[22px] sm:text-[24px] md:text-[28px] font-bold text-[var(--color-text-heading)] mb-2 tracking-tight">Create your account</h2>
+                  <p className="text-[14px] sm:text-[15px] text-[var(--color-text-muted)]">Join East Africa's premier marketplace today.</p>
                 </div>
 
                 <div className="space-y-4">
@@ -194,8 +199,8 @@ export function Register() {
                   <div className="w-16 h-16 bg-[var(--color-primary-bg)] rounded-full flex items-center justify-center mx-auto mb-6 text-[var(--color-primary)]">
                     <Mail className="w-8 h-8" />
                   </div>
-                  <h2 className="text-[28px] font-bold text-[var(--color-text-heading)] mb-2 tracking-tight">Verify it's you</h2>
-                  <p className="text-[15px] text-[var(--color-text-muted)] max-w-sm mx-auto leading-relaxed">
+                  <h2 className="text-[22px] sm:text-[24px] md:text-[28px] font-bold text-[var(--color-text-heading)] mb-2 tracking-tight">Verify it's you</h2>
+                  <p className="text-[14px] sm:text-[15px] text-[var(--color-text-muted)] max-w-sm mx-auto leading-relaxed">
                     We've sent a 6-digit code to <span className="font-bold text-[var(--color-text-heading)]">john@example.com</span>. Enter it below to verify your email.
                   </p>
                 </div>
@@ -238,12 +243,12 @@ export function Register() {
                 transition={{ duration: 0.4, type: 'spring' }}
                 className="text-center py-6"
               >
-                <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-500 shadow-sm border-[4px] border-white">
-                  <CheckCircle className="w-12 h-12" />
+                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 text-green-500 shadow-sm border-[3px] sm:border-[4px] border-white">
+                  <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" />
                 </div>
 
-                <h2 className="text-[36px] font-bold text-[var(--color-text-heading)] mb-2 tracking-tight">Welcome to Nataka Hii!</h2>
-                <p className="text-[16px] text-[var(--color-text-muted)] max-w-sm mx-auto mb-10">
+                <h2 className="text-[26px] sm:text-[30px] md:text-[36px] font-bold text-[var(--color-text-heading)] mb-2 tracking-tight">Welcome to Nataka Hii!</h2>
+                <p className="text-[14px] sm:text-[15px] md:text-[16px] text-[var(--color-text-muted)] max-w-sm mx-auto mb-6 sm:mb-10">
                   Your account has been created successfully. What would you like to do next?
                 </p>
 
