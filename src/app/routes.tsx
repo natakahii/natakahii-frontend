@@ -7,6 +7,7 @@ import { ProductDetail } from "./pages/ProductDetail";
 import { VideoFeed } from "./pages/VideoFeed";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
+import { ForgotPassword } from "./pages/ForgotPassword";
 import { CustomerHome } from "./pages/CustomerHome";
 import { Cart } from "./pages/Cart";
 import { Checkout } from "./pages/Checkout";
@@ -30,6 +31,7 @@ import { VendorDropoffs } from "./pages/vendor/VendorDropoffs";
 // Error/404 Page
 import { NotFound } from "./pages/NotFound";
 import { RootLayout } from "./RootLayout";
+import { RedirectIfAuthenticated, RequireAuth, RequireMissingRole, RequireRole } from "./components/auth/AuthGuards";
 
 export const router = createBrowserRouter([
   {
@@ -44,23 +46,48 @@ export const router = createBrowserRouter([
       { path: "explore", Component: Explore },
       { path: "product/:id", Component: ProductDetail },
       { path: "video", Component: VideoFeed },
-      { path: "vendor/apply", Component: VendorApply },
+      {
+        path: "vendor/apply",
+        element: (
+          <RequireAuth>
+            <RequireMissingRole role="vendor" redirectTo="/vendor/dashboard">
+              <VendorApply />
+            </RequireMissingRole>
+          </RequireAuth>
+        ),
+      },
       { path: "*", Component: NotFound },
     ],
   },
   // Auth Flow (No nav/footer)
   {
     path: "/login",
-    Component: Login,
+    element: (
+      <RedirectIfAuthenticated>
+        <Login />
+      </RedirectIfAuthenticated>
+    ),
   },
   {
     path: "/register",
-    Component: Register,
+    element: (
+      <RedirectIfAuthenticated>
+        <Register />
+      </RedirectIfAuthenticated>
+    ),
+  },
+  {
+    path: "/forgot-password",
+    Component: ForgotPassword,
   },
   // Customer Authenticated Flow
   {
     path: "/",
-    Component: CustomerLayout,
+    element: (
+      <RequireAuth>
+        <CustomerLayout />
+      </RequireAuth>
+    ),
     children: [
       { path: "customer", Component: CustomerHome },
       { path: "cart", Component: Cart },
@@ -72,7 +99,11 @@ export const router = createBrowserRouter([
   // Vendor Authenticated Flow
   {
     path: "/vendor/dashboard",
-    Component: VendorLayout,
+    element: (
+      <RequireRole roles={['vendor']} redirectTo="/vendor/apply">
+        <VendorLayout />
+      </RequireRole>
+    ),
     children: [
       { index: true, Component: VendorDashboardHome },
       { path: "products", Component: VendorProducts },

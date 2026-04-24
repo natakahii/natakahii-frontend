@@ -46,6 +46,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 function buildHeaders(options?: RequestInit): Headers {
   const headers = new Headers(options?.headers as HeadersInit | undefined);
+  headers.set('Accept', 'application/json');
 
   const token = getAuthToken();
   if (token) {

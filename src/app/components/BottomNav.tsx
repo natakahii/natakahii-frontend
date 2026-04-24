@@ -2,13 +2,15 @@ import { Home, Compass, PlaySquare, ShoppingCart, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { motion } from 'motion/react';
 import { cn } from './ui/button';
+import { useAuth } from '../providers/AuthProvider';
 
 export function BottomNav() {
   const location = useLocation();
   const path = location.pathname;
+  const { defaultRoute } = useAuth();
 
   const tabs = [
-    { name: 'Home', path: '/', icon: Home },
+    { name: 'Home', path: defaultRoute, icon: Home },
     { name: 'Explore', path: '/explore', icon: Compass },
     { name: 'Video', path: '/video', icon: PlaySquare },
     { name: 'Cart', path: '/cart', icon: ShoppingCart },

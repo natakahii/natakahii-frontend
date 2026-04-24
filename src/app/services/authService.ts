@@ -2,25 +2,92 @@ import { apiClient, getAuthToken, setAuthToken, clearAuthToken } from './apiClie
 import { signInWithPopup, signOut } from 'firebase/auth';
 import { firebaseAuth, googleAuthProvider } from './firebase';
 
-export interface LoginResponse {
+export interface AuthRole {
+  id?: number;
+  name?: string;
+  description?: string | null;
+}
+
+export interface AuthUser {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  profile_photo?: string | null;
+  status?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  roles: Array<AuthRole | string>;
+}
+
+export interface AuthResponse {
+  message?: string;
   token: string;
   token_type: string;
   expires_in: number;
-  user: any;
+  user: AuthUser;
 }
 
-export async function login(email: string, password: string): Promise<LoginResponse> {
-  const response = await apiClient.post<LoginResponse>('/auth/login', JSON.stringify({ email, password }));
+export interface RegisterPayload {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+}
+
+export interface RegisterInitiationResponse {
+  message: string;
+  email: string;
+}
+
+export interface VerifyRegistrationPayload {
+  email: string;
+  otp: string;
+}
+
+export interface ResetPasswordPayload {
+  email: string;
+  otp: string;
+  password: string;
+  password_confirmation: string;
+}
+
+export type OtpType = 'registration' | 'password_reset' | 'email_verification';
+
+export function getUserRoleNames(user: AuthUser | null | undefined): string[] {
+  if (!user || !Array.isArray(user.roles)) {
+    return [];
+  }
+
+  return user.roles
+    .map((role) => (typeof role === 'string' ? role : role?.name))
+    .filter((role): role is string => Boolean(role));
+}
+
+export function hasUserRole(user: AuthUser | null | undefined, role: string): boolean {
+  return getUserRoleNames(user).includes(role);
+}
+
+export function resolveUserDefaultRoute(user: AuthUser | null | undefined): string {
+  if (hasUserRole(user, 'vendor')) {
+    return '/vendor/dashboard';
+  }
+
+  return '/customer';
+}
+
+export async function login(email: string, password: string): Promise<AuthResponse> {
+  const response = await apiClient.post<AuthResponse>('/auth/login', JSON.stringify({ email, password }));
   setAuthToken(response.token);
   return response;
 }
 
-export async function loginWithGoogle(): Promise<LoginResponse> {
+export async function loginWithGoogle(): Promise<AuthResponse> {
   const result = await signInWithPopup(firebaseAuth, googleAuthProvider);
   const idToken = await result.user.getIdToken(true);
 
   try {
-    const response = await apiClient.post<LoginResponse>('/auth/google', JSON.stringify({ id_token: idToken }));
+    const response = await apiClient.post<AuthResponse>('/auth/google', JSON.stringify({ id_token: idToken }));
     setAuthToken(response.token);
     return response;
   } catch (error) {
@@ -29,7 +96,35 @@ export async function loginWithGoogle(): Promise<LoginResponse> {
   }
 }
 
-export async function fetchCurrentUser(): Promise<{ user: any }> {
+export async function register(payload: RegisterPayload): Promise<RegisterInitiationResponse> {
+  return apiClient.post<RegisterInitiationResponse>('/auth/register', JSON.stringify(payload));
+}
+
+export async function verifyRegistration(payload: VerifyRegistrationPayload): Promise<AuthResponse> {
+  const response = await apiClient.post<AuthResponse>('/auth/verify-registration', JSON.stringify(payload));
+  setAuthToken(response.token);
+  return response;
+}
+
+export async function resendOtp(email: string, type: OtpType): Promise<{ message: string }> {
+  return apiClient.post<{ message: string }>('/auth/resend-otp', JSON.stringify({ email, type }));
+}
+
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+  return apiClient.post<{ message: string }>('/auth/forgot-password', JSON.stringify({ email }));
+}
+
+export async function resetPassword(payload: ResetPasswordPayload): Promise<{ message: string }> {
+  return apiClient.post<{ message: string }>('/auth/reset-password', JSON.stringify(payload));
+}
+
+export async function refreshToken(): Promise<{ token: string; token_type: string; expires_in: number }> {
+  const response = await apiClient.post<{ token: string; token_type: string; expires_in: number }>('/auth/refresh', undefined);
+  setAuthToken(response.token);
+  return response;
+}
+
+export async function fetchCurrentUser(): Promise<{ user: AuthUser }> {
   return apiClient.get('/auth/me');
 }
 
@@ -37,7 +132,17 @@ export function getCurrentToken(): string | null {
   return getAuthToken();
 }
 
-export async function logout() {
+export async function clearLocalSession() {
   clearAuthToken();
   await signOut(firebaseAuth).catch(() => undefined);
+}
+
+export async function logout() {
+  try {
+    if (getAuthToken()) {
+      await apiClient.post<{ message: string }>('/auth/logout', undefined);
+    }
+  } finally {
+    await clearLocalSession();
+  }
 }

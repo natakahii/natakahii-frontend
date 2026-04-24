@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { useToast } from '../components/ui/toast';
-import { login, loginWithGoogle } from '../services/authService';
+import { resolveUserDefaultRoute } from '../services/authService';
 import { Mail, Phone, Lock, Eye, EyeOff, ShoppingBag, Users, Shield, Star, Truck, CreditCard } from 'lucide-react';
+import { useAuth } from '../providers/AuthProvider';
 import logoImage from '../../assets/words only.png';
 import img01 from '../../assets/img 01.png';
 import mainLogo from '../../assets/Nataka Hii_1.png';
@@ -19,7 +20,9 @@ export function Login() {
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const { login, loginWithGoogle } = useAuth();
 
   const slideshowImages = [
     {
@@ -43,15 +46,10 @@ export function Login() {
     return () => clearInterval(timer);
   }, []);
 
+  const requestedPath = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
+
   const navigateForUser = (user: any) => {
-    const role = user?.roles?.[0]?.name;
-
-    if (role === 'vendor') {
-      navigate('/vendor/dashboard');
-      return;
-    }
-
-    navigate('/customer');
+    navigate(requestedPath || resolveUserDefaultRoute(user), { replace: true });
   };
 
   const resolveGoogleError = (error: any) => {
@@ -253,7 +251,7 @@ export function Login() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between ml-1">
                 <label className="text-[13px] font-semibold text-[var(--color-text-heading)]">Password</label>
-                <a href="#" className="text-[13px] font-semibold text-[var(--color-accent)] hover:underline">Forgot Password?</a>
+                <Link to="/forgot-password" className="text-[13px] font-semibold text-[var(--color-accent)] hover:underline">Forgot Password?</Link>
               </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">

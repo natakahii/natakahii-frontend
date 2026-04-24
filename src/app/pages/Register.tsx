@@ -1,72 +1,150 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router';
-import { motion, AnimatePresence } from 'motion/react';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
+import { AnimatePresence, motion } from 'motion/react';
+import confetti from 'canvas-confetti';
+import { ArrowLeft, ArrowRight, CheckCircle, Lock, Mail, Phone, ShoppingCart, Store, User } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '../components/ui/input-otp';
 import { useToast } from '../components/ui/toast';
-import { loginWithGoogle } from '../services/authService';
-import { CheckCircle, ArrowLeft, ArrowRight, User, Mail, Phone, ShoppingCart, Store } from 'lucide-react';
-import confetti from 'canvas-confetti';
+import { useAuth } from '../providers/AuthProvider';
+import { resolveUserDefaultRoute } from '../services/authService';
 import logoImage from '../../assets/Nataka Hii_1.png';
 
 export function Register() {
   const [step, setStep] = useState(1);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [otp, setOtp] = useState('');
   const [countdown, setCountdown] = useState(30);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const { loginWithGoogle, register, resendOtp, verifyRegistration } = useAuth();
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: number | undefined;
 
     if (step === 2 && countdown > 0) {
-      timer = setInterval(() => setCountdown((currentValue) => currentValue - 1), 1000);
+      timer = window.setInterval(() => setCountdown((currentValue) => Math.max(currentValue - 1, 0)), 1000);
     }
 
-    return () => clearInterval(timer);
-  }, [step, countdown]);
+    return () => {
+      if (timer) {
+        window.clearInterval(timer);
+      }
+    };
+  }, [countdown, step]);
 
-  const handleNext = () => {
-    if (step === 2) {
-      const duration = 3 * 1000;
-      const end = Date.now() + duration;
+  const requestedPath = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
 
-      const frame = () => {
-        confetti({
-          particleCount: 5,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: ['#142490', '#F05A28'],
-        });
-        confetti({
-          particleCount: 5,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: ['#142490', '#F05A28'],
-        });
+  const triggerConfetti = () => {
+    const end = Date.now() + 3000;
 
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      };
+    const frame = () => {
+      confetti({
+        particleCount: 5,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: ['#142490', '#F05A28'],
+      });
+      confetti({
+        particleCount: 5,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: ['#142490', '#F05A28'],
+      });
 
-      frame();
-    }
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
 
-    setStep((currentStep) => Math.min(currentStep + 1, 3));
+    frame();
+  };
+
+  const navigateForUser = (user: any) => {
+    navigate(requestedPath || resolveUserDefaultRoute(user), { replace: true });
   };
 
   const handleBack = () => setStep((currentStep) => Math.max(currentStep - 1, 1));
+
+  const handleRegisterSubmit = async () => {
+    if (password !== passwordConfirmation) {
+      toast({ type: 'error', title: 'Passwords do not match', message: 'Please confirm your password again.' });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await register({
+        name,
+        email,
+        phone: phone.trim() || undefined,
+        password,
+      });
+
+      toast({ type: 'success', title: 'Verification code sent', message: response.message });
+      setStep(2);
+      setCountdown(30);
+    } catch (error: any) {
+      toast({ type: 'error', title: 'Unable to start registration', message: error?.message || 'Please review your details and try again.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyRegistration = async () => {
+    if (otp.length !== 6) {
+      toast({ type: 'error', title: 'Enter the full code', message: 'The verification code must be 6 digits.' });
+      return;
+    }
+
+    setIsVerifying(true);
+
+    try {
+      await verifyRegistration({ email, otp });
+      triggerConfetti();
+      toast({ type: 'success', title: 'Account created', message: 'Welcome to Nataka Hii.' });
+      setStep(3);
+    } catch (error: any) {
+      toast({ type: 'error', title: 'Verification failed', message: error?.message || 'Please check the code and try again.' });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setIsResending(true);
+
+    try {
+      const response = await resendOtp(email, 'registration');
+      toast({ type: 'success', title: 'Code resent', message: response.message });
+      setCountdown(30);
+    } catch (error: any) {
+      toast({ type: 'error', title: 'Unable to resend code', message: error?.message || 'Please try again in a moment.' });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleGoogleSignUp = async () => {
     setIsGoogleLoading(true);
 
     try {
-      await loginWithGoogle();
+      const response = await loginWithGoogle();
       toast({ type: 'success', title: 'Account ready', message: 'Signed in with Google successfully.' });
-      navigate('/customer');
+      navigateForUser(response.user);
     } catch (error: any) {
       const message = error?.code === 'auth/popup-closed-by-user'
         ? 'Google sign-in was cancelled before completion.'
@@ -143,13 +221,19 @@ export function Register() {
                     </span>
                   </div>
 
-                  <div className="space-y-1.5 relative">
+                  <div className="space-y-1.5">
                     <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Full Name</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                         <User className="w-5 h-5 text-[var(--color-text-muted)]" />
                       </div>
-                      <Input placeholder="John Doe" className="pl-11 focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)]" />
+                      <Input
+                        placeholder="John Doe"
+                        value={name}
+                        onChange={(event) => setName(event.target.value)}
+                        className="pl-11 focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)]"
+                        required
+                      />
                     </div>
                   </div>
 
@@ -159,7 +243,14 @@ export function Register() {
                       <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                         <Mail className="w-5 h-5 text-[var(--color-text-muted)]" />
                       </div>
-                      <Input type="email" placeholder="john@example.com" className="pl-11 focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)]" />
+                      <Input
+                        type="email"
+                        placeholder="john@example.com"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        className="pl-11 focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)]"
+                        required
+                      />
                     </div>
                   </div>
 
@@ -169,13 +260,59 @@ export function Register() {
                       <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                         <Phone className="w-5 h-5 text-[var(--color-text-muted)]" />
                       </div>
-                      <Input type="tel" placeholder="+254 7XX XXX XXX" className="pl-11 focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)]" />
+                      <Input
+                        type="tel"
+                        placeholder="+254 7XX XXX XXX"
+                        value={phone}
+                        onChange={(event) => setPhone(event.target.value)}
+                        className="pl-11 focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Password</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                        <Lock className="w-5 h-5 text-[var(--color-text-muted)]" />
+                      </div>
+                      <Input
+                        type="password"
+                        placeholder="Create a strong password"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        className="pl-11 focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)]"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Confirm Password</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                        <Lock className="w-5 h-5 text-[var(--color-text-muted)]" />
+                      </div>
+                      <Input
+                        type="password"
+                        placeholder="Repeat your password"
+                        value={passwordConfirmation}
+                        onChange={(event) => setPasswordConfirmation(event.target.value)}
+                        className="pl-11 focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)]"
+                        required
+                      />
                     </div>
                   </div>
                 </div>
 
                 <div className="pt-4 flex justify-end">
-                  <Button onClick={handleNext} variant="primary" size="l" className="w-full sm:w-auto bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]">
+                  <Button
+                    onClick={handleRegisterSubmit}
+                    variant="primary"
+                    size="l"
+                    className="w-full sm:w-auto bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]"
+                    isLoading={isSubmitting}
+                  >
                     Continue <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </div>
@@ -201,19 +338,27 @@ export function Register() {
                   </div>
                   <h2 className="text-[22px] sm:text-[24px] md:text-[28px] font-bold text-[var(--color-text-heading)] mb-2 tracking-tight">Verify it's you</h2>
                   <p className="text-[14px] sm:text-[15px] text-[var(--color-text-muted)] max-w-sm mx-auto leading-relaxed">
-                    We've sent a 6-digit code to <span className="font-bold text-[var(--color-text-heading)]">john@example.com</span>. Enter it below to verify your email.
+                    We've sent a 6-digit code to <span className="font-bold text-[var(--color-text-heading)]">{email}</span>. Enter it below to verify your email.
                   </p>
                 </div>
 
-                <div className="flex gap-2 sm:gap-4 justify-center">
-                  {[1, 2, 3, 4, 5, 6].map((index) => (
-                    <input
-                      key={index}
-                      type="text"
-                      maxLength={1}
-                      className="w-10 h-12 sm:w-14 sm:h-16 text-center text-[24px] font-bold rounded-[12px] border-2 border-[var(--color-border)] focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)] focus:outline-none transition-all shadow-sm bg-[var(--color-bg-page)]"
-                    />
-                  ))}
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={otp}
+                    onChange={(value) => setOtp(value)}
+                    containerClassName="justify-center"
+                  >
+                    <InputOTPGroup className="gap-2 sm:gap-3">
+                      {[0, 1, 2, 3, 4, 5].map((index) => (
+                        <InputOTPSlot
+                          key={index}
+                          index={index}
+                          className="w-10 h-12 sm:w-14 sm:h-16 rounded-[12px] border-2 border-[var(--color-border)] bg-[var(--color-bg-page)] text-[20px] sm:text-[24px] font-bold"
+                        />
+                      ))}
+                    </InputOTPGroup>
+                  </InputOTP>
                 </div>
 
                 <div className="w-full flex flex-col sm:flex-row gap-4 items-center justify-between mt-8">
@@ -222,13 +367,15 @@ export function Register() {
                   </Button>
 
                   <div className="flex flex-col items-center gap-4 sm:flex-row-reverse w-full sm:w-auto">
-                    <Button onClick={handleNext} variant="primary" size="l" className="w-full sm:w-auto bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]">
+                    <Button onClick={handleVerifyRegistration} variant="primary" size="l" className="w-full sm:w-auto bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]" isLoading={isVerifying}>
                       Verify Code
                     </Button>
                     {countdown > 0 ? (
                       <span className="text-[13px] font-medium text-[var(--color-text-muted)]">Resend in 00:{countdown.toString().padStart(2, '0')}</span>
                     ) : (
-                      <button onClick={() => setCountdown(30)} className="text-[13px] font-bold text-[var(--color-primary)] hover:underline">Resend Code</button>
+                      <button onClick={handleResendOtp} disabled={isResending} className="text-[13px] font-bold text-[var(--color-primary)] hover:underline disabled:opacity-50">
+                        {isResending ? 'Resending...' : 'Resend Code'}
+                      </button>
                     )}
                   </div>
                 </div>
@@ -264,7 +411,7 @@ export function Register() {
                   </Button>
 
                   <Button
-                    onClick={() => navigate('/profile')}
+                    onClick={() => navigate(requestedPath === '/vendor/apply' ? requestedPath : '/vendor/apply')}
                     variant="ghost"
                     className="h-auto py-4 flex flex-col items-center justify-center gap-3 border-2 border-[var(--color-border)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-bg)] group transition-all"
                   >

@@ -10,7 +10,7 @@ export function Layout() {
   const location = useLocation();
   return (
     <div className="flex flex-col min-h-screen bg-[var(--color-bg-page)] text-[var(--color-text-body)]">
-      <Navbar role="visitor" />
+      <Navbar />
       <main className="flex-1 w-full pb-16 lg:pb-0 overflow-x-hidden">
         <AnimatePresence mode="wait">
           <PageTransition key={location.pathname}>
