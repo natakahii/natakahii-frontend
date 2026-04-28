@@ -124,9 +124,14 @@ export function VendorApply() {
   const [isRefreshingStatus, setIsRefreshingStatus] = useState(false);
 
   useEffect(() => {
+    if (hasUserRole(user, 'vendor')) {
+      navigate('/vendor/dashboard', { replace: true });
+      return;
+    }
+
     void loadStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [navigate, user]);
 
   async function syncApprovedAccess() {
     setView('redirecting');
@@ -622,11 +627,11 @@ export function VendorApply() {
                 {step === 2 && (
                   <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label="Region / County" required error={fieldErrors.region}>
+                      <FormField label="Region" required error={fieldErrors.region}>
                         <Input
                           value={form.region}
                           onChange={(event) => updateField('region', event.target.value)}
-                          placeholder="Nairobi"
+                          placeholder="Dar es Salaam"
                           error={Boolean(fieldErrors.region)}
                         />
                       </FormField>
@@ -634,7 +639,7 @@ export function VendorApply() {
                         <Input
                           value={form.city}
                           onChange={(event) => updateField('city', event.target.value)}
-                          placeholder="Nairobi"
+                          placeholder="Dar es Salaam"
                           error={Boolean(fieldErrors.city)}
                         />
                       </FormField>
@@ -645,7 +650,7 @@ export function VendorApply() {
                         <Input
                           value={form.ward}
                           onChange={(event) => updateField('ward', event.target.value)}
-                          placeholder="Kilimani"
+                          placeholder="Mikocheni"
                           error={Boolean(fieldErrors.ward)}
                         />
                       </FormField>
@@ -653,7 +658,7 @@ export function VendorApply() {
                         <Input
                           value={form.street}
                           onChange={(event) => updateField('street', event.target.value)}
-                          placeholder="Kimweri Road"
+                          placeholder="Sam Nujoma Road"
                           error={Boolean(fieldErrors.street)}
                         />
                       </FormField>

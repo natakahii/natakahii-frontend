@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Skeleton } from '../../components/ui/skeleton';
 import { Textarea } from '../../components/ui/textarea';
 import { useToast } from '../../components/ui/toast';
+import { useAuth } from '../../providers/AuthProvider';
 import {
   CatalogCategory,
   CatalogProductImage,
@@ -38,6 +39,8 @@ import {
   uploadVendorProductMedia,
 } from '../../services/vendorProductService';
 import { formatCurrency } from '../../utils/currency';
+import { getProductPath } from '../../utils/products';
+import { getVendorStorefrontPath } from '../../utils/storefront';
 
 const MAX_PRODUCT_IMAGES = 10;
 
@@ -129,7 +132,15 @@ function buildSelectedAttributeIds(productResponse: VendorProductDetailResponse[
 }
 
 function formatStatus(status: VendorProductStatus | string | undefined) {
-  return String(status || 'draft').replace(/_/g, ' ');
+  if (status === 'active') {
+    return 'published';
+  }
+
+  if (status === 'out_of_stock') {
+    return 'out of stock';
+  }
+
+  return 'draft';
 }
 
 export function VendorProductForm() {
@@ -137,6 +148,7 @@ export function VendorProductForm() {
   const { productId } = useParams<{ productId: string }>();
   const isEditMode = Boolean(productId);
   const { toast } = useToast();
+  const { user } = useAuth();
   const previewUrlsRef = useRef<string[]>([]);
   const videoPreviewUrlRef = useRef<string | null>(null);
 
@@ -154,6 +166,8 @@ export function VendorProductForm() {
   const [discountPrice, setDiscountPrice] = useState('');
   const [stock, setStock] = useState('');
   const [currentStatus, setCurrentStatus] = useState<VendorProductStatus>('draft');
+  const [currentProductId, setCurrentProductId] = useState<number | null>(null);
+  const [currentProductSlug, setCurrentProductSlug] = useState<string | null>(null);
   const [newVideoFile, setNewVideoFile] = useState<File | null>(null);
   const [newVideoPreviewUrl, setNewVideoPreviewUrl] = useState<string | null>(null);
   const [videoTitle, setVideoTitle] = useState('');
@@ -171,6 +185,11 @@ export function VendorProductForm() {
   );
   const totalImageCount = existingImages.length + newImages.length;
   const previewImage = newImages[0]?.preview || existingImages[0]?.image_path || '/natakahii-logo.png';
+  const storefrontPath = getVendorStorefrontPath(user?.vendor);
+  const hasStorefront = Boolean(user?.vendor?.shop_slug || user?.vendor?.id);
+  const publicProductPath = currentProductId
+    ? getProductPath({ id: currentProductId, slug: currentProductSlug })
+    : null;
 
   useEffect(() => {
     previewUrlsRef.current = newImages.map((image) => image.preview);
@@ -209,6 +228,8 @@ export function VendorProductForm() {
         setVariantAttributes(variantAttributeData);
 
         if (productResponse) {
+          setCurrentProductId(productResponse.product.id);
+          setCurrentProductSlug(productResponse.product.slug || null);
           setName(productResponse.product.name);
           setCategoryId(String(productResponse.product.category_id || ''));
           setDescription(productResponse.product.description || '');
@@ -536,6 +557,10 @@ export function VendorProductForm() {
         ? await updateVendorProduct(productId, payload)
         : await createVendorProduct(payload);
 
+      setCurrentProductId(response.product.id);
+      setCurrentProductSlug(response.product.slug || null);
+      setCurrentStatus((response.product.status as VendorProductStatus) || nextStatus);
+
       if (newVideoFile) {
         try {
           await uploadVendorProductMedia(response.product.id, {
@@ -636,6 +661,26 @@ export function VendorProductForm() {
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {publicProductPath && currentStatus === 'active' && (
+            <Button
+              type="button"
+              variant="outline"
+              className="border-[var(--color-primary)] text-[var(--color-primary)]"
+              onClick={() => navigate(publicProductPath)}
+            >
+              View Public Product
+            </Button>
+          )}
+          {hasStorefront && (
+            <Button
+              type="button"
+              variant="outline"
+              className="border-[var(--color-primary)] text-[var(--color-primary)]"
+              onClick={() => navigate(storefrontPath)}
+            >
+              View Storefront
+            </Button>
+          )}
           <Badge className="capitalize bg-[var(--color-primary-bg)] text-[var(--color-primary)] hover:bg-[var(--color-primary-bg)]">
             {formatStatus(currentStatus)}
           </Badge>

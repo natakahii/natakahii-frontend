@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
@@ -10,6 +11,7 @@ import { useToast } from '../../components/ui/toast';
 import { useAuth } from '../../providers/AuthProvider';
 import { saveVendorProfile } from '../../services/vendorProfileService';
 import { Camera, RefreshCcw, Save, Store, UserRound } from 'lucide-react';
+import { getVendorStorefrontPath } from '../../utils/storefront';
 
 type VendorFieldErrors = Partial<Record<'shop_name' | 'shop_slug' | 'description' | 'logo', string>>;
 
@@ -73,6 +75,7 @@ export function VendorSettings() {
   const logoUrl = previewUrl || vendor?.logo || user?.profile_photo || '';
   const statusLabel = vendor?.status ? String(vendor.status).replace(/_/g, ' ') : 'unknown';
   const storefrontUrl = useMemo(() => (shopSlug ? `natakahii.com/shop/${shopSlug}` : 'Choose a store URL'), [shopSlug]);
+  const storefrontPath = getVendorStorefrontPath(vendor);
 
   function clearFieldError(field: keyof VendorFieldErrors) {
     setFieldErrors((currentErrors) => {
@@ -147,6 +150,17 @@ export function VendorSettings() {
           <p className="text-[var(--color-text-muted)]">Manage the public identity and branding of your seller workspace.</p>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
+          {vendor.shop_slug && (
+            <Link to={storefrontPath} target="_blank" rel="noreferrer">
+              <Button
+                type="button"
+                variant="outline"
+                className="border-[var(--color-primary)] text-[var(--color-primary)]"
+              >
+                View Storefront
+              </Button>
+            </Link>
+          )}
           <Badge className="bg-[var(--color-primary-bg)] text-[var(--color-primary)] hover:bg-[var(--color-primary-bg)] capitalize">
             {statusLabel}
           </Badge>

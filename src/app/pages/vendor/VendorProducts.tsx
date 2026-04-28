@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
 import { useToast } from '../../components/ui/toast';
+import { useAuth } from '../../providers/AuthProvider';
 import { CatalogCategory, CatalogProduct, fetchCategories } from '../../services/productService';
 import {
   VendorProductStatus,
@@ -26,6 +27,8 @@ import {
   updateVendorProductStatus,
 } from '../../services/vendorProductService';
 import { formatCurrency } from '../../utils/currency';
+import { getProductPath } from '../../utils/products';
+import { getVendorStorefrontPath } from '../../utils/storefront';
 
 function flattenCategories(categories: CatalogCategory[], depth = 0): Array<{ id: string; name: string }> {
   return categories.flatMap((category) => [
@@ -38,7 +41,15 @@ function flattenCategories(categories: CatalogCategory[], depth = 0): Array<{ id
 }
 
 function formatStatus(status?: string | null) {
-  return String(status || 'draft').replace(/_/g, ' ');
+  if (status === 'active') {
+    return 'published';
+  }
+
+  if (status === 'out_of_stock') {
+    return 'out of stock';
+  }
+
+  return 'draft';
 }
 
 function getStatusBadgeClasses(status?: string | null) {
@@ -56,6 +67,7 @@ function getStatusBadgeClasses(status?: string | null) {
 export function VendorProducts() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [categories, setCategories] = useState<CatalogCategory[]>([]);
@@ -66,6 +78,13 @@ export function VendorProducts() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const categoryOptions = useMemo(() => flattenCategories(categories), [categories]);
+  const storefrontPath = getVendorStorefrontPath(user?.vendor);
+  const hasStorefront = Boolean(user?.vendor?.shop_slug || user?.vendor?.id);
+  const visibleCounts = useMemo(() => ({
+    published: products.filter((product) => product.status === 'active').length,
+    draft: products.filter((product) => product.status === 'draft').length,
+    outOfStock: products.filter((product) => product.status === 'out_of_stock').length,
+  }), [products]);
 
   useEffect(() => {
     let isMounted = true;
@@ -192,17 +211,46 @@ export function VendorProducts() {
           <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text-heading)]">Products</h1>
           <p className="text-[var(--color-text-muted)]">Upload new products, edit listings, and control what goes live in your storefront and video commerce flow.</p>
         </div>
-        <Button
-          className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white gap-2 w-full sm:w-auto"
-          onClick={() => navigate('/vendor/dashboard/products/add')}
-        >
-          <Plus className="w-4 h-4" />
-          Add Product
-        </Button>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          {hasStorefront && (
+            <Button
+              variant="outline"
+              className="text-[var(--color-primary)] border-[var(--color-primary)] w-full sm:w-auto"
+              onClick={() => navigate(storefrontPath)}
+            >
+              View Storefront
+            </Button>
+          )}
+          <Button
+            className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white gap-2 w-full sm:w-auto"
+            onClick={() => navigate('/vendor/dashboard/products/add')}
+          >
+            <Plus className="w-4 h-4" />
+            Add Product
+          </Button>
+        </div>
       </div>
 
       <Card className="border-[var(--color-border)] shadow-sm">
         <CardContent className="p-4 sm:p-6 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-[18px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.3px] text-[var(--color-text-muted)]">Published</p>
+              <p className="text-2xl font-bold text-[var(--color-text-heading)] mt-1">{visibleCounts.published}</p>
+              <p className="text-sm text-[var(--color-text-muted)] mt-1">Products currently live in your storefront.</p>
+            </div>
+            <div className="rounded-[18px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.3px] text-[var(--color-text-muted)]">Draft</p>
+              <p className="text-2xl font-bold text-[var(--color-text-heading)] mt-1">{visibleCounts.draft}</p>
+              <p className="text-sm text-[var(--color-text-muted)] mt-1">Products still being prepared before publication.</p>
+            </div>
+            <div className="rounded-[18px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.3px] text-[var(--color-text-muted)]">Out of Stock</p>
+              <p className="text-2xl font-bold text-[var(--color-text-heading)] mt-1">{visibleCounts.outOfStock}</p>
+              <p className="text-sm text-[var(--color-text-muted)] mt-1">Listings that need inventory before they can sell again.</p>
+            </div>
+          </div>
+
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
               <div className="relative w-full sm:w-72">
@@ -221,7 +269,7 @@ export function VendorProducts() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="active">Live</SelectItem>
+                  <SelectItem value="active">Published</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="out_of_stock">Out of Stock</SelectItem>
                 </SelectContent>
@@ -330,9 +378,14 @@ export function VendorProducts() {
                                 <Edit className="w-4 h-4" />
                                 Edit Details
                               </DropdownMenuItem>
+                              {product.status === 'active' && (
+                                <DropdownMenuItem className="gap-2" onClick={() => navigate(getProductPath(product))}>
+                                  View Public Listing
+                                </DropdownMenuItem>
+                              )}
                               {product.status !== 'active' && (
                                 <DropdownMenuItem className="gap-2" onClick={() => void handleStatusChange(product, 'active')}>
-                                  Publish Live
+                                  Publish Product
                                 </DropdownMenuItem>
                               )}
                               {product.status !== 'draft' && (
@@ -420,8 +473,8 @@ export function VendorProducts() {
                           Edit
                         </Button>
                         {product.status === 'active' ? (
-                          <Button variant="ghost" size="sm" className="flex-1" onClick={() => void handleStatusChange(product, 'draft')}>
-                            Draft
+                          <Button variant="ghost" size="sm" className="flex-1" onClick={() => navigate(getProductPath(product))}>
+                            View Live
                           </Button>
                         ) : (
                           <Button variant="ghost" size="sm" className="flex-1" onClick={() => void handleStatusChange(product, 'active')}>

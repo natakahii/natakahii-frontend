@@ -11,6 +11,7 @@ import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { useAuth } from '../../providers/AuthProvider';
 import { fetchVendorOverview, VendorOverviewResponse } from '../../services/analyticsService';
 import { formatCompactCurrency, formatCurrency } from '../../utils/currency';
+import { getVendorStorefrontPath } from '../../utils/storefront';
 
 function formatDateLabel(value?: string) {
   if (!value) {
@@ -84,6 +85,8 @@ export function VendorDashboardHome() {
     [overview?.daily_metrics],
   );
   const vendorStatus = user?.vendor?.status ? String(user.vendor.status).replace(/_/g, ' ') : null;
+  const storefrontPath = getVendorStorefrontPath(user?.vendor);
+  const hasStorefront = Boolean(user?.vendor?.shop_slug || user?.vendor?.id);
 
   return (
     <div className="space-y-6">
@@ -104,6 +107,16 @@ export function VendorDashboardHome() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {hasStorefront && (
+            <Button
+              type="button"
+              variant="outline"
+              className="text-[var(--color-primary)] border-[var(--color-primary)]"
+              onClick={() => navigate(storefrontPath)}
+            >
+              View Storefront
+            </Button>
+          )}
           <Button
             type="button"
             variant="outline"
