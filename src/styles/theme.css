@@ -2,6 +2,8 @@
 
 @theme {
   --font-sans: "Plus Jakarta Sans", "Inter", sans-serif;
+  --font-times: "Times New Roman", Times, serif;
+  --font-snasm: "Snasm", "Impact", "Arial Black", sans-serif;
 
   --color-primary: #142490;
   --color-primary-light: #1E35C0;
@@ -49,6 +51,19 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   color: var(--color-text-heading);
+}
+
+/* Times New Roman Bold font utility */
+.font-times-bold {
+  font-family: "Times New Roman", Times, serif;
+  font-weight: 700;
+}
+
+/* Snasm Bold Italic font utility */
+.font-snasm {
+  font-family: "Snasm Bold Italic", "Snasm", "Roboto Bold Italic", "Helvetica Neue Bold Italic", "Helvetica Bold Italic", "Arial Bold", sans-serif;
+  font-weight: 700;
+  font-style: italic;
 }
 
 /* Hide scrollbar for cleaner UI where needed */

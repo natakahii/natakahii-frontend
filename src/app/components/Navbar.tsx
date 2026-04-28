@@ -5,11 +5,14 @@ import { Button, cn } from './ui/button';
 import { SearchInput } from './ui/input';
 import { NotificationPanel } from './NotificationPanel';
 import { useAuth } from '../providers/AuthProvider';
+import headerLogo from '../../assets/Nataka Hii Header.png';
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [mobileSearchQuery, setMobileSearchQuery] = useState('');
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const navigate = useNavigate();
   const { defaultRoute, hasRole, isAuthenticated, logout, user } = useAuth();
 
@@ -33,18 +36,47 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full bg-white shadow-[var(--shadow-level-1)]">
       <div className="container mx-auto px-4 h-[72px] flex items-center justify-between gap-4 lg:gap-8">
+        {/* Logo */}
         <Link to={homePath} className="flex items-center flex-shrink-0">
           <img
-            src="/natakahii-logo.png"
+            src={headerLogo}
             alt="Nataka Hii"
             className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto max-w-[120px] sm:max-w-[140px] md:max-w-[160px] lg:max-w-[180px] object-contain"
           />
         </Link>
 
+        {/* Desktop Search */}
         <div className="hidden lg:flex flex-1 max-w-2xl mx-auto">
           <SearchInput placeholder="Search products, brands, or vendors..." />
         </div>
 
+        {/* Mobile Search - inline between logo and icons */}
+        {isMobileSearchOpen && (
+          <div className="lg:hidden flex-1 flex items-center gap-2 mx-2">
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                const query = mobileSearchQuery.trim();
+                setIsMobileSearchOpen(false);
+                setMobileSearchQuery('');
+                navigate(query ? `/explore?search=${encodeURIComponent(query)}` : '/explore');
+              }}
+              className="relative flex-1"
+            >
+              <input
+                type="text"
+                placeholder="Search..."
+                value={mobileSearchQuery}
+                onChange={(e) => setMobileSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 rounded-[10px] border border-[var(--color-border)] bg-[var(--color-bg-page)] text-[var(--color-text-heading)] text-[13px] focus:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/20"
+                autoFocus
+              />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+            </form>
+          </div>
+        )}
+
+        {/* Desktop Right Icons */}
         <div className="hidden lg:flex items-center gap-4 flex-shrink-0">
           {!isAuthenticated ? (
             <>
@@ -80,20 +112,38 @@ export function Navbar() {
           )}
         </div>
 
-        <div className="flex lg:hidden items-center gap-3">
-          <button className="p-2 text-[var(--color-text-heading)]">
-            <Search className="w-6 h-6" />
-          </button>
-          <Link to="/cart" className="relative p-2 text-[var(--color-text-heading)]">
-            <ShoppingCart className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-accent)] text-[11px] font-bold text-white">3</span>
-          </Link>
-          <button
-            className="p-2 text-[var(--color-text-heading)]"
-            onClick={() => setIsMobileMenuOpen(true)}
-          >
-            <Menu className="w-6 h-6" />
-          </button>
+        {/* Mobile Right Icons */}
+        <div className="flex lg:hidden items-center gap-2 flex-shrink-0">
+          {!isMobileSearchOpen ? (
+            <>
+              <button 
+                onClick={() => setIsMobileSearchOpen(true)} 
+                className="p-2 text-[var(--color-text-heading)]"
+              >
+                <Search className="w-6 h-6" />
+              </button>
+              <Link to="/cart" className="relative p-2 text-[var(--color-text-heading)]">
+                <ShoppingCart className="w-6 h-6" />
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-accent)] text-[11px] font-bold text-white">3</span>
+              </Link>
+              <button
+                className="p-2 text-[var(--color-text-heading)]"
+                onClick={() => setIsMobileMenuOpen(true)}
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+            </>
+          ) : (
+            <button 
+              onClick={() => {
+                setIsMobileSearchOpen(false);
+                setMobileSearchQuery('');
+              }}
+              className="p-2 text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 

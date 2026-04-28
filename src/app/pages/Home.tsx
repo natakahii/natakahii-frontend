@@ -145,30 +145,22 @@ export function Home() {
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[var(--color-accent)]/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[var(--color-info)]/20 rounded-full blur-[80px] translate-y-1/3 -translate-x-1/3 pointer-events-none" />
 
-        <div className="container relative z-10 mx-auto max-w-4xl text-center flex flex-col items-center">
-          <h1 className="text-[40px] md:text-[56px] lg:text-[64px] font-bold text-white leading-[1.1] tracking-[-1.5px] mb-6">
-            Nataka Hii. <br />
-            <span className="text-[var(--color-accent)]">Get What You Want.</span>
+        <div className="container relative z-10 mx-auto max-w-5xl text-center flex flex-col items-center">
+          <h1 className="font-snasm text-[48px] sm:text-[64px] md:text-[80px] lg:text-[96px] text-white leading-[0.95] tracking-[-2px] mb-8 drop-shadow-[0_4px_30px_rgba(0,0,0,0.3)]" style={{ color: '#FFFFFF' }}>
+            nataka hii.
           </h1>
+          <h2 className="font-times-bold text-[28px] sm:text-[36px] md:text-[44px] lg:text-[52px] text-white leading-[1.1] tracking-[-1px] mb-10 drop-shadow-lg" style={{ color: '#FFFFFF' }}>
+            Get What You Want.
+          </h2>
 
-          <p className="text-[16px] md:text-[18px] text-[var(--color-primary-bg)] opacity-90 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Discover thousands of verified local vendors, AI-curated products, and a fully protected shopping experience.
+          <p className="text-[18px] sm:text-[20px] md:text-[22px] text-white/95 mb-12 max-w-3xl mx-auto leading-[1.6] font-medium">
+            East Africa's premier marketplace connecting you with verified local vendors, AI-curated products, and a fully protected shopping experience.
           </p>
 
-          <form onSubmit={handleSearchSubmit} className="w-full max-w-2xl bg-white p-2 rounded-full shadow-[var(--shadow-level-3)] flex items-center mb-8 relative">
-            <Search className="w-6 h-6 text-[var(--color-text-muted)] ml-4" />
-            <input
-              type="text"
-              placeholder="What are you looking for?"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              className="flex-1 bg-transparent border-none text-[16px] font-medium text-[var(--color-text-heading)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-0 px-4 h-12"
-            />
-            <Button type="submit" size="m" className="rounded-full shadow-sm px-8">Search</Button>
-          </form>
+          <div className="w-full max-w-2xl h-14 mb-8"></div>
 
           <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 text-[13px] text-white/80 font-medium">
-            <span className="opacity-60 hidden md:inline">Trending:</span>
+          
             {(topCategories.length > 0 ? topCategories : [{ id: 0, name: 'Explore', slug: 'explore', parent_id: null, children: [] } as CatalogCategory]).slice(0, 4).map((category) => (
               <button
                 key={category.id}
@@ -185,7 +177,7 @@ export function Home() {
       <div className="container mx-auto px-4 flex flex-col gap-12 lg:gap-20">
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-[22px] lg:text-[28px] font-bold text-[var(--color-text-heading)] tracking-[-0.5px]">Trending Categories</h2>
+            <h2 className="font-times-bold text-[22px] lg:text-[28px] text-[var(--color-text-heading)] tracking-[-0.5px]">Trending Categories</h2>
             <Link to="/explore" className="text-[var(--color-primary)] font-semibold text-[14px] hover:text-[var(--color-accent)] flex items-center gap-1">
               See All <ChevronRight className="w-4 h-4" />
             </Link>
@@ -232,7 +224,7 @@ export function Home() {
           <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-[var(--color-accent-bg)] to-transparent p-4 rounded-t-[16px] border-l-4 border-[var(--color-accent)]">
             <div className="flex items-center gap-3">
               <Zap className="w-6 h-6 text-[var(--color-accent)]" />
-              <h2 className="text-[22px] font-bold text-[var(--color-text-heading)] tracking-[-0.5px]">Fresh Picks</h2>
+              <h2 className="font-times-bold text-[22px] text-[var(--color-text-heading)] tracking-[-0.5px]">Fresh Picks</h2>
               <Badge variant="hot-deal" className="ml-2">Live from the catalog</Badge>
             </div>
           </div>
@@ -327,7 +319,7 @@ export function Home() {
                 <Sparkles className="w-4 h-4 text-[var(--color-accent)]" />
                 <span className="text-[13px] font-semibold tracking-wide uppercase text-[var(--color-accent-bg)]">AI-Powered Shopping</span>
               </div>
-              <h2 className="text-[28px] md:text-[36px] font-bold leading-tight mb-4 tracking-[-1px]">
+              <h2 className="font-times-bold text-[28px] md:text-[36px] leading-tight mb-4 tracking-[-1px]">
                 Meet your personal <span className="text-[var(--color-accent)]">Nataka Hii</span> AI shopper
               </h2>
               <p className="text-[16px] text-[var(--color-primary-bg)] opacity-90 mb-8 max-w-md">
@@ -368,7 +360,7 @@ export function Home() {
         <section>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-[22px] lg:text-[28px] font-bold text-[var(--color-text-heading)] tracking-[-0.5px]">Discover on Video</h2>
+              <h2 className="font-times-bold text-[22px] lg:text-[28px] text-[var(--color-text-heading)] tracking-[-0.5px]">Discover on Video</h2>
               <p className="text-[14px] text-[var(--color-text-muted)] mt-1">Watch real vendor demos and reviews.</p>
             </div>
             <Link to="/video" className="text-[var(--color-primary)] font-semibold text-[14px] hover:text-[var(--color-accent)] flex items-center gap-1 bg-[var(--color-primary-bg)] px-4 py-2 rounded-full">
@@ -405,7 +397,7 @@ export function Home() {
 
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-[22px] lg:text-[28px] font-bold text-[var(--color-text-heading)] tracking-[-0.5px]">Top Verified Vendors</h2>
+            <h2 className="font-times-bold text-[22px] lg:text-[28px] text-[var(--color-text-heading)] tracking-[-0.5px]">Top Verified Vendors</h2>
           </div>
 
           {isLoading ? (
