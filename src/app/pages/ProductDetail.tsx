@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import { motion } from 'motion/react';
 import { BellRing, CheckCircle, ChevronRight, Clock, Heart, Minus, Plus, Share2, ShieldCheck, Sparkles, Star } from 'lucide-react';
 import { AnimatedPrice } from '../components/ui/animated-price';
@@ -18,10 +18,9 @@ import {
   getProductPrice,
   getProductPrimaryImage,
 } from '../services/productService';
-
-function formatCurrency(value: number) {
-  return `KES ${value.toLocaleString()}`;
-}
+import { formatCurrency } from '../utils/currency';
+import { getProductPath } from '../utils/products';
+import { getVendorStorefrontPath } from '../utils/storefront';
 
 function getVariantSelections(variant: CatalogProductVariant) {
   return variant.attribute_values.reduce<Record<string, string>>((selection, attributeValue) => {
@@ -37,7 +36,8 @@ function getVariantSelections(variant: CatalogProductVariant) {
 }
 
 export function ProductDetail() {
-  const { id } = useParams();
+  const { productIdentifier } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState<CatalogProduct | null>(null);
   const [recentReviews, setRecentReviews] = useState<any[]>([]);
   const [activeImage, setActiveImage] = useState('');
@@ -49,7 +49,7 @@ export function ProductDetail() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!id) {
+    if (!productIdentifier) {
       setError('Product not found.');
       setIsLoading(false);
       return;
@@ -59,10 +59,16 @@ export function ProductDetail() {
     setIsLoading(true);
     setError(null);
 
-    fetchProduct(id)
+    fetchProduct(productIdentifier)
       .then((response) => {
         if (!isMounted) {
           return;
+        }
+
+        const canonicalPath = getProductPath(response.product);
+
+        if (canonicalPath !== `/product/${productIdentifier}`) {
+          navigate(canonicalPath, { replace: true });
         }
 
         setProduct(response.product);
@@ -98,7 +104,7 @@ export function ProductDetail() {
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [navigate, productIdentifier]);
 
   const galleryImages = useMemo(() => {
     if (!product) {
@@ -185,6 +191,7 @@ export function ProductDetail() {
   const totalPrice = currentUnitPrice * qty;
   const reviewsAverage = product?.reviews_avg_rating ? product.reviews_avg_rating.toFixed(1) : null;
   const reviewsCount = product?.reviews_count || recentReviews.length;
+  const vendorStorefrontPath = getVendorStorefrontPath(product?.vendor);
 
   const handleCatalogOnlyAction = () => {
     toast({
@@ -254,7 +261,7 @@ export function ProductDetail() {
         ) : null}
         {product.vendor ? (
           <>
-            <Link to={`/explore?vendor=${product.vendor.id}`} className="hover:text-[var(--color-primary)] flex items-center gap-1">
+            <Link to={vendorStorefrontPath} className="hover:text-[var(--color-primary)] flex items-center gap-1">
               {product.vendor.shop_name} {product.vendor.status === 'approved' && <CheckCircle className="w-3 h-3 text-[var(--color-primary)]" />}
             </Link>
             <ChevronRight className="w-4 h-4" />
@@ -291,7 +298,7 @@ export function ProductDetail() {
         <div className="flex flex-col">
           <div className="mb-6">
             {product.vendor ? (
-              <Link to={`/explore?vendor=${product.vendor.id}`} className="inline-flex items-center gap-2 text-[14px] font-bold text-[var(--color-text-heading)] hover:text-[var(--color-primary)] mb-3 bg-[var(--color-bg-card)] px-3 py-1.5 rounded-full w-fit">
+              <Link to={vendorStorefrontPath} className="inline-flex items-center gap-2 text-[14px] font-bold text-[var(--color-text-heading)] hover:text-[var(--color-primary)] mb-3 bg-[var(--color-bg-card)] px-3 py-1.5 rounded-full w-fit">
                 <div className="w-6 h-6 rounded-full overflow-hidden">
                   <ImageWithFallback src={product.vendor.logo || '/natakahii-logo.png'} alt={product.vendor.shop_name} className="w-full h-full object-cover" />
                 </div>
@@ -322,7 +329,7 @@ export function ProductDetail() {
 
           <div className="mb-8">
             <div className="flex items-end gap-3 mb-2">
-              <AnimatedPrice value={totalPrice} currency="KES" className="text-[36px] font-bold text-[var(--color-accent)] leading-none tracking-tight" />
+              <AnimatedPrice value={totalPrice} className="text-[36px] font-bold text-[var(--color-accent)] leading-none tracking-tight" />
               {compareAtPrice ? (
                 <span className="text-[18px] text-[var(--color-text-muted)] line-through font-semibold mb-1 decoration-red-500/50">{formatCurrency(compareAtPrice * qty)}</span>
               ) : null}
@@ -518,7 +525,7 @@ export function ProductDetail() {
                   {product.vendor?.description || 'This vendor has not added a public store description yet.'}
                 </p>
                 {product.vendor?.id ? (
-                  <Link to={`/explore?vendor=${product.vendor.id}`} className="inline-block mt-6">
+                  <Link to={vendorStorefrontPath} className="inline-block mt-6">
                     <Button variant="secondary">View More Products</Button>
                   </Link>
                 ) : null}
@@ -544,7 +551,7 @@ export function ProductDetail() {
               <div className="flex gap-2 mt-6">
                 <Button variant="primary" className="flex-1" onClick={handleCatalogOnlyAction}>Follow Vendor</Button>
                 {product.vendor?.id ? (
-                  <Link to={`/explore?vendor=${product.vendor.id}`} className="flex-1">
+                  <Link to={vendorStorefrontPath} className="flex-1">
                     <Button variant="secondary" className="w-full">Visit Store</Button>
                   </Link>
                 ) : (

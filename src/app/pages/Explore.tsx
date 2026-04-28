@@ -16,10 +16,8 @@ import {
   getProductPrice,
   getProductPrimaryImage,
 } from '../services/productService';
-
-function formatCurrency(value: number) {
-  return `KES ${value.toLocaleString()}`;
-}
+import { formatCurrency } from '../utils/currency';
+import { getProductPath } from '../utils/products';
 
 function parseNumberParam(value: string | null): number | undefined {
   if (!value) {
@@ -313,7 +311,7 @@ export function Explore() {
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Price Range (KES)</h3>
+                  <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Price Range (TZS)</h3>
                   <div className="grid grid-cols-2 gap-3">
                     <input
                       type="number"
@@ -381,7 +379,7 @@ export function Explore() {
             </div>
 
             <div>
-              <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] mb-4">Price Range (KES)</h3>
+              <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] mb-4">Price Range (TZS)</h3>
               <div className="flex items-center gap-2 mb-4">
                 <input
                   type="number"
@@ -490,7 +488,7 @@ export function Explore() {
                   const price = getProductPrice(product);
 
                   return (
-                    <Link to={`/product/${product.id}`} key={product.id}>
+                    <Link to={getProductPath(product)} key={product.id}>
                       <Card className="group cursor-pointer hover:shadow-[var(--shadow-level-2)] transition-shadow h-full flex flex-col">
                         <div className="relative aspect-[4/5] overflow-hidden bg-[var(--color-bg-card)]">
                           <ImageWithFallback src={getProductPrimaryImage(product)} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />

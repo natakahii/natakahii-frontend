@@ -1,10 +1,11 @@
 import { CheckCircle2, ShieldCheck, Rocket } from 'lucide-react';
+import { formatCurrency } from '../../utils/currency';
 
 const plans = [
   {
     id: 'basic',
     title: 'Basic Account',
-    price: 'KES 0 / month',
+    price: `${formatCurrency(0)} / month`,
     description: 'Start selling with essential tools for beginner vendors.',
     features: [
       'Up to 50 products',
@@ -17,7 +18,7 @@ const plans = [
   {
     id: 'pro',
     title: 'Pro Account',
-    price: 'KES 2,499 / month',
+    price: `${formatCurrency(2499)} / month`,
     description: 'Grow faster with analytics, priority placement and better support.',
     features: [
       'Up to 250 products',
@@ -30,7 +31,7 @@ const plans = [
   {
     id: 'enterprise',
     title: 'Enterprise Account',
-    price: 'KES 7,499 / month',
+    price: `${formatCurrency(7499)} / month`,
     description: 'Premium onboarding, dedicated support and unlimited scale.',
     features: [
       'Unlimited products',

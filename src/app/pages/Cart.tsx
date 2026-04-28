@@ -5,6 +5,7 @@ import { Card } from '../components/ui/card';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { Minus, Plus, Trash2, ShieldCheck, Truck, ChevronRight, ShoppingBag } from 'lucide-react';
 import { EmptyState } from '../components/ui/empty-state';
+import { formatCurrency } from '../utils/currency';
 
 const mockCartItems = [
   { id: 1, title: "African Print Maxi Dress", variant: "Size: M, Color: Blue/Gold", vendor: "Nairobi Styles", price: 4500, quantity: 1, img: "https://images.unsplash.com/photo-1508418717103-8b56bcf03360?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
@@ -83,7 +84,7 @@ export function Cart() {
                         <p className="text-[13px] text-[var(--color-text-muted)] mb-1">{item.variant}</p>
                         <p className="text-[12px] font-medium text-[var(--color-primary)] flex items-center gap-1">Sold by {item.vendor}</p>
                         <div className="sm:hidden text-[16px] font-bold text-[var(--color-accent)] mt-2">
-                          KES {(item.price * item.quantity).toLocaleString()}
+                          {formatCurrency(item.price * item.quantity)}
                         </div>
                       </div>
                     </div>
@@ -103,7 +104,7 @@ export function Cart() {
                     
                     {/* Price (Desktop) */}
                     <div className="hidden sm:block col-span-2 text-right">
-                      <span className="text-[16px] font-bold text-[var(--color-text-heading)]">KES {(item.price * item.quantity).toLocaleString()}</span>
+                      <span className="text-[16px] font-bold text-[var(--color-text-heading)]">{formatCurrency(item.price * item.quantity)}</span>
                     </div>
                     
                     {/* Remove */}
@@ -134,15 +135,15 @@ export function Cart() {
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-[15px] font-medium text-[var(--color-text-muted)]">
                   <span>Subtotal</span>
-                  <span className="text-[var(--color-text-heading)]">KES {subtotal.toLocaleString()}</span>
+                  <span className="text-[var(--color-text-heading)]">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-[15px] font-medium text-[var(--color-text-muted)]">
                   <span>Platform Fee (2%)</span>
-                  <span className="text-[var(--color-text-heading)]">KES {platformFee.toLocaleString()}</span>
+                  <span className="text-[var(--color-text-heading)]">{formatCurrency(platformFee)}</span>
                 </div>
                 <div className="flex justify-between text-[15px] font-medium text-[var(--color-text-muted)]">
                   <span>Estimated Shipping</span>
-                  <span className="text-[var(--color-text-heading)]">{shippingCost > 0 ? `KES ${shippingCost.toLocaleString()}` : 'Free'}</span>
+                  <span className="text-[var(--color-text-heading)]">{shippingCost > 0 ? formatCurrency(shippingCost) : 'Free'}</span>
                 </div>
               </div>
 
@@ -166,7 +167,7 @@ export function Cart() {
                         <div className="text-[12px] text-[var(--color-text-muted)]">{provider.days}</div>
                       </div>
                       <div className="font-bold text-[14px] text-[var(--color-text-heading)]">
-                        {provider.price === 0 ? 'Free' : `KES ${provider.price}`}
+                        {provider.price === 0 ? 'Free' : formatCurrency(provider.price)}
                       </div>
                     </label>
                   ))}
@@ -175,7 +176,7 @@ export function Cart() {
 
               <div className="flex justify-between items-center text-[20px] font-bold text-[var(--color-text-heading)] mb-8 pt-6 border-t border-[var(--color-border)]">
                 <span>Total</span>
-                <span className="text-[var(--color-accent)] text-[24px]">KES {total.toLocaleString()}</span>
+                <span className="text-[var(--color-accent)] text-[24px]">{formatCurrency(total)}</span>
               </div>
 
               <Button onClick={() => navigate('/checkout')} variant="primary" size="xl" className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] shadow-[var(--shadow-level-2)]">

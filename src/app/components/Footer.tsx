@@ -51,7 +51,7 @@ export function Footer() {
           <div>
             <h4 className="font-semibold text-[16px] mb-6">Make Money</h4>
             <ul className="space-y-4">
-              <li><Link to="/sell" className="text-[14px] text-[var(--color-text-muted)] hover:text-[var(--color-accent)]">Sell on Nataka Hii</Link></li>
+              <li><Link to="/vendor/apply" className="text-[14px] text-[var(--color-text-muted)] hover:text-[var(--color-accent)]">Sell on Nataka Hii</Link></li>
               <li><Link to="/affiliate" className="text-[14px] text-[var(--color-text-muted)] hover:text-[var(--color-accent)]">Affiliate Program</Link></li>
               <li><Link to="/creator" className="text-[14px] text-[var(--color-text-muted)] hover:text-[var(--color-accent)]">Creator Portal</Link></li>
             </ul>

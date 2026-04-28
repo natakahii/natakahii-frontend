@@ -4,6 +4,7 @@ import { CustomerLayout } from "./components/CustomerLayout";
 import { Home } from "./pages/Home";
 import { Explore } from "./pages/Explore";
 import { ProductDetail } from "./pages/ProductDetail";
+import { ShopStorefront } from "./pages/ShopStorefront";
 import { VideoFeed } from "./pages/VideoFeed";
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
@@ -22,6 +23,7 @@ import { VendorProducts } from "./pages/vendor/VendorProducts";
 import { VendorProductForm } from "./pages/vendor/VendorProductForm";
 import { VendorAnalytics } from "./pages/vendor/VendorAnalytics";
 import { VendorDropoffs } from "./pages/vendor/VendorDropoffs";
+import { VendorSettings } from "./pages/vendor/VendorSettings";
 
 // Admin Flow
 //import { AdminLayout } from "./pages/admin/AdminLayout";
@@ -44,7 +46,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: Home },
       { path: "explore", Component: Explore },
-      { path: "product/:id", Component: ProductDetail },
+      { path: "product/:productIdentifier", Component: ProductDetail },
+      { path: "shop/:shopSlug", Component: ShopStorefront },
       { path: "video", Component: VideoFeed },
       {
         path: "vendor/apply",
@@ -108,8 +111,10 @@ export const router = createBrowserRouter([
       { index: true, Component: VendorDashboardHome },
       { path: "products", Component: VendorProducts },
       { path: "products/add", Component: VendorProductForm },
+      { path: "products/:productId/edit", Component: VendorProductForm },
       { path: "analytics", Component: VendorAnalytics },
       { path: "dropoffs", Component: VendorDropoffs },
+      { path: "settings", Component: VendorSettings },
       { path: "*", Component: VendorDashboardHome },
     ],
   },

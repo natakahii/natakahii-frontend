@@ -8,6 +8,19 @@ export interface AuthRole {
   description?: string | null;
 }
 
+export interface AuthVendor {
+  id: number;
+  user_id: number;
+  shop_name: string;
+  shop_slug: string;
+  description?: string | null;
+  logo?: string | null;
+  commission_rate?: string | number | null;
+  status?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface AuthUser {
   id: number;
   name: string;
@@ -18,6 +31,7 @@ export interface AuthUser {
   created_at?: string;
   updated_at?: string;
   roles: Array<AuthRole | string>;
+  vendor?: AuthVendor | null;
 }
 
 export interface AuthResponse {

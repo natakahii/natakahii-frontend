@@ -4,6 +4,7 @@ import { Button } from '../components/ui/button';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { PullToRefresh } from '../components/ui/pull-to-refresh';
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from '../components/ui/drawer';
+import { formatCurrency } from '../utils/currency';
 
 const MOCK_VIDEOS = [
   {
@@ -13,7 +14,7 @@ const MOCK_VIDEOS = [
     vendor: "Nairobi Styles",
     vendorAvatar: "https://images.unsplash.com/photo-1556452576-3e2d58536f62?crop=entropy&cs=tinysrgb&fit=facearea&facepad=2&w=100&h=100&q=80",
     productName: "African Print Maxi Dress",
-    price: "KES 4,500",
+    price: 4500,
     likes: "12.4K",
     comments: "342",
     shares: "1.2K"
@@ -25,7 +26,7 @@ const MOCK_VIDEOS = [
     vendor: "Kazi Kicks",
     vendorAvatar: "https://images.unsplash.com/photo-1508418717103-8b56bcf03360?crop=entropy&cs=tinysrgb&fit=facearea&facepad=2&w=100&h=100&q=80",
     productName: "Handcrafted Leather Sneakers",
-    price: "KES 6,200",
+    price: 6200,
     likes: "8.9K",
     comments: "156",
     shares: "890"
@@ -37,7 +38,7 @@ const MOCK_VIDEOS = [
     vendor: "Natural Essence",
     vendorAvatar: "https://images.unsplash.com/photo-1556452576-3e2d58536f62?crop=entropy&cs=tinysrgb&fit=facearea&facepad=2&w=100&h=100&q=80",
     productName: "Organic Shea Butter 500g",
-    price: "KES 1,200",
+    price: 1200,
     likes: "45.2K",
     comments: "1.2K",
     shares: "5.4K"
@@ -193,7 +194,7 @@ function MobileVideoCard({ video }: { video: typeof MOCK_VIDEOS[0] }) {
           </div>
           <div className="flex-1">
             <div className="text-[12px] font-bold text-[var(--color-text-heading)] line-clamp-1">{video.productName}</div>
-            <div className="text-[14px] font-black text-[var(--color-accent)]">{video.price}</div>
+            <div className="text-[14px] font-black text-[var(--color-accent)]">{formatCurrency(video.price)}</div>
           </div>
           <Drawer>
             <DrawerTrigger asChild>
@@ -221,7 +222,7 @@ function MobileVideoCard({ video }: { video: typeof MOCK_VIDEOS[0] }) {
                 </div>
               </div>
               <DrawerFooter>
-                <Button className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-dark)]">Add to Cart - {video.price}</Button>
+                <Button className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-dark)]">Add to Cart - {formatCurrency(video.price)}</Button>
                 <DrawerClose asChild>
                   <Button variant="outline" className="w-full">Cancel</Button>
                 </DrawerClose>
@@ -281,7 +282,7 @@ function DesktopVideoCard({ video }: { video: typeof MOCK_VIDEOS[0] }) {
 
         <div className="flex items-center justify-between">
           <span className="text-[18px] font-black text-[var(--color-accent)] drop-shadow-md">
-            {video.price}
+            {formatCurrency(video.price)}
           </span>
           <Drawer>
             <DrawerTrigger asChild>
@@ -310,7 +311,7 @@ function DesktopVideoCard({ video }: { video: typeof MOCK_VIDEOS[0] }) {
                 </div>
               </div>
               <DrawerFooter>
-                <Button className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-dark)]">Add to Cart - {video.price}</Button>
+                <Button className="w-full bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-dark)]">Add to Cart - {formatCurrency(video.price)}</Button>
                 <DrawerClose asChild>
                   <Button variant="outline" className="w-full">Cancel</Button>
                 </DrawerClose>
