@@ -22,14 +22,18 @@ import { FormField } from '../../components/ui/form-field';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
 import { useToast } from '../../components/ui/toast';
+import { VendorSubscriptionPlan } from './VendorSubscriptionPlan';
 import { useAuth } from '../../providers/AuthProvider';
 import { AuthUser, hasUserRole } from '../../services/authService';
 import {
+  fetchVendorSubscriptionPlans,
   fetchVendorApplicationStatus,
   submitVendorApplication,
   VendorApplicationPayload,
   VendorApplicationRecord,
+  VendorSubscriptionPlanRecord,
 } from '../../services/vendorApplicationService';
+import { formatCurrency } from '../../utils/currency';
 
 type ApplicationView = 'checking' | 'form' | 'pending' | 'rejected' | 'redirecting';
 type ApplicationStep = 1 | 2 | 3;
@@ -38,13 +42,13 @@ type FieldErrors = Partial<Record<keyof VendorApplicationPayload, string>>;
 const stepLabels: Record<ApplicationStep, string> = {
   1: 'Business Information',
   2: 'Location Details',
-  3: 'Review & Submit',
+  3: 'Plan & Review',
 };
 
 const requiredFieldsByStep: Record<ApplicationStep, Array<keyof VendorApplicationPayload>> = {
   1: ['business_name', 'full_name', 'business_email', 'phone'],
   2: ['region', 'ward', 'street', 'address'],
-  3: [],
+  3: ['subscription_plan'],
 };
 
 function buildInitialForm(user: AuthUser | null, application?: VendorApplicationRecord | null): VendorApplicationPayload {
@@ -59,11 +63,12 @@ function buildInitialForm(user: AuthUser | null, application?: VendorApplication
     street: application?.street || '',
     address: application?.address || '',
     description: application?.description || '',
+    subscription_plan: application?.subscription_plan?.slug || '',
   };
 }
 
 function hasStartedForm(form: VendorApplicationPayload) {
-  return Object.values(form).some((value) => value.trim().length > 0);
+  return Object.entries(form).some(([field, value]) => field !== 'subscription_plan' && value.trim().length > 0);
 }
 
 function extractFieldErrors(error: any): FieldErrors {
@@ -98,6 +103,25 @@ function getStepErrors(form: VendorApplicationPayload, targetStep: ApplicationSt
   return nextErrors;
 }
 
+function getDefaultPlanSlug(plans: VendorSubscriptionPlanRecord[]) {
+  return plans.find((plan) => plan.is_free)?.slug || plans[0]?.slug || '';
+}
+
+function formatPlanSummary(plan?: VendorSubscriptionPlanRecord | null) {
+  if (!plan) {
+    return 'Not selected yet';
+  }
+
+  if (plan.is_free) {
+    return `${plan.name} (Free)`;
+  }
+
+  const amount = Number(plan.price ?? 0);
+  const billingLabel = plan.billing_cycle === 'yearly' ? 'year' : 'month';
+
+  return `${plan.name} (${formatCurrency(Number.isFinite(amount) ? amount : 0)} / ${billingLabel})`;
+}
+
 function formatDate(dateString?: string) {
   if (!dateString) {
     return 'Recently';
@@ -122,6 +146,9 @@ export function VendorApply() {
   const [pageError, setPageError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefreshingStatus, setIsRefreshingStatus] = useState(false);
+  const [plans, setPlans] = useState<VendorSubscriptionPlanRecord[]>([]);
+  const [plansError, setPlansError] = useState<string | null>(null);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
 
   useEffect(() => {
     if (hasUserRole(user, 'vendor')) {
@@ -132,6 +159,11 @@ export function VendorApply() {
     void loadStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, user]);
+
+  useEffect(() => {
+    void loadPlans();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function syncApprovedAccess() {
     setView('redirecting');
@@ -147,6 +179,31 @@ export function VendorApply() {
       setPageError('Your vendor application is approved, but your session has not updated yet. Please refresh your status again.');
     } catch (error: any) {
       setPageError(error?.message || 'Your application is approved, but we could not refresh your session yet.');
+    }
+  }
+
+  async function loadPlans() {
+    setIsLoadingPlans(true);
+    setPlansError(null);
+
+    try {
+      const response = await fetchVendorSubscriptionPlans();
+      const availablePlans = response.plans;
+      const defaultPlanSlug = getDefaultPlanSlug(availablePlans);
+
+      setPlans(availablePlans);
+      setForm((currentForm) => (
+        currentForm.subscription_plan
+          ? currentForm
+          : {
+              ...currentForm,
+              subscription_plan: defaultPlanSlug,
+            }
+      ));
+    } catch (error: any) {
+      setPlansError(error?.message || 'Unable to load subscription plans right now.');
+    } finally {
+      setIsLoadingPlans(false);
     }
   }
 
@@ -222,10 +279,12 @@ export function VendorApply() {
   function validateForm() {
     const stepOneErrors = getStepErrors(form, 1);
     const stepTwoErrors = getStepErrors(form, 2);
+    const stepThreeErrors = getStepErrors(form, 3);
 
     setFieldErrors({
       ...stepOneErrors,
       ...stepTwoErrors,
+      ...stepThreeErrors,
     });
 
     if (Object.keys(stepOneErrors).length > 0) {
@@ -235,6 +294,11 @@ export function VendorApply() {
 
     if (Object.keys(stepTwoErrors).length > 0) {
       setStep(2);
+      return false;
+    }
+
+    if (Object.keys(stepThreeErrors).length > 0) {
+      setStep(3);
       return false;
     }
 
@@ -281,6 +345,7 @@ export function VendorApply() {
         street: form.street.trim(),
         address: form.address.trim(),
         description: form.description.trim(),
+        subscription_plan: form.subscription_plan.trim(),
       };
 
       const response = await submitVendorApplication(payload);
@@ -320,11 +385,20 @@ export function VendorApply() {
     }
   }
 
+  const selectedPlan = useMemo(() => (
+    plans.find((plan) => plan.slug === form.subscription_plan) || application?.subscription_plan || null
+  ), [application, form.subscription_plan, plans]);
+
   const reviewRows = useMemo(() => ([
-    { label: 'Business Name', value: form.business_name || 'Not provided yet', icon: Building },
+    { label: 'Shop Display Name', value: form.business_name || 'Not provided yet', icon: Building },
     { label: 'Contact Person', value: form.full_name || 'Not provided yet', icon: User },
     { label: 'Business Email', value: form.business_email || 'Not provided yet', icon: Mail },
     { label: 'Phone', value: form.phone || 'Not provided yet', icon: Phone },
+    {
+      label: 'Subscription Plan',
+      value: formatPlanSummary(selectedPlan),
+      icon: ShieldCheck,
+    },
     {
       label: 'Location',
       value: [form.street, form.ward, form.city, form.region].filter(Boolean).join(', ') || 'Not provided yet',
@@ -332,7 +406,7 @@ export function VendorApply() {
     },
     { label: 'Address', value: form.address || 'Not provided yet', icon: MapPin },
     { label: 'Description', value: form.description || 'No description added yet.', icon: Store },
-  ]), [form]);
+  ]), [form, selectedPlan]);
 
   if (view === 'checking' || view === 'redirecting') {
     return (
@@ -398,6 +472,10 @@ export function VendorApply() {
               <div className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-[var(--color-primary)]" />
                 <span>{application?.business_email}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="w-5 h-5 text-[var(--color-primary)]" />
+                <span>{formatPlanSummary(application?.subscription_plan)}</span>
               </div>
               <div className="flex items-center gap-3">
                 <MapPin className="w-5 h-5 text-[var(--color-primary)]" />
@@ -563,7 +641,7 @@ export function VendorApply() {
               <CardDescription>
                 {step === 1 && 'Tell us who will manage the business account.'}
                 {step === 2 && 'Share the business location details we need for seller verification.'}
-                {step === 3 && 'Review your information before sending it for approval.'}
+                {step === 3 && 'Choose the seller plan you want, then review your information before sending it for approval.'}
               </CardDescription>
             </CardHeader>
 
@@ -583,11 +661,11 @@ export function VendorApply() {
 
                 {step === 1 && (
                   <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4">
-                    <FormField label="Business Legal Name" required error={fieldErrors.business_name}>
+                    <FormField label="Shop Display Name" required error={fieldErrors.business_name}>
                       <Input
                         value={form.business_name}
                         onChange={(event) => updateField('business_name', event.target.value)}
-                        placeholder="e.g. Mambo Jambo Ltd"
+                        placeholder="e.g. Mambo Jambo Store"
                         error={Boolean(fieldErrors.business_name)}
                       />
                     </FormField>
@@ -678,6 +756,29 @@ export function VendorApply() {
 
                 {step === 3 && (
                   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                    <VendorSubscriptionPlan
+                      plans={plans}
+                      selectedPlan={form.subscription_plan}
+                      onSelectPlan={(plan) => updateField('subscription_plan', plan)}
+                      isLoading={isLoadingPlans}
+                      error={plansError}
+                    />
+
+                    {fieldErrors.subscription_plan && (
+                      <p className="text-sm font-medium text-[var(--color-error)]">{fieldErrors.subscription_plan}</p>
+                    )}
+
+                    {plansError && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => void loadPlans()}
+                        isLoading={isLoadingPlans}
+                      >
+                        Reload Plans
+                      </Button>
+                    )}
+
                     <FormField label="Business Description" error={fieldErrors.description}>
                       <Textarea
                         value={form.description}
@@ -724,6 +825,7 @@ export function VendorApply() {
                   type="submit"
                   className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white gap-2"
                   isLoading={isSubmitting}
+                  disabled={step === 3 && (isLoadingPlans || plans.length === 0)}
                 >
                   {step === 3 ? 'Submit Application' : 'Continue'}
                   {step < 3 && <ChevronRight className="w-4 h-4" />}
