@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
+import { LogoSlider } from '../components/LogoSlider';
+import mpesaLogo from '../../assets/mpesa.png';
+import airtelMoneyLogo from '../../assets/airtelmoney.png';
+import mixxbyyasLogo from '../../assets/mixxbyyas.png';
+import halopesaLogo from '../../assets/halopesa.png';
+import selcomLogo from '../../assets/selcom.png';
+import azampesaLogo from '../../assets/azampesa.png';
 import {
   CheckCircle,
   ChevronRight,
@@ -448,6 +455,20 @@ export function Home() {
             />
           )}
         </section>
+
+        {/* Payment Partners - Infinite Scroll */}
+      <section className="py-6 sm:py-8 md:py-10 overflow-hidden">
+        <div className="container mx-auto px-4 mb-4 sm:mb-5 md:mb-6">
+          <h3 className="text-center text-[18px] sm:text-[20px] md:text-[22px] font-times-bold text-[var(--color-text-heading)]">Payment Partners</h3>
+        </div>
+        <LogoSlider
+          logos={[mpesaLogo, airtelMoneyLogo, mixxbyyasLogo, halopesaLogo, selcomLogo, azampesaLogo]}
+          duration={20}
+          gap="gap-8 sm:gap-12 md:gap-16"
+          showGradient={true}
+          pauseOnHover={true}
+        />
+      </section>
       </div>
     </div>
   );

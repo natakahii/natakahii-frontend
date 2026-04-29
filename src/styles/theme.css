@@ -83,3 +83,5 @@ h1, h2, h3, h4, h5, h6 {
 .snap-center {
   scroll-snap-align: center;
 }
+
+/* Note: Infinite scroll animation now handled by Framer Motion in LogoSlider component */
