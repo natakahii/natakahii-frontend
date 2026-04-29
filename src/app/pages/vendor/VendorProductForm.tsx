@@ -43,6 +43,18 @@ import { getProductPath } from '../../utils/products';
 import { getVendorStorefrontPath } from '../../utils/storefront';
 
 const MAX_PRODUCT_IMAGES = 10;
+const MAX_PRODUCT_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+const SUPPORTED_PRODUCT_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+
+function isSupportedProductImage(file: File) {
+  const normalizedType = file.type.toLowerCase();
+  const normalizedName = file.name.toLowerCase();
+
+  return normalizedType === 'image/jpeg'
+    || normalizedType === 'image/png'
+    || normalizedType === 'image/webp'
+    || SUPPORTED_PRODUCT_IMAGE_EXTENSIONS.some((extension) => normalizedName.endsWith(extension));
+}
 
 type ProductFieldErrors = Partial<
   Record<'name' | 'category_id' | 'description' | 'price' | 'discount_price' | 'stock' | 'images' | 'variants' | 'video', string>
@@ -362,18 +374,52 @@ export function VendorProductForm() {
       return;
     }
 
-    const acceptedFiles = files.slice(0, availableSlots).map((file, index) => ({
-      id: `image-${Date.now()}-${index}`,
-      file,
-      preview: URL.createObjectURL(file),
-    }));
+    let skippedForSlots = 0;
+    let skippedForType = 0;
+    let skippedForSize = 0;
 
-    if (acceptedFiles.length < files.length) {
+    const acceptedFiles = files
+      .slice(0, availableSlots)
+      .reduce<PendingImage[]>((result, file, index) => {
+        if (!isSupportedProductImage(file)) {
+          skippedForType += 1;
+          return result;
+        }
+
+        if (file.size > MAX_PRODUCT_IMAGE_SIZE_BYTES) {
+          skippedForSize += 1;
+          return result;
+        }
+
+        result.push({
+          id: `image-${Date.now()}-${index}`,
+          file,
+          preview: URL.createObjectURL(file),
+        });
+
+        return result;
+      }, []);
+
+    if (files.length > availableSlots) {
+      skippedForSlots = files.length - availableSlots;
+    }
+
+    if (skippedForSlots > 0 || skippedForType > 0 || skippedForSize > 0) {
+      const reasons = [
+        skippedForSlots > 0 ? `only ${availableSlots} more image${availableSlots === 1 ? '' : 's'} can be added` : null,
+        skippedForType > 0 ? `${skippedForType} file${skippedForType === 1 ? '' : 's'} ${skippedForType === 1 ? 'was' : 'were'} not JPG, PNG, or WebP` : null,
+        skippedForSize > 0 ? `${skippedForSize} file${skippedForSize === 1 ? '' : 's'} ${skippedForSize === 1 ? 'was' : 'were'} larger than 5 MB` : null,
+      ].filter(Boolean);
+
       toast({
         type: 'warning',
         title: 'Some images were skipped',
-        message: `Only ${availableSlots} more image${availableSlots === 1 ? '' : 's'} can be added to this product.`,
+        message: `${reasons.join('. ')}.`,
       });
+    }
+
+    if (acceptedFiles.length === 0) {
+      return;
     }
 
     setNewImages((currentImages) => [...currentImages, ...acceptedFiles]);
@@ -842,7 +888,7 @@ export function VendorProductForm() {
                 <p className="text-sm text-[var(--color-text-muted)] mt-1">
                   Add up to {MAX_PRODUCT_IMAGES} images. JPEG, PNG, and WebP are supported, up to 5 MB each.
                 </p>
-                <input type="file" accept="image/*" multiple className="hidden" onChange={handleAddImages} />
+                    <input type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleAddImages} />
               </label>
 
               {fieldErrors.images && <p className="text-[12px] font-bold text-[var(--color-error)]">{fieldErrors.images}</p>}
