@@ -5,10 +5,13 @@ import { Heart, ShoppingCart, Star, CheckCircle } from "lucide-react";
 import { Button } from "./button";
 import { Card } from "./card";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
+import { formatCurrency } from "../../utils/currency";
+import { getProductPath } from "../../utils/products";
 
 interface ProductCardProps {
   product: {
     id: string | number;
+    slug?: string | null;
     title: string;
     vendor?: string;
     price: string | number;
@@ -40,7 +43,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   };
 
   return (
-    <Link to={`/product/${product.id}`} className="block h-full">
+    <Link to={getProductPath(product)} className="block h-full">
       <motion.div
         whileHover={{ y: -2, transition: { duration: 0.2, ease: "easeOut" } }}
         className="h-full"
@@ -82,7 +85,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             </h3>
             <div className="mt-auto flex items-end justify-between relative">
               <div className="text-[18px] font-bold text-[var(--color-accent)] tracking-tight">
-                {typeof product.price === 'number' ? `KES ${product.price.toLocaleString()}` : product.price}
+                {typeof product.price === 'number' ? formatCurrency(product.price) : product.price}
               </div>
               <motion.div animate={cartControls}>
                 <Button 

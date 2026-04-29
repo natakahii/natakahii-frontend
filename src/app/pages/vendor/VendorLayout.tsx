@@ -1,20 +1,15 @@
 import { NavLink, Outlet, useNavigate } from 'react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
-import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import {
   BarChart3,
   Bell,
-  Image as ImageIcon,
   LayoutDashboard,
   LogOut,
-  MessageSquare,
   Package,
   Settings,
-  ShoppingCart,
   Store,
   Truck,
-  Wallet,
 } from 'lucide-react';
 import { useAuth } from '../../providers/AuthProvider';
 
@@ -25,16 +20,13 @@ export function VendorLayout() {
   const navItems = [
     { name: 'Dashboard', path: '/vendor/dashboard', icon: LayoutDashboard },
     { name: 'Products', path: '/vendor/dashboard/products', icon: Package },
-    { name: 'Orders', path: '/vendor/dashboard/orders', icon: ShoppingCart },
     { name: 'Analytics', path: '/vendor/dashboard/analytics', icon: BarChart3 },
-    { name: 'Media', path: '/vendor/dashboard/media', icon: ImageIcon },
     { name: 'Dropoffs', path: '/vendor/dashboard/dropoffs', icon: Truck },
-    { name: 'Messages', path: '/vendor/dashboard/messages', icon: MessageSquare, badge: 3 },
-    { name: 'Earnings', path: '/vendor/dashboard/earnings', icon: Wallet },
     { name: 'Settings', path: '/vendor/dashboard/settings', icon: Settings },
   ];
 
-  const displayName = user?.name || 'Vendor Account';
+  const displayName = user?.vendor?.shop_name || user?.name || 'Vendor Account';
+  const displayImage = user?.vendor?.logo || user?.profile_photo || undefined;
   const displayInitials = displayName
     .split(' ')
     .slice(0, 2)
@@ -58,7 +50,7 @@ export function VendorLayout() {
 
         <div className="p-6 border-b border-white/10 flex items-center gap-3">
           <Avatar className="h-12 w-12 border-2 border-[var(--color-accent)] rounded-lg">
-            <AvatarImage src={user?.profile_photo || undefined} />
+            <AvatarImage src={displayImage} />
             <AvatarFallback className="rounded-lg">{displayInitials}</AvatarFallback>
           </Avatar>
           <div className="flex-1 overflow-hidden">
@@ -86,11 +78,6 @@ export function VendorLayout() {
             >
               <item.icon className="w-5 h-5" />
               <span className="flex-1">{item.name}</span>
-              {item.badge && (
-                <Badge className="bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-dark)] h-5 px-1.5 flex items-center justify-center text-[10px] rounded-full">
-                  {item.badge}
-                </Badge>
-              )}
             </NavLink>
           ))}
         </nav>
@@ -127,8 +114,9 @@ export function VendorLayout() {
           {[
             { name: 'Home', path: '/vendor/dashboard', icon: LayoutDashboard },
             { name: 'Products', path: '/vendor/dashboard/products', icon: Package },
-            { name: 'Orders', path: '/vendor/dashboard/orders', icon: ShoppingCart },
-            { name: 'More', path: '/vendor/dashboard/settings', icon: Settings },
+            { name: 'Analytics', path: '/vendor/dashboard/analytics', icon: BarChart3 },
+            { name: 'Dropoffs', path: '/vendor/dashboard/dropoffs', icon: Truck },
+            { name: 'Settings', path: '/vendor/dashboard/settings', icon: Settings },
           ].map((item) => (
             <NavLink
               key={item.name}

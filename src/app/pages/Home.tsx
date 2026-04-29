@@ -40,6 +40,9 @@ import {
   getProductPrice,
   getProductPrimaryImage,
 } from '../services/productService';
+import { formatCurrency } from '../utils/currency';
+import { getProductPath } from '../utils/products';
+import { getVendorStorefrontPath } from '../utils/storefront';
 
 const CATEGORY_ICON_MAP = [
   { pattern: /fashion|apparel|clothing|dress/, icon: Shirt },
@@ -53,10 +56,6 @@ const CATEGORY_ICON_MAP = [
 function getCategoryIcon(category: CatalogCategory) {
   const label = `${category.icon || ''} ${category.slug} ${category.name}`.toLowerCase();
   return CATEGORY_ICON_MAP.find((entry) => entry.pattern.test(label))?.icon || Zap;
-}
-
-function formatCurrency(value: number) {
-  return `KES ${value.toLocaleString()}`;
 }
 
 export function Home() {
@@ -259,7 +258,7 @@ export function Home() {
                 const price = getProductPrice(product);
 
                 return (
-                  <Link to={`/product/${product.id}`} key={product.id}>
+                  <Link to={getProductPath(product)} key={product.id}>
                     <Card className="group cursor-pointer hover:shadow-[var(--shadow-level-2)] transition-shadow h-full flex flex-col">
                       <div className="relative aspect-square overflow-hidden bg-[var(--color-bg-card)]">
                         <ImageWithFallback src={image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -439,7 +438,7 @@ export function Home() {
                       <span>{vendor.status === 'approved' ? 'Approved vendor' : 'Active store'}</span>
                     </div>
                   </div>
-                  <Link to={`/explore?vendor=${vendor.id}`} className="w-full">
+                  <Link to={getVendorStorefrontPath(vendor)} className="w-full">
                     <Button variant="secondary" size="s" className="w-full mt-2 rounded-full font-bold">Shop This Vendor</Button>
                   </Link>
                 </Card>

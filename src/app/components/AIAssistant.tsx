@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Sparkles, Send, Mic, Search, Store, ArrowRight, Clock } from 'lucide-react';
 import { Button } from './ui/button';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { formatCurrency } from '../utils/currency';
 
 interface Message {
   id: string;
@@ -63,7 +64,7 @@ export function AIAssistant() {
             data: {
               id: 'p1',
               name: 'Samsung Galaxy S23 Ultra - 256GB',
-              price: 'KES 145,000',
+              price: formatCurrency(145000),
               image: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&q=80&w=400',
               vendor: 'Tech Haven Nairobi'
             }

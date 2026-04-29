@@ -10,6 +10,8 @@ import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { ProductCard } from '../components/ui/product-card';
+import { formatCurrency } from '../utils/currency';
+import { getProductPath } from '../utils/products';
 
 // Reusing dummy data from Home
 const categories = [
@@ -22,10 +24,10 @@ const categories = [
 ];
 
 const mockProducts = [
-  { id: 1, title: "African Print Maxi Dress", vendor: "Nairobi Styles", price: "KES 4,500", rating: 4.8, likes: 234, img: "https://images.unsplash.com/photo-1508418717103-8b56bcf03360?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
-  { id: 2, title: "Handcrafted Leather Sneakers", vendor: "Kazi Kicks", price: "KES 6,200", rating: 4.9, likes: 512, img: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
-  { id: 3, title: "Samsung Galaxy S24 Ultra", vendor: "Tech Hub KE", price: "KES 145,000", rating: 4.7, likes: 120, img: "https://images.unsplash.com/photo-1684132925971-31c258718bd1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
-  { id: 4, title: "Organic Shea Butter 500g", vendor: "Natural Essence", price: "KES 1,200", rating: 4.9, likes: 890, img: "https://images.unsplash.com/photo-1643168343279-3f93c2e592ef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
+  { id: 1, title: "African Print Maxi Dress", vendor: "Nairobi Styles", price: 4500, rating: 4.8, likes: 234, img: "https://images.unsplash.com/photo-1508418717103-8b56bcf03360?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
+  { id: 2, title: "Handcrafted Leather Sneakers", vendor: "Kazi Kicks", price: 6200, rating: 4.9, likes: 512, img: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
+  { id: 3, title: "Samsung Galaxy S24 Ultra", vendor: "Tech Hub KE", price: 145000, rating: 4.7, likes: 120, img: "https://images.unsplash.com/photo-1684132925971-31c258718bd1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
+  { id: 4, title: "Organic Shea Butter 500g", vendor: "Natural Essence", price: 1200, rating: 4.9, likes: 890, img: "https://images.unsplash.com/photo-1643168343279-3f93c2e592ef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
 ];
 
 export function CustomerHome() {
@@ -76,13 +78,13 @@ export function CustomerHome() {
 
             <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar w-full relative z-10">
               {mockProducts.slice(0,3).map(prod => (
-                <Link to={`/product/${prod.id}`} key={prod.id} className="shrink-0 w-[200px] bg-white rounded-[12px] p-2 flex gap-3 items-center shadow-sm hover:shadow-md transition-shadow group border border-[var(--color-border)]/50">
+                <Link to={getProductPath(prod)} key={prod.id} className="shrink-0 w-[200px] bg-white rounded-[12px] p-2 flex gap-3 items-center shadow-sm hover:shadow-md transition-shadow group border border-[var(--color-border)]/50">
                   <div className="w-16 h-16 rounded-[8px] overflow-hidden bg-[var(--color-bg-page)] shrink-0">
                     <ImageWithFallback src={prod.img} alt={prod.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-[13px] font-bold text-[var(--color-text-heading)] truncate group-hover:text-[var(--color-primary)] transition-colors">{prod.title}</h4>
-                    <p className="text-[14px] font-bold text-[var(--color-accent)] mt-1">{prod.price}</p>
+                    <p className="text-[14px] font-bold text-[var(--color-accent)] mt-1">{formatCurrency(prod.price)}</p>
                   </div>
                 </Link>
               ))}
@@ -162,9 +164,11 @@ export function CustomerHome() {
             </div>
             
             <div className="relative z-10 w-full md:w-auto shrink-0 flex flex-col sm:flex-row gap-3">
-              <Button variant="secondary" className="bg-white text-[var(--color-primary-darker)] border-none hover:bg-[var(--color-bg-page)] px-8 shadow-md h-12">
-                Open Your Store
-              </Button>
+              <Link to="/vendor/apply">
+                <Button variant="secondary" className="bg-white text-[var(--color-primary-darker)] border-none hover:bg-[var(--color-bg-page)] px-8 shadow-md h-12">
+                  Open Your Store
+                </Button>
+              </Link>
             </div>
           </div>
         </section>

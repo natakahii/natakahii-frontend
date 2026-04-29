@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { X, CheckCircle2, Box, MessageSquare, AlertCircle, Trash2 } from "lucide-react";
+import { Bell, X, CheckCircle2, Box, MessageSquare, AlertCircle, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "./ui/button";
 
 import { EmptyState } from "./ui/empty-state";
+import { formatCurrency } from "../utils/currency";
 
 interface NotificationPanelProps {
   isOpen: boolean;
@@ -43,7 +44,7 @@ const mockNotifications = [
     id: 4,
     type: "success",
     title: "Refund Processed",
-    desc: "KES 4,500 has been credited to your wallet.",
+    desc: `${formatCurrency(4500)} has been credited to your wallet.`,
     time: "Oct 22, 2023",
     unread: false,
     group: "older",

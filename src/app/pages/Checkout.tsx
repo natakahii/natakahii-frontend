@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { ShieldCheck, Truck, CreditCard, Banknote, CheckCircle, ChevronRight, ChevronLeft, MapPin, Package, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
+import { formatCurrency } from '../utils/currency';
 
 // Dummy data
 const shippingProviders = [
@@ -222,7 +223,7 @@ export function Checkout() {
                             </div>
                             
                             <div className="text-[18px] font-bold text-[var(--color-text-heading)]">
-                              {provider.price === 0 ? 'Free' : `KES ${provider.price}`}
+                              {provider.price === 0 ? 'Free' : formatCurrency(provider.price)}
                             </div>
                           </div>
                         ))}
@@ -370,7 +371,7 @@ export function Checkout() {
                     <div className="text-[13px] font-bold text-[var(--color-text-heading)] truncate">African Print Maxi Dress</div>
                     <div className="text-[12px] text-[var(--color-text-muted)]">Qty: 1</div>
                   </div>
-                  <div className="text-[13px] font-bold text-[var(--color-text-heading)]">KES 4,500</div>
+                  <div className="text-[13px] font-bold text-[var(--color-text-heading)]">{formatCurrency(4500)}</div>
                 </div>
                 {/* Micro Item Row */}
                 <div className="flex gap-3 items-center">
@@ -381,28 +382,28 @@ export function Checkout() {
                     <div className="text-[13px] font-bold text-[var(--color-text-heading)] truncate">Handcrafted Leather Sneakers</div>
                     <div className="text-[12px] text-[var(--color-text-muted)]">Qty: 2</div>
                   </div>
-                  <div className="text-[13px] font-bold text-[var(--color-text-heading)]">KES 12,400</div>
+                  <div className="text-[13px] font-bold text-[var(--color-text-heading)]">{formatCurrency(12400)}</div>
                 </div>
               </div>
 
               <div className="space-y-4 mb-6 pt-2">
                 <div className="flex justify-between text-[15px] font-medium text-[var(--color-text-muted)]">
                   <span>Subtotal</span>
-                  <span className="text-[var(--color-text-heading)]">KES {subtotal.toLocaleString()}</span>
+                  <span className="text-[var(--color-text-heading)]">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-[15px] font-medium text-[var(--color-text-muted)]">
                   <span>Platform Fee</span>
-                  <span className="text-[var(--color-text-heading)]">KES {platformFee.toLocaleString()}</span>
+                  <span className="text-[var(--color-text-heading)]">{formatCurrency(platformFee)}</span>
                 </div>
                 <div className="flex justify-between text-[15px] font-medium text-[var(--color-text-muted)]">
                   <span>Shipping</span>
-                  <span className="text-[var(--color-text-heading)]">{shippingCost > 0 ? `KES ${shippingCost.toLocaleString()}` : 'Free'}</span>
+                  <span className="text-[var(--color-text-heading)]">{shippingCost > 0 ? formatCurrency(shippingCost) : 'Free'}</span>
                 </div>
               </div>
 
               <div className="flex justify-between items-center text-[20px] font-bold text-[var(--color-text-heading)] mb-8 pt-6 border-t border-[var(--color-border)]">
                 <span>Total</span>
-                <span className="text-[var(--color-accent)] text-[28px] tracking-tight">KES {total.toLocaleString()}</span>
+                <span className="text-[var(--color-accent)] text-[28px] tracking-tight">{formatCurrency(total)}</span>
               </div>
 
               {/* Escrow badge */}

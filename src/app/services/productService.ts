@@ -34,6 +34,8 @@ export interface CatalogVendor {
   logo?: string | null;
   commission_rate?: number | null;
   status?: string | null;
+  products_count?: number;
+  followers_count?: number;
 }
 
 export interface CatalogProductImage {
@@ -108,6 +110,7 @@ export interface CatalogProduct {
   variants: CatalogProductVariant[];
   reviews_count?: number;
   reviews_avg_rating?: number | null;
+  video_count?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -127,7 +130,7 @@ export interface ProductDetailResponse {
   recent_reviews: CatalogReview[];
 }
 
-function toNumber(value: unknown, fallback = 0): number {
+export function toNumber(value: unknown, fallback = 0): number {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value;
   }
@@ -140,7 +143,7 @@ function toNumber(value: unknown, fallback = 0): number {
   return fallback;
 }
 
-function extractResourceArray<T>(payload: unknown): T[] {
+export function extractResourceArray<T>(payload: unknown): T[] {
   if (Array.isArray(payload)) {
     return payload as T[];
   }
@@ -152,7 +155,7 @@ function extractResourceArray<T>(payload: unknown): T[] {
   return [];
 }
 
-function normalizeCategory(category: any): CatalogCategory {
+export function normalizeCategory(category: any): CatalogCategory {
   return {
     id: toNumber(category?.id),
     parent_id: category?.parent_id == null ? null : toNumber(category.parent_id),
@@ -166,7 +169,7 @@ function normalizeCategory(category: any): CatalogCategory {
   };
 }
 
-function normalizeVendor(vendor: any): CatalogVendor | undefined {
+export function normalizeVendor(vendor: any): CatalogVendor | undefined {
   if (!vendor || typeof vendor !== 'object') {
     return undefined;
   }
@@ -180,6 +183,8 @@ function normalizeVendor(vendor: any): CatalogVendor | undefined {
     logo: vendor.logo || null,
     commission_rate: vendor.commission_rate == null ? null : toNumber(vendor.commission_rate),
     status: vendor.status || null,
+    products_count: vendor.products_count == null ? undefined : toNumber(vendor.products_count),
+    followers_count: vendor.followers_count == null ? undefined : toNumber(vendor.followers_count),
   };
 }
 
@@ -227,7 +232,7 @@ function normalizeProductVariant(variant: any): CatalogProductVariant {
   };
 }
 
-function normalizeProduct(product: any): CatalogProduct {
+export function normalizeProduct(product: any): CatalogProduct {
   const basePrice = toNumber(product?.price);
   const discountPrice = product?.discount_price == null ? null : toNumber(product.discount_price);
   const effectivePrice = product?.effective_price == null ? (discountPrice ?? basePrice) : toNumber(product.effective_price);
@@ -250,6 +255,7 @@ function normalizeProduct(product: any): CatalogProduct {
     variants: extractResourceArray<any>(product?.variants).map(normalizeProductVariant),
     reviews_count: product?.reviews_count == null ? undefined : toNumber(product.reviews_count),
     reviews_avg_rating: product?.reviews_avg_rating == null ? null : toNumber(product.reviews_avg_rating),
+    video_count: product?.video_count == null ? undefined : toNumber(product.video_count),
     created_at: product?.created_at || undefined,
     updated_at: product?.updated_at || undefined,
   };
@@ -323,8 +329,8 @@ export async function fetchProducts(params: ProductFilterParams = {}): Promise<P
   };
 }
 
-export async function fetchProduct(productId: string | number): Promise<ProductDetailResponse> {
-  const response = await apiClient.get<any>(`/products/${productId}`);
+export async function fetchProduct(productIdentifier: string | number): Promise<ProductDetailResponse> {
+  const response = await apiClient.get<any>(`/products/${productIdentifier}`);
 
   return {
     product: normalizeProduct(response?.product),
