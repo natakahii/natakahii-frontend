@@ -102,9 +102,9 @@ export function Login() {
   return (
     <div className="h-screen bg-[var(--color-bg-page)] lg:flex lg:overflow-hidden">
       {/* Mobile Header / Desktop Left Side - Product Showcase */}
-      <div className="w-full lg:w-1/2 relative overflow-hidden flex flex-col h-64 lg:h-auto shrink-0">
-        {/* Background product slideshow */}
-        <div className="absolute inset-0">
+      <div className="w-full lg:w-1/2 relative overflow-hidden flex flex-col h-auto shrink-0">
+        {/* Background product slideshow - hidden on mobile */}
+        <div className="hidden lg:block absolute inset-0">
           {slideshowImages.map((image, index) => (
             <div
               key={index}
@@ -138,32 +138,28 @@ export function Login() {
           <div className="space-y-3 lg:space-y-6">
             {/* Mobile: Logo here / Desktop: Trust badges */}
             <div className="lg:hidden text-center">
-              <img
-                src={logoImage}
-                alt="Nataka Hii"
-                className="h-8 w-auto mx-auto mb-1"
-              />
-              <p className="text-white/80 text-[11px]">East Africa's Premier Marketplace</p>
+              <p className="text-[var(--color-text-heading)] text-[14px] font-bold mb-1">Nataka Hii</p>
+              <p className="text-[var(--color-text-muted)] text-[11px]">East Africa's Premier Marketplace</p>
             </div>
 
             {/* Trust badges - visible on both */}
             <div className="flex flex-wrap gap-2 lg:gap-3 justify-center">
-              <div className="flex items-center gap-1.5 lg:gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 lg:px-4 py-1.5 lg:py-2">
+              <div className="flex items-center gap-1.5 lg:gap-2 bg-[var(--color-bg-card)] lg:bg-white/10 lg:backdrop-blur-sm rounded-full px-3 lg:px-4 py-1.5 lg:py-2 border border-[var(--color-border)] lg:border-0">
                 <Shield className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-[var(--color-accent)]" />
-                <span className="text-white text-[11px] lg:text-[13px] font-medium">Verified Vendors</span>
+                <span className="text-[var(--color-text-body)] lg:text-white text-[11px] lg:text-[13px] font-medium">Verified Vendors</span>
               </div>
-              <div className="flex items-center gap-1.5 lg:gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 lg:px-4 py-1.5 lg:py-2">
+              <div className="flex items-center gap-1.5 lg:gap-2 bg-[var(--color-bg-card)] lg:bg-white/10 lg:backdrop-blur-sm rounded-full px-3 lg:px-4 py-1.5 lg:py-2 border border-[var(--color-border)] lg:border-0">
                 <Truck className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-[var(--color-accent)]" />
-                <span className="text-white text-[11px] lg:text-[13px] font-medium">Fast Delivery</span>
+                <span className="text-[var(--color-text-body)] lg:text-white text-[11px] lg:text-[13px] font-medium">Fast Delivery</span>
               </div>
-              <div className="flex items-center gap-1.5 lg:gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 lg:px-4 py-1.5 lg:py-2">
+              <div className="flex items-center gap-1.5 lg:gap-2 bg-[var(--color-bg-card)] lg:bg-white/10 lg:backdrop-blur-sm rounded-full px-3 lg:px-4 py-1.5 lg:py-2 border border-[var(--color-border)] lg:border-0">
                 <CreditCard className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-[var(--color-accent)]" />
-                <span className="text-white text-[11px] lg:text-[13px] font-medium">Secure Payments</span>
+                <span className="text-[var(--color-text-body)] lg:text-white text-[11px] lg:text-[13px] font-medium">Secure Payments</span>
               </div>
             </div>
 
             {/* Live stats - compact on mobile, full on desktop */}
-            <div className="grid grid-cols-3 gap-2 lg:gap-4">
+            <div className="hidden lg:grid grid-cols-3 gap-2 lg:gap-4">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl lg:rounded-2xl p-2 lg:p-5 text-center">
                 <div className="flex items-center justify-center gap-1 lg:gap-2 mb-1 lg:mb-2">
                   <ShoppingBag className="w-4 h-4 lg:w-5 lg:h-5 text-[var(--color-accent)]" />
@@ -188,8 +184,8 @@ export function Login() {
             </div>
           </div>
 
-          {/* Slide indicators */}
-          <div className="flex gap-2 justify-center">
+          {/* Slide indicators - hidden on mobile */}
+          <div className="hidden lg:flex gap-2 justify-center">
             {slideshowImages.map((_, index) => (
               <button
                 key={index}
