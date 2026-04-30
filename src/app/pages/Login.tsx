@@ -101,8 +101,8 @@ export function Login() {
 
   return (
     <div className="h-screen bg-[var(--color-bg-page)] lg:flex lg:overflow-hidden">
-      {/* Mobile Header / Desktop Left Side - Product Showcase */}
-      <div className="w-full lg:w-1/2 relative overflow-hidden flex flex-col h-auto shrink-0">
+      {/* Desktop Left Side - Product Showcase (hidden on mobile) */}
+      <div className="hidden lg:block w-full lg:w-1/2 relative overflow-hidden flex flex-col h-auto shrink-0">
         {/* Background product slideshow - hidden on mobile */}
         <div className="hidden lg:block absolute inset-0">
           {slideshowImages.map((image, index) => (
@@ -202,7 +202,7 @@ export function Login() {
         </div>
       </div>
 
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 overflow-hidden">
+      <div className="w-full flex items-center justify-center p-6 sm:p-12 overflow-hidden">
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
             <img
