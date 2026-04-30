@@ -212,7 +212,7 @@ export function Login() {
             <img
               src={mainLogo}
               alt="Nataka Hii"
-              className="h-28 w-auto mx-auto mb-4"
+              className="hidden sm:block h-28 w-auto mx-auto mb-4"
             />
             <h2 className="text-[32px] font-bold text-[var(--color-text-heading)] mb-2 tracking-tight">Welcome Back</h2>
             <p className="text-[16px] text-[var(--color-text-muted)]">Log in to continue shopping on Natakahii.</p>
