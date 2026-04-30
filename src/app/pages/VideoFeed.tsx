@@ -165,13 +165,6 @@ function MobileVideoCard({ video }: { video: typeof MOCK_VIDEOS[0] }) {
 
         <button className="flex flex-col items-center gap-1 group">
           <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center transition-colors group-hover:bg-white/20">
-            <MessageCircle className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-[12px] font-bold shadow-sm">{video.comments}</span>
-        </button>
-
-        <button className="flex flex-col items-center gap-1 group">
-          <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center transition-colors group-hover:bg-white/20">
             <Share2 className="w-6 h-6 text-white" />
           </div>
           <span className="text-[12px] font-bold shadow-sm">{video.shares}</span>
@@ -179,7 +172,7 @@ function MobileVideoCard({ video }: { video: typeof MOCK_VIDEOS[0] }) {
       </div>
 
       {/* Bottom Info Overlay */}
-      <div className="absolute bottom-4 left-4 right-20 z-30 flex flex-col gap-3">
+      <div className="absolute bottom-20 left-4 right-20 z-30 flex flex-col gap-3">
         <h3 className="font-bold text-[16px] shadow-sm flex items-center gap-2">
           @{video.vendor}
         </h3>
