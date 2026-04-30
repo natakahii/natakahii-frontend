@@ -157,8 +157,8 @@ function MobileVideoCard({ video }: { video: typeof MOCK_VIDEOS[0] }) {
         </div>
 
         <button className="flex flex-col items-center gap-1 group" onClick={() => setIsLiked(!isLiked)}>
-          <div className={`w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center transition-colors ${isLiked ? 'bg-[var(--color-accent)]' : 'group-hover:bg-white/20'}`}>
-            <Heart className={`w-6 h-6 ${isLiked ? 'fill-white text-white' : 'text-white'}`} />
+          <div className={`w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center transition-colors ${isLiked ? 'bg-red-500/20' : 'group-hover:bg-white/20'}`}>
+            <Heart className={`w-6 h-6 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-white'}`} />
           </div>
           <span className="text-[12px] font-bold shadow-sm">{video.likes}</span>
         </button>
