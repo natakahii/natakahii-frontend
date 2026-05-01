@@ -79,8 +79,8 @@ export function Home() {
       try {
         const [categoryData, productData, videoData] = await Promise.all([
           fetchCategories(),
-          fetchProducts({ per_page: 12 }),
-          fetchVideoFeed('for-you', 1, 4), // Fetch page 1, 4 videos per page
+          fetchProducts({ per_page: 100 }), // Load 100 featured products on home
+          fetchVideoFeed('for-you', 1, 12), // Fetch page 1, 12 latest videos
         ]);
 
         if (!isMounted) {
@@ -136,11 +136,6 @@ export function Home() {
     });
 
     return Array.from(uniqueVendors.values()).slice(0, 4);
-  }, [featuredProducts]);
-
-  const flashDeals = useMemo(() => {
-    const discountedProducts = featuredProducts.filter((product) => product.discount_price && product.discount_price < product.price);
-    return (discountedProducts.length > 0 ? discountedProducts : featuredProducts).slice(0, 4);
   }, [featuredProducts]);
 
   const topCategories = categories.slice(0, 6);
@@ -243,7 +238,7 @@ export function Home() {
 
           {isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {Array.from({ length: 4 }).map((_, index) => (
+              {Array.from({ length: 12 }).map((_, index) => (
                 <Card key={index} className="h-full flex flex-col">
                   <Skeleton className="aspect-square rounded-t-[16px]" />
                   <div className="p-4 space-y-3">
@@ -254,9 +249,9 @@ export function Home() {
                 </Card>
               ))}
             </div>
-          ) : flashDeals.length > 0 ? (
+          ) : featuredProducts.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {flashDeals.map((product) => {
+              {featuredProducts.map((product) => {
                 const discountPercent = getProductDiscountPercent(product);
                 const rating = product.reviews_avg_rating ? product.reviews_avg_rating.toFixed(1) : null;
                 const image = getProductPrimaryImage(product);
@@ -379,10 +374,10 @@ export function Home() {
               Open Feed <Play className="w-4 h-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {videos.length === 0 ? (
               // Skeleton loading state
-              Array.from({ length: 4 }).map((_, index) => (
+              Array.from({ length: 12 }).map((_, index) => (
                 <div key={index} className="relative aspect-[9/16] rounded-[16px] overflow-hidden bg-[var(--color-bg-card)] shadow-[var(--shadow-level-1)]">
                   <Skeleton className="w-full h-full" />
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -393,7 +388,7 @@ export function Home() {
                 </div>
               ))
             ) : (
-              videos.slice(0, 4).map((video) => (
+              videos.slice(0, 12).map((video) => (
                 <Link key={video.id} to={`/video?v=${video.id}`} className="relative aspect-[9/16] rounded-[16px] overflow-hidden bg-[var(--color-bg-card)] group cursor-pointer shadow-[var(--shadow-level-1)] block">
                   {/* Video Thumbnail or Placeholder */}
                   <ImageWithFallback

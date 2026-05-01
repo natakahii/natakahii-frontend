@@ -536,11 +536,30 @@ export function Explore() {
                 })}
               </div>
 
+              {/* Infinite scroll trigger - hidden element that triggers load when visible */}
               {meta.current_page < meta.last_page && (
-                <div className="mt-12 flex justify-center">
-                  <Button variant="primary" size="l" className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] shadow-md w-full max-w-[240px] border-none font-bold" onClick={handleLoadMore} isLoading={isLoadingMore}>
-                    Load More Results
-                  </Button>
+                <div
+                  ref={(el) => {
+                    if (!el) return;
+                    const observer = new IntersectionObserver(
+                      (entries) => {
+                        if (entries[0].isIntersecting && !isLoadingMore) {
+                          handleLoadMore();
+                        }
+                      },
+                      { rootMargin: '100px' }
+                    );
+                    observer.observe(el);
+                    return () => observer.disconnect();
+                  }}
+                  className="h-10 mt-8 flex items-center justify-center"
+                >
+                  {isLoadingMore && (
+                    <div className="flex items-center gap-2 text-[var(--color-text-muted)]">
+                      <div className="w-5 h-5 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
+                      <span className="text-[14px]">Loading more...</span>
+                    </div>
+                  )}
                 </div>
               )}
             </>
