@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Heart, Share2, Play, Pause, ShoppingBag, Plus, Check, Volume2, VolumeX } from 'lucide-react';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, Link, useSearchParams } from 'react-router';
 import { Button } from '../components/ui/button';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { PullToRefresh } from '../components/ui/pull-to-refresh';
@@ -25,6 +25,7 @@ import { getProductPath } from '../utils/products';
 const NATAKA_HII_LOGO = '/Nataka Hii_favicon updated.png';
 
 export function VideoFeed() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'for-you' | 'following'>('for-you');
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +33,7 @@ export function VideoFeed() {
   const [error, setError] = useState<string | null>(null);
   const [meta, setMeta] = useState({ current_page: 1, last_page: 1, per_page: 10, total: 0 });
   const { isAuthenticated } = useAuth();
+  const targetVideoId = searchParams.get('v');
 
   // Fetch videos on mount and when tab changes
   const loadVideos = useCallback(async (page = 1, append = false) => {
@@ -61,6 +63,22 @@ export function VideoFeed() {
       setIsLoadingMore(false);
     }
   }, [activeTab]);
+
+  // Handle initial video ID from query param
+  useEffect(() => {
+    if (targetVideoId && videos.length > 0) {
+      const targetIndex = videos.findIndex((v) => v.id.toString() === targetVideoId);
+      if (targetIndex !== -1) {
+        // Scroll to the target video
+        const targetElement = document.getElementById(`video-${targetVideoId}`);
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        // Clear the query param after navigation
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [videos, targetVideoId, setSearchParams]);
 
   useEffect(() => {
     loadVideos(1, false);
@@ -410,7 +428,7 @@ function MobileVideoCard({ video, onUpdate, isLast, onLoadMore }: MobileVideoCar
   const effectivePrice = video.product?.effective_price || video.product?.price || 0;
 
   return (
-    <div ref={cardRef} className="relative w-full h-full snap-start snap-always bg-black flex justify-center">
+    <div ref={cardRef} id={`video-${video.id}`} className="relative w-full h-full snap-start snap-always bg-black flex justify-center">
       {/* Video Element with Auto-play */}
       <div className="absolute inset-0 z-0">
         {video.file_path ? (
@@ -775,6 +793,7 @@ function DesktopVideoCard({ video, onUpdate }: DesktopVideoCardProps) {
 
   return (
     <div
+      id={`video-${video.id}`}
       className="relative w-full aspect-[9/16] rounded-[24px] overflow-hidden bg-black group cursor-pointer shadow-[var(--shadow-level-2)] hover:shadow-[var(--shadow-level-3)] transition-all duration-300 transform hover:-translate-y-1"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
