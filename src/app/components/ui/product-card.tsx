@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { motion, useAnimationControls } from "motion/react";
-import { Heart, ShoppingCart, Star, CheckCircle } from "lucide-react";
+import { Heart, ShoppingCart, Star, CheckCircle, MapPin } from "lucide-react";
 import { Button } from "./button";
 import { Card } from "./card";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { formatCurrency } from "../../utils/currency";
 import { getProductPath } from "../../utils/products";
+import { useAuth } from "../../providers/AuthProvider";
+import { useToast } from "../../components/ui/toast";
+import { likeProduct, unlikeProduct } from "../../services/videoFeedService";
 
 interface ProductCardProps {
   product: {
@@ -17,21 +20,65 @@ interface ProductCardProps {
     price: string | number;
     rating?: number;
     img: string;
+    is_liked?: boolean;
+    vendor_location?: {
+      street?: string | null;
+      region?: string | null;
+      city?: string | null;
+    };
   };
   onAddToCart?: (e: React.MouseEvent) => void;
+  onLikeToggle?: (isLiked: boolean) => void;
 }
 
-export function ProductCard({ product, onAddToCart }: ProductCardProps) {
-  const [isLiked, setIsLiked] = useState(false);
+export function ProductCard({ product, onAddToCart, onLikeToggle }: ProductCardProps) {
+  const [isLiked, setIsLiked] = useState(product.is_liked || false);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
   const heartControls = useAnimationControls();
   const cartControls = useAnimationControls();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
+
+  // Build location string from vendor location fields
+  const locationText = product.vendor_location
+    ? [product.vendor_location.street, product.vendor_location.region, product.vendor_location.city]
+        .filter(Boolean)
+        .join(', ')
+    : null;
 
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsLiked(!isLiked);
-    if (!isLiked) {
+
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: { pathname: window.location.pathname } } });
+      return;
+    }
+
+    if (isLikeLoading) return;
+
+    const newIsLiked = !isLiked;
+    setIsLiked(newIsLiked);
+
+    if (newIsLiked) {
       await heartControls.start({ scale: [1, 1.3, 0.9, 1.1, 1], transition: { duration: 0.4 } });
+    }
+
+    setIsLikeLoading(true);
+    try {
+      if (newIsLiked) {
+        await likeProduct(Number(product.id));
+      } else {
+        await unlikeProduct(Number(product.id));
+      }
+      onLikeToggle?.(newIsLiked);
+    } catch (err) {
+      // Revert on error
+      setIsLiked(!newIsLiked);
+      toast({ type: 'error', title: 'Failed to update like' });
+    } finally {
+      setIsLikeLoading(false);
     }
   };
 
@@ -80,6 +127,13 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
                 </span>
               )}
             </div>
+            {/* Vendor Location */}
+            {locationText && (
+              <div className="text-[11px] text-[var(--color-text-muted)] mb-2 flex items-center gap-1">
+                <MapPin className="w-3 h-3 shrink-0" />
+                <span className="truncate">{locationText}</span>
+              </div>
+            )}
             <h3 className="font-semibold text-[14px] text-[var(--color-text-heading)] line-clamp-2 mb-2 group-hover:text-[var(--color-primary)] transition-colors">
               {product.title}
             </h3>

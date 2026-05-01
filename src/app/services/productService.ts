@@ -36,6 +36,12 @@ export interface CatalogVendor {
   status?: string | null;
   products_count?: number;
   followers_count?: number;
+  // Location fields from VendorApplication
+  street?: string | null;
+  region?: string | null;
+  city?: string | null;
+  ward?: string | null;
+  address?: string | null;
 }
 
 export interface CatalogProductImage {
@@ -185,6 +191,12 @@ export function normalizeVendor(vendor: any): CatalogVendor | undefined {
     status: vendor.status || null,
     products_count: vendor.products_count == null ? undefined : toNumber(vendor.products_count),
     followers_count: vendor.followers_count == null ? undefined : toNumber(vendor.followers_count),
+    // Location fields
+    street: vendor.street || null,
+    region: vendor.region || null,
+    city: vendor.city || null,
+    ward: vendor.ward || null,
+    address: vendor.address || null,
   };
 }
 
