@@ -23,6 +23,7 @@ import {
   Star,
   Watch,
   Zap,
+  Video,
 } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -40,6 +41,7 @@ import {
   getProductPrice,
   getProductPrimaryImage,
 } from '../services/productService';
+import { fetchVideoFeed, VideoItem } from '../services/videoFeedService';
 import { formatCurrency } from '../utils/currency';
 import { getProductPath } from '../utils/products';
 import { getVendorStorefrontPath } from '../utils/storefront';
@@ -60,8 +62,9 @@ function getCategoryIcon(category: CatalogCategory) {
 
 export function Home() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [categories, setCategories] = useState<CatalogCategory[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<CatalogProduct[]>([]);
+  const [categories, setCategories] = useState<CatalogCategory[]>([]);
+  const [videos, setVideos] = useState<VideoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -74,9 +77,10 @@ export function Home() {
       setError(null);
 
       try {
-        const [categoryData, productData] = await Promise.all([
+        const [categoryData, productData, videoData] = await Promise.all([
           fetchCategories(),
           fetchProducts({ per_page: 12 }),
+          fetchVideoFeed('for-you', 4).catch(() => ({ videos: [], meta: {} })), // Graceful fallback if video API fails
         ]);
 
         if (!isMounted) {
@@ -85,6 +89,7 @@ export function Home() {
 
         setCategories(categoryData);
         setFeaturedProducts(productData.products);
+        setVideos(videoData.videos || []);
       } catch (loadError: any) {
         if (!isMounted) {
           return;
@@ -375,30 +380,59 @@ export function Home() {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((index) => (
-              <div key={index} className="relative aspect-[9/16] rounded-[16px] overflow-hidden bg-[var(--color-bg-card)] group cursor-pointer shadow-[var(--shadow-level-1)]">
-                <ImageWithFallback
-                  src={`https://images.unsplash.com/photo-${index % 2 === 0 ? '1508418717103-8b56bcf03360' : '1730793295617-375689a1df3f'}?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&w=600`}
-                  alt="Video thumbnail"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-12 h-12 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center">
-                    <Play className="w-6 h-6 text-white fill-white" />
-                  </div>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-6 h-6 rounded-full overflow-hidden border border-white/50">
-                      <ImageWithFallback src="https://images.unsplash.com/photo-1556452576-3e2d58536f62?crop=entropy&cs=tinysrgb&fit=facearea&facepad=2&w=100&h=100&q=80" alt="avatar" />
+            {videos.length === 0 ? (
+              // Skeleton loading state
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="relative aspect-[9/16] rounded-[16px] overflow-hidden bg-[var(--color-bg-card)] shadow-[var(--shadow-level-1)]">
+                  <Skeleton className="w-full h-full" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-black/20 flex items-center justify-center">
+                      <Video className="w-6 h-6 text-white/50" />
                     </div>
-                    <span className="text-[12px] font-medium text-white shadow-sm">Vendor Story</span>
                   </div>
-                  <h3 className="text-[13px] font-semibold text-white leading-tight line-clamp-2">See live product demos, quick reviews, and seller drops in the feed.</h3>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              videos.slice(0, 4).map((video) => (
+                <Link key={video.id} to={`/video?v=${video.id}`} className="relative aspect-[9/16] rounded-[16px] overflow-hidden bg-[var(--color-bg-card)] group cursor-pointer shadow-[var(--shadow-level-1)] block">
+                  {/* Video Thumbnail or Placeholder */}
+                  <ImageWithFallback
+                    src={video.product?.images?.[0]?.image_path || 'https://images.unsplash.com/photo-1508418717103-8b56bcf03360?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&w=600'}
+                    alt={video.title || 'Video'}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
+
+                  {/* Play Icon - Always visible with pulse animation */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/40 shadow-lg group-hover:scale-110 transition-transform">
+                      <Play className="w-7 h-7 text-white fill-white ml-1" />
+                    </div>
+                  </div>
+
+                  {/* Video Badge */}
+                  <div className="absolute top-3 left-3">
+                    <div className="flex items-center gap-1 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full">
+                      <Video className="w-3 h-3 text-white" />
+                      <span className="text-[10px] font-medium text-white">VIDEO</span>
+                    </div>
+                  </div>
+
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 rounded-full overflow-hidden border border-white/50">
+                        <ImageWithFallback
+                          src={video.vendor?.logo || 'https://images.unsplash.com/photo-1556452576-3e2d58536f62?crop=entropy&cs=tinysrgb&fit=facearea&facepad=2&w=100&h=100&q=80'}
+                          alt={video.vendor?.shop_name || 'Vendor'}
+                        />
+                      </div>
+                      <span className="text-[12px] font-medium text-white shadow-sm truncate">{video.vendor?.shop_name || 'Vendor'}</span>
+                    </div>
+                    <h3 className="text-[13px] font-semibold text-white leading-tight line-clamp-2">{video.title || video.product?.name || 'Product Video'}</h3>
+                  </div>
+                </Link>
+              ))
+            )}
           </div>
         </section>
 
