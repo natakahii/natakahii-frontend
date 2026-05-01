@@ -80,7 +80,7 @@ export function Home() {
         const [categoryData, productData, videoData] = await Promise.all([
           fetchCategories(),
           fetchProducts({ per_page: 12 }),
-          fetchVideoFeed('for-you', 4).catch(() => ({ videos: [], meta: {} })), // Graceful fallback if video API fails
+          fetchVideoFeed('for-you', 1, 4), // Fetch page 1, 4 videos per page
         ]);
 
         if (!isMounted) {
