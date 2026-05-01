@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Heart, Share2, MessageCircle, Play, Pause, ShoppingBag, Plus, Check, Volume2, VolumeX } from 'lucide-react';
+import { Heart, Share2, Play, Pause, ShoppingBag, Plus, Check, Volume2, VolumeX } from 'lucide-react';
 import { useNavigate, Link } from 'react-router';
 import { Button } from '../components/ui/button';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
@@ -477,14 +477,6 @@ function MobileVideoCard({ video, onUpdate, isLast, onLoadMore }: MobileVideoCar
             <Heart className={`w-6 h-6 transition-colors ${video.is_liked_by_user ? 'fill-red-500 text-red-500' : 'text-white'}`} />
           </div>
           <span className="text-[12px] font-bold shadow-sm">{formatCount(video.likes_count)}</span>
-        </button>
-
-        {/* Comments Button (placeholder) */}
-        <button className="flex flex-col items-center gap-1 group">
-          <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center transition-colors group-hover:bg-white/20">
-            <MessageCircle className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-[12px] font-bold shadow-sm">{formatCount(video.comments_count)}</span>
         </button>
 
         {/* Mute Toggle Button */}
