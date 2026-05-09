@@ -20,10 +20,10 @@ interface NotificationPanelProps {
   onClose: () => void;
 }
 
-const mockNotifications: NotificationItem[] = [];
+const initialNotifications: NotificationItem[] = [];
 
 export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState(initialNotifications);
 
   const handleMarkAllRead = () => {
     setNotifications(notifications.map(n => ({ ...n, unread: false })));

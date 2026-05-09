@@ -164,7 +164,26 @@ export function Home() {
             East Africa's premier marketplace connecting you with verified local vendors, AI-curated products, and a fully protected shopping experience.
           </p>
 
-          <div className="w-full max-w-2xl h-14 mb-8"></div>
+          <form onSubmit={handleSearchSubmit} className="w-full max-w-2xl mb-8">
+            <div className="relative flex items-center">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                <Search className="w-5 h-5 text-[var(--color-text-muted)]" />
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for products, vendors, categories..."
+                className="w-full h-14 pl-12 pr-4 rounded-full bg-white text-[var(--color-text-heading)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-lg text-[16px]"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white px-5 py-2.5 rounded-full font-bold text-[14px] transition-colors"
+              >
+                Search
+              </button>
+            </div>
+          </form>
 
           <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 text-[13px] text-white/80 font-medium">
           

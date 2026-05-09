@@ -99,6 +99,16 @@ export function Login() {
     }
   };
 
+  const handleAppleSignIn = async () => {
+    setIsAppleLoading(true);
+
+    try {
+      toast({ type: 'info', title: 'Coming Soon', message: 'Apple sign-in will be available soon.' });
+    } finally {
+      setIsAppleLoading(false);
+    }
+  };
+
   return (
     <div className="h-screen bg-[var(--color-bg-page)] lg:flex lg:overflow-hidden">
       {/* Desktop Left Side - Product Showcase (hidden on mobile) */}
@@ -304,7 +314,7 @@ export function Login() {
               type="button"
               variant="ghost"
               className="flex-1 border-2 border-[var(--color-border)] hover:bg-[var(--color-bg-card)] flex items-center justify-center gap-3 h-12"
-              onClick={() => toast({ type: 'info', title: 'Coming Soon', message: 'Apple sign-in will be available soon.' })}
+              onClick={handleAppleSignIn}
               isLoading={isAppleLoading}
               disabled={isAppleLoading}
             >

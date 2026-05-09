@@ -148,7 +148,7 @@ export function Tracking() {
                 {/* Abstract map background */}
                 <div className="absolute inset-0 opacity-20 bg-[var(--color-primary-bg)]" />
                 
-                {/* Map route mock */}
+                {/* Map route illustration */}
                 <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
                   {/* Dashed route line */}
                   <path d="M 200,100 Q 300,150 400,300 T 700,500" fill="none" stroke="var(--color-primary)" strokeWidth="4" strokeDasharray="10, 10" className="opacity-50" />

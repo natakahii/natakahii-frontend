@@ -14,7 +14,7 @@ interface Message {
     data: {
       id: string;
       name: string;
-      price: string;
+      price: number;
       image: string;
       vendor: string;
     };
@@ -133,6 +133,9 @@ export function AIAssistant() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button className="hidden lg:flex w-8 h-8 items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-bg-card)] transition-colors">
+                    <Search className="w-4 h-4" />
+                  </button>
+                  <button className="hidden lg:flex w-8 h-8 items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-bg-card)] transition-colors">
                     <Clock className="w-4 h-4" />
                   </button>
                   <button
@@ -174,13 +177,13 @@ export function AIAssistant() {
                         </div>
                         <div className="p-3">
                           <h4 className="font-bold text-[14px] text-[var(--color-text-heading)] mb-1 line-clamp-1">{msg.embed.data.name}</h4>
-                          <p className="font-extrabold text-[16px] text-[#142490] mb-2">{msg.embed.data.price}</p>
+                          <p className="font-extrabold text-[16px] text-[#142490] mb-2">{formatCurrency(msg.embed.data.price)}</p>
                           <div className="flex items-center gap-1.5 text-[11px] text-[var(--color-text-muted)] mb-3">
                             <Store className="w-3 h-3" />
                             <span>{msg.embed.data.vendor}</span>
                           </div>
-                          <Button className="w-full h-8 text-[12px] bg-[#F05A28] hover:bg-[#C44718] text-white">
-                            View Product
+                          <Button className="w-full h-8 text-[12px] bg-[#F05A28] hover:bg-[#C44718] text-white flex items-center justify-center gap-1">
+                            View Product <ArrowRight className="w-3 h-3" />
                           </Button>
                         </div>
                       </div>

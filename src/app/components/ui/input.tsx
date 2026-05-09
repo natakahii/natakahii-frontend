@@ -28,6 +28,52 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 );
 Input.displayName = "Input";
 
+export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  error?: boolean;
+}
+
+export const Select = forwardRef<HTMLSelectElement, SelectProps>(
+  ({ className, error, children, ...props }, ref) => {
+    return (
+      <select
+        className={cn(
+          baseInputStyles,
+          "appearance-none bg-none pr-10",
+          error && "border-[var(--color-error)] focus:border-[var(--color-error)] focus:ring-[var(--color-error)]",
+          className
+        )}
+        ref={ref}
+        {...props}
+      >
+        {children}
+      </select>
+    );
+  }
+);
+Select.displayName = "Select";
+
+export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  error?: boolean;
+}
+
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, error, ...props }, ref) => {
+    return (
+      <textarea
+        className={cn(
+          baseInputStyles,
+          "min-h-[100px] resize-y",
+          error && "border-[var(--color-error)] focus:border-[var(--color-error)] focus:ring-[var(--color-error)]",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+Textarea.displayName = "Textarea";
+
 export const SearchInput = forwardRef<HTMLInputElement, InputProps>(
   ({ className, ...props }, ref) => {
     return (
@@ -46,7 +92,7 @@ export const SearchInput = forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         <div className="absolute inset-y-0 right-0 flex items-center pr-4">
-          {/* Voice Search Icon mock */}
+          {/* Voice Search Icon placeholder */}
           <button type="button" className="text-[var(--color-primary)] hover:text-[var(--color-accent)]">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
           </button>
