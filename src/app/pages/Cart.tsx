@@ -1,16 +1,14 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
-import { Card } from '../components/ui/card';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { Minus, Plus, Trash2, ShieldCheck, Truck, ChevronRight, ShoppingBag } from 'lucide-react';
+import { Minus, Plus, Trash2, ShieldCheck, Truck, ChevronRight, AlertCircle, Loader, Info } from 'lucide-react';
 import { EmptyState } from '../components/ui/empty-state';
 import { formatCurrency } from '../utils/currency';
-
-const mockCartItems = [
-  { id: 1, title: "African Print Maxi Dress", variant: "Size: M, Color: Blue/Gold", vendor: "Nairobi Styles", price: 4500, quantity: 1, img: "https://images.unsplash.com/photo-1508418717103-8b56bcf03360?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
-  { id: 2, title: "Handcrafted Leather Sneakers", variant: "Size: 42, Color: Brown", vendor: "Kazi Kicks", price: 6200, quantity: 2, img: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" }
-];
+import { useCart } from '../providers/CartProvider';
+import { useAuth } from '../providers/AuthProvider';
+import { toast } from '../components/ui/toast';
+import { getAvailableStock, getMaxQuantity } from '../services/cartService';
 
 const shippingProviders = [
   { id: 'fargo', name: 'Fargo Courier', days: '1-2 Days', price: 450, logo: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?crop=entropy&cs=tinysrgb&fit=crop&w=100&q=80' },
@@ -19,24 +17,95 @@ const shippingProviders = [
 ];
 
 export function Cart() {
-  const [items, setItems] = useState(mockCartItems);
-  const [shippingMethod, setShippingMethod] = useState(shippingProviders[0].id);
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { items, totalAmount, isLoading, error, updateQuantity: updateQuantityApi, removeItem: removeItemApi } = useCart();
+  const [shippingMethod] = useState(shippingProviders[0].id);
+  const [isUpdating, setIsUpdating] = useState<number | null>(null);
 
-  const updateQuantity = (id: number, delta: number) => {
-    setItems(items.map(item => 
-      item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item
-    ));
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  const handleUpdateQuantity = async (id: number, delta: number) => {
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+
+    const maxQuantity = getMaxQuantity(item);
+    const newQuantity = Math.max(1, item.quantity + delta);
+    
+    if (newQuantity > maxQuantity) {
+      toast({ 
+        type: 'error', 
+        title: `Only ${maxQuantity} unit(s) available for this product` 
+      });
+      return;
+    }
+    
+    try {
+      setIsUpdating(id);
+      await updateQuantityApi(id, newQuantity);
+    } catch (err) {
+      toast({ 
+        type: 'error', 
+        title: err instanceof Error ? err.message : 'Failed to update quantity' 
+      });
+    } finally {
+      setIsUpdating(null);
+    }
   };
 
-  const removeItem = (id: number) => {
-    setItems(items.filter(item => item.id !== id));
+  const handleRemoveItem = async (id: number) => {
+    try {
+      setIsUpdating(id);
+      await removeItemApi(id);
+      toast({ type: 'success', title: 'Item removed from cart' });
+    } catch (err) {
+      toast({ 
+        type: 'error', 
+        title: err instanceof Error ? err.message : 'Failed to remove item' 
+      });
+    } finally {
+      setIsUpdating(null);
+    }
   };
-
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  
+  // Calculate price from API data (uses total_amount) or fallback calculation
+  const subtotal = totalAmount || items.reduce((sum, item) => {
+    const price = item.product?.price || 0;
+    return sum + price * item.quantity;
+  }, 0);
   const platformFee = Math.round(subtotal * 0.02);
   const shippingCost = shippingProviders.find(p => p.id === shippingMethod)?.price || 0;
   const total = subtotal + platformFee + shippingCost;
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-16 flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader className="w-12 h-12 text-[var(--color-primary)] animate-spin mb-4" />
+        <p className="text-[var(--color-text-muted)] font-medium">Loading your cart...</p>
+      </div>
+    );
+  }
+
+  if (error && items.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="bg-red-50 border border-red-200 rounded-[12px] p-6 flex items-start gap-4">
+          <AlertCircle className="w-6 h-6 text-red-500 shrink-0 mt-0.5" />
+          <div>
+            <h3 className="font-bold text-red-900 mb-2">Error Loading Cart</h3>
+            <p className="text-red-700 text-sm mb-4">{error}</p>
+            <Button onClick={() => navigate('/customer')} variant="secondary" size="sm">
+              Continue Shopping
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -71,50 +140,73 @@ export function Cart() {
               </div>
               
               <div className="flex flex-col gap-6">
-                {items.map((item, idx) => (
-                  <div key={item.id} className={`grid grid-cols-1 sm:grid-cols-12 gap-4 items-start sm:items-center ${idx !== items.length - 1 ? 'pb-6 border-b border-[var(--color-border)]/50' : ''}`}>
-                    
-                    {/* Product Info */}
-                    <div className="col-span-1 sm:col-span-6 flex gap-4">
-                      <div className="w-24 h-24 sm:w-20 sm:h-20 rounded-[12px] overflow-hidden bg-[var(--color-bg-card)] shrink-0 border border-[var(--color-border)]">
-                        <ImageWithFallback src={item.img} alt={item.title} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="flex flex-col justify-center">
-                        <h3 className="font-bold text-[15px] text-[var(--color-text-heading)] line-clamp-2 leading-tight mb-1">{item.title}</h3>
-                        <p className="text-[13px] text-[var(--color-text-muted)] mb-1">{item.variant}</p>
-                        <p className="text-[12px] font-medium text-[var(--color-primary)] flex items-center gap-1">Sold by {item.vendor}</p>
-                        <div className="sm:hidden text-[16px] font-bold text-[var(--color-accent)] mt-2">
-                          {formatCurrency(item.price * item.quantity)}
+                {items.map((item, idx) => {
+                  const price = item.product?.price || 0;
+                  const productName = item.product?.name || 'Product';
+                  const productImage = item.product?.images?.[0]?.image_path || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
+                  const isItemUpdating = isUpdating === item.id;
+
+                  return (
+                    <div key={item.id} className={`grid grid-cols-1 sm:grid-cols-12 gap-4 items-start sm:items-center ${idx !== items.length - 1 ? 'pb-6 border-b border-[var(--color-border)]/50' : ''}`}>
+                      
+                      {/* Product Info */}
+                      <div className="col-span-1 sm:col-span-6 flex gap-4">
+                        <div className="w-24 h-24 sm:w-20 sm:h-20 rounded-[12px] overflow-hidden bg-[var(--color-bg-card)] shrink-0 border border-[var(--color-border)]">
+                          <ImageWithFallback src={productImage} alt={productName} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex flex-col justify-center">
+                          <h3 className="font-bold text-[15px] text-[var(--color-text-heading)] line-clamp-2 leading-tight mb-1">{productName}</h3>
+                          <p className="text-[13px] text-[var(--color-text-muted)] mb-1">Variant: ID {item.variant_id || 'Default'}</p>
+                          <p className="text-[12px] font-medium text-[var(--color-primary)] flex items-center gap-1">Item #{item.id}</p>
+                          <div className="sm:hidden text-[16px] font-bold text-[var(--color-accent)] mt-2">
+                            {formatCurrency(price * item.quantity)}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    {/* Quantity Stepper */}
-                    <div className="col-span-1 sm:col-span-3 flex items-center justify-start sm:justify-center mt-2 sm:mt-0">
-                      <div className="flex items-center gap-1 bg-[var(--color-bg-page)] rounded-full p-1 border border-[var(--color-border)]">
-                        <button onClick={() => updateQuantity(item.id, -1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white hover:shadow-sm text-[var(--color-text-heading)] transition-all disabled:opacity-50" disabled={item.quantity <= 1}>
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-8 text-center text-[14px] font-bold">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, 1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white hover:shadow-sm text-[var(--color-text-heading)] transition-all">
-                          <Plus className="w-4 h-4" />
+                      
+                      {/* Quantity Stepper */}
+                      <div className="col-span-1 sm:col-span-3 flex items-center justify-start sm:justify-center mt-2 sm:mt-0">
+                        <div className="flex items-center gap-1 bg-[var(--color-bg-page)] rounded-full p-1 border border-[var(--color-border)]">
+                          <button 
+                            onClick={() => handleUpdateQuantity(item.id, -1)} 
+                            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white hover:shadow-sm text-[var(--color-text-heading)] transition-all disabled:opacity-50" 
+                            disabled={item.quantity <= 1 || isItemUpdating}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="w-8 text-center text-[14px] font-bold">{item.quantity}</span>
+                          <button 
+                            onClick={() => handleUpdateQuantity(item.id, 1)}
+                            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white hover:shadow-sm text-[var(--color-text-heading)] transition-all disabled:opacity-50"
+                            disabled={isItemUpdating}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Price (Desktop) */}
+                      <div className="hidden sm:block col-span-2 text-right">
+                        <span className="text-[16px] font-bold text-[var(--color-text-heading)]">{formatCurrency(price * item.quantity)}</span>
+                      </div>
+                      
+                      {/* Remove */}
+                      <div className="absolute right-6 sm:static sm:col-span-1 flex justify-end">
+                        <button 
+                          onClick={() => handleRemoveItem(item.id)} 
+                          className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                          disabled={isItemUpdating}
+                        >
+                          {isItemUpdating ? (
+                            <Loader className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-5 h-5" />
+                          )}
                         </button>
                       </div>
                     </div>
-                    
-                    {/* Price (Desktop) */}
-                    <div className="hidden sm:block col-span-2 text-right">
-                      <span className="text-[16px] font-bold text-[var(--color-text-heading)]">{formatCurrency(item.price * item.quantity)}</span>
-                    </div>
-                    
-                    {/* Remove */}
-                    <div className="absolute right-6 sm:static sm:col-span-1 flex justify-end">
-                      <button onClick={() => removeItem(item.id)} className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:text-red-500 hover:bg-red-50 transition-colors">
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
             

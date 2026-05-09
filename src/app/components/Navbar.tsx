@@ -5,6 +5,7 @@ import { Button, cn } from './ui/button';
 import { SearchInput } from './ui/input';
 import { NotificationPanel } from './NotificationPanel';
 import { useAuth } from '../providers/AuthProvider';
+import { useCart } from '../providers/CartProvider';
 import headerLogo from '../../assets/Nataka Hii Header.png';
 
 export function Navbar() {
@@ -15,6 +16,7 @@ export function Navbar() {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const navigate = useNavigate();
   const { defaultRoute, hasRole, isAuthenticated, logout, user } = useAuth();
+  const { totalItems } = useCart();
 
   const homePath = isAuthenticated ? defaultRoute : '/';
   const profileTarget = hasRole('vendor') ? '/vendor/dashboard' : '/profile';
@@ -97,9 +99,11 @@ export function Navbar() {
               </button>
               <Link to="/cart" className="relative p-2 text-[var(--color-text-body)] hover:text-[var(--color-primary)] transition-colors">
                 <ShoppingCart className="w-6 h-6" />
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-accent)] text-[11px] font-bold text-white">
-                  3
-                </span>
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-accent)] text-[11px] font-bold text-white">
+                    {totalItems > 99 ? '99+' : totalItems}
+                  </span>
+                )}
               </Link>
               <Link to={profileTarget} className="h-8 w-8 rounded-full bg-[var(--color-primary-bg)] overflow-hidden border-2 border-[var(--color-primary)] flex items-center justify-center hover:opacity-80 transition-opacity">
                 {profilePhoto ? (
@@ -124,7 +128,11 @@ export function Navbar() {
               </button>
               <Link to="/cart" className="relative p-2 text-[var(--color-text-heading)]">
                 <ShoppingCart className="w-6 h-6" />
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-accent)] text-[11px] font-bold text-white">3</span>
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-accent)] text-[11px] font-bold text-white">
+                    {totalItems > 99 ? '99+' : totalItems}
+                  </span>
+                )}
               </Link>
               <button
                 className="p-2 text-[var(--color-text-heading)]"

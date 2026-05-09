@@ -7,6 +7,7 @@ import { PullToRefresh } from '../components/ui/pull-to-refresh';
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from '../components/ui/drawer';
 import { formatCurrency } from '../utils/currency';
 import { useAuth } from '../providers/AuthProvider';
+import { useCart } from '../providers/CartProvider';
 import { useToast } from '../components/ui/toast';
 import {
   VideoItem,
@@ -18,7 +19,6 @@ import {
   unfollowVendor,
   formatCount,
 } from '../services/videoFeedService';
-import { addToCart } from '../services/cartService';
 import { getProductPath } from '../utils/products';
 
 // Video feed logo watermark for shares
@@ -234,6 +234,7 @@ function MobileVideoCard({ video, onUpdate, isLast, onLoadMore }: MobileVideoCar
   const cardRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { addToCart: addToCartContext } = useCart();
   const { toast } = useToast();
 
   // Intersection Observer for auto-play/pause
@@ -416,7 +417,7 @@ function MobileVideoCard({ video, onUpdate, isLast, onLoadMore }: MobileVideoCar
     if (!video.product) return;
 
     try {
-      await addToCart(video.product.id, 1, variantId);
+      await addToCartContext(video.product.id, 1, variantId);
       toast({ type: 'success', title: 'Added to cart!' });
     } catch (err: any) {
       toast({ type: 'error', title: err?.message || 'Failed to add to cart' });
