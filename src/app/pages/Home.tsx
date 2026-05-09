@@ -15,7 +15,6 @@ import {
   Heart,
   Home as HomeIcon,
   Play,
-  Search,
   Shirt,
   ShoppingCart,
   Smartphone,
@@ -61,7 +60,6 @@ function getCategoryIcon(category: CatalogCategory) {
 }
 
 export function Home() {
-  const [searchQuery, setSearchQuery] = useState('');
   const [featuredProducts, setFeaturedProducts] = useState<CatalogProduct[]>([]);
   const [categories, setCategories] = useState<CatalogCategory[]>([]);
   const [videos, setVideos] = useState<VideoItem[]>([]);
@@ -140,12 +138,6 @@ export function Home() {
 
   const topCategories = categories.slice(0, 6);
 
-  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const query = searchQuery.trim();
-    navigate(query ? `/explore?search=${encodeURIComponent(query)}` : '/explore');
-  };
-
   return (
     <div className="flex flex-col gap-8 lg:gap-16 pb-20">
       <section className="relative w-full bg-gradient-to-br from-[var(--color-primary-darker)] via-[var(--color-primary)] to-[var(--color-primary-light)] overflow-hidden pt-12 pb-20 lg:py-24 px-4">
@@ -163,27 +155,6 @@ export function Home() {
           <p className="text-[18px] sm:text-[20px] md:text-[22px] text-white/95 mb-12 max-w-3xl mx-auto leading-[1.6] font-medium">
             East Africa's premier marketplace connecting you with verified local vendors, AI-curated products, and a fully protected shopping experience.
           </p>
-
-          <form onSubmit={handleSearchSubmit} className="w-full max-w-2xl mb-8">
-            <div className="relative flex items-center">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <Search className="w-5 h-5 text-[var(--color-text-muted)]" />
-              </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for products, vendors, categories..."
-                className="w-full h-14 pl-12 pr-4 rounded-full bg-white text-[var(--color-text-heading)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] shadow-lg text-[16px]"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white px-5 py-2.5 rounded-full font-bold text-[14px] transition-colors"
-              >
-                Search
-              </button>
-            </div>
-          </form>
 
           <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 text-[13px] text-white/80 font-medium">
           
