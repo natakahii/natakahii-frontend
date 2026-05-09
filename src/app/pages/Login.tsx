@@ -30,11 +30,11 @@ export function Login() {
       alt: 'East African crafts and handmade goods'
     },
     {
-      url: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&q=80',
+      url: img01,
       alt: 'Online shopping and digital commerce'
     },
     {
-      url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=80',
+      url: img01,
       alt: 'Fashion retail and clothing store'
     }
   ];

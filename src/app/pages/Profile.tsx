@@ -39,7 +39,7 @@ export function Profile() {
     ? new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(new Date(user.created_at))
     : 'Recently';
 
-  const profileImage = user.profile_photo || 'https://images.unsplash.com/photo-1556452576-3e2d58536f62?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200';
+  const profileImage = user.profile_photo || '';
 
   const handleSaveProfile = async () => {
     setIsSaving(true);

@@ -1,6 +1,5 @@
 import { createBrowserRouter } from "react-router";
 import { Layout } from "./components/Layout";
-import { CustomerLayout } from "./components/CustomerLayout";
 import { Home } from "./pages/Home";
 import { Explore } from "./pages/Explore";
 import { ProductDetail } from "./pages/ProductDetail";
@@ -25,11 +24,6 @@ import { VendorAnalytics } from "./pages/vendor/VendorAnalytics";
 import { VendorDropoffs } from "./pages/vendor/VendorDropoffs";
 import { VendorSettings } from "./pages/vendor/VendorSettings";
 
-// Admin Flow
-//import { AdminLayout } from "./pages/admin/AdminLayout";
-//import { AdminDashboard } from "./pages/admin/AdminDashboard";
-//import { AdminCargo } from "./pages/admin/AdminCargo";
-
 // Error/404 Page
 import { NotFound } from "./pages/NotFound";
 import { RootLayout } from "./RootLayout";
@@ -39,95 +33,77 @@ export const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
-      // Visitor Flow
-  {
-    path: "/",
-    Component: Layout,
-    children: [
-      { index: true, Component: Home },
-      { path: "explore", Component: Explore },
-      { path: "product/:productIdentifier", Component: ProductDetail },
-      { path: "shop/:shopSlug", Component: ShopStorefront },
-      { path: "video", Component: VideoFeed },
       {
-        path: "vendor/apply",
+        path: "/",
+        Component: Layout,
+        children: [
+          // Public
+          { index: true, Component: Home },
+          { path: "explore", Component: Explore },
+          { path: "product/:productIdentifier", Component: ProductDetail },
+          { path: "shop/:shopSlug", Component: ShopStorefront },
+          { path: "video", Component: VideoFeed },
+
+          // Auth required customer routes
+          { path: "customer", element: <RequireAuth><CustomerHome /></RequireAuth> },
+          { path: "cart", element: <RequireAuth><Cart /></RequireAuth> },
+          { path: "checkout", element: <RequireAuth><Checkout /></RequireAuth> },
+          { path: "tracking", element: <RequireAuth><Tracking /></RequireAuth> },
+          { path: "profile", element: <RequireAuth><Profile /></RequireAuth> },
+
+          {
+            path: "vendor/apply",
+            element: (
+              <RequireAuth>
+                <RequireMissingRole role="vendor" redirectTo="/vendor/dashboard">
+                  <VendorApply />
+                </RequireMissingRole>
+              </RequireAuth>
+            ),
+          },
+          { path: "*", Component: NotFound },
+        ],
+      },
+      // Auth Flow (No nav/footer)
+      {
+        path: "/login",
         element: (
-          <RequireAuth>
-            <RequireMissingRole role="vendor" redirectTo="/vendor/dashboard">
-              <VendorApply />
-            </RequireMissingRole>
-          </RequireAuth>
+          <RedirectIfAuthenticated>
+            <Login />
+          </RedirectIfAuthenticated>
         ),
       },
-      { path: "*", Component: NotFound },
-    ],
-  },
-  // Auth Flow (No nav/footer)
-  {
-    path: "/login",
-    element: (
-      <RedirectIfAuthenticated>
-        <Login />
-      </RedirectIfAuthenticated>
-    ),
-  },
-  {
-    path: "/register",
-    element: (
-      <RedirectIfAuthenticated>
-        <Register />
-      </RedirectIfAuthenticated>
-    ),
-  },
-  {
-    path: "/forgot-password",
-    Component: ForgotPassword,
-  },
-  // Customer Authenticated Flow
-  {
-    path: "/",
-    element: (
-      <RequireAuth>
-        <CustomerLayout />
-      </RequireAuth>
-    ),
-    children: [
-      { path: "customer", Component: CustomerHome },
-      { path: "cart", Component: Cart },
-      { path: "checkout", Component: Checkout },
-      { path: "tracking", Component: Tracking },
-      { path: "profile", Component: Profile },
-    ],
-  },
-  // Vendor Authenticated Flow
-  {
-    path: "/vendor/dashboard",
-    element: (
-      <RequireRole roles={['vendor']} redirectTo="/vendor/apply">
-        <VendorLayout />
-      </RequireRole>
-    ),
-    children: [
-      { index: true, Component: VendorDashboardHome },
-      { path: "products", Component: VendorProducts },
-      { path: "products/add", Component: VendorProductForm },
-      { path: "products/:productId/edit", Component: VendorProductForm },
-      { path: "analytics", Component: VendorAnalytics },
-      { path: "dropoffs", Component: VendorDropoffs },
-      { path: "settings", Component: VendorSettings },
-      { path: "*", Component: VendorDashboardHome },
-    ],
-  },
-  // Admin Flow
- // {
-  //  path: "/admin",
-  //  Component: AdminLayout,
-  //  children: [
-    //  { index: true, Component: AdminDashboard },
-     // { path: "cargo", Component: AdminCargo },
-    //  { path: "*", Component: AdminDashboard },
-    //],
- // },
-  ] 
-}
+      {
+        path: "/register",
+        element: (
+          <RedirectIfAuthenticated>
+            <Register />
+          </RedirectIfAuthenticated>
+        ),
+      },
+      {
+        path: "/forgot-password",
+        Component: ForgotPassword,
+      },
+      // Vendor Authenticated Flow
+      {
+        path: "/vendor/dashboard",
+        element: (
+          <RequireRole roles={['vendor']} redirectTo="/vendor/apply">
+            <VendorLayout />
+          </RequireRole>
+        ),
+        children: [
+          { index: true, Component: VendorDashboardHome },
+          { path: "products", Component: VendorProducts },
+          { path: "products/add", Component: VendorProductForm },
+          { path: "products/:productId/edit", Component: VendorProductForm },
+          { path: "analytics", Component: VendorAnalytics },
+          { path: "dropoffs", Component: VendorDropoffs },
+          { path: "settings", Component: VendorSettings },
+          { path: "*", Component: VendorDashboardHome },
+        ],
+      },
+    ]
+  }
 ]);

@@ -1,5 +1,5 @@
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
-import { Cart, CartItem, getCart, addToCart as addToCartApi, updateCartItem as updateCartItemApi, removeFromCart as removeFromCartApi, clearCart as clearCartApi, getAvailableStock, getMaxQuantity } from '../services/cartService';
+import { Cart, CartItem, getCart, addToCart as addToCartApi, updateCartItem as updateCartItemApi, removeFromCart as removeFromCartApi, clearCart as clearCartApi, getMaxQuantity } from '../services/cartService';
 import { useAuth } from './AuthProvider';
 
 interface CartContextValue {
@@ -50,14 +50,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     void fetchCart();
   }, [isAuthenticated]);
 
+  const normalizeCart = (raw: Cart | null): Cart | null => {
+    if (!raw) return null;
+    const items = raw.items || [];
+    const total_items = raw.total_items ?? items.reduce((sum, item) => sum + item.quantity, 0);
+    const total_amount = raw.total_amount ?? items.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+    return { ...raw, items, total_items, total_amount };
+  };
+
   const refreshCart = async () => {
     if (!isAuthenticated) return;
-    
+
     try {
       setIsLoading(true);
       setError(null);
       const data = await getCart();
-      setCart(data);
+      setCart(normalizeCart(data));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to refresh cart';
       setError(message);
@@ -79,7 +87,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       setError(null);
       const response = await addToCartApi(productId, quantity, variantId);
-      setCart(response.cart);
+      setCart(normalizeCart(response.cart));
     } catch (err: any) {
       const errorMessage = err?.data?.message || err?.message || 'Failed to add item to cart';
       setError(errorMessage);
@@ -96,7 +104,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       throw new Error('Quantity must be at least 1');
     }
 
-    // Find the item to validate stock
     const item = cart?.items.find(i => i.id === itemId);
     if (!item) {
       throw new Error('Item not found in cart');
@@ -110,7 +117,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       setError(null);
       const response = await updateCartItemApi(itemId, quantity);
-      setCart(response.cart);
+      setCart(normalizeCart(response.cart));
     } catch (err: any) {
       const errorMessage = err?.data?.message || err?.message || 'Failed to update cart item';
       setError(errorMessage);
@@ -126,7 +133,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       setError(null);
       const response = await removeFromCartApi(itemId);
-      setCart(response.cart);
+      setCart(normalizeCart(response.cart));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to remove item from cart';
       setError(message);

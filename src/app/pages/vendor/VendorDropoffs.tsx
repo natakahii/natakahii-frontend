@@ -6,14 +6,10 @@ import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { MapPin, Plus, CheckCircle2, Clock, QrCode, Search, Navigation } from 'lucide-react';
+import { MapPin, Clock, QrCode, Search, Navigation } from 'lucide-react';
 import { fetchVendorDropoffs } from '../../services/dropoffService';
 
-const fulfillmentCenters = [
-  { id: 'fc-1', name: 'Nairobi Central FC', address: 'Tom Mboya St, CBD', distance: '2.5 km' },
-  { id: 'fc-2', name: 'Kilimani Dropoff Point', address: 'Argwings Kodhek Rd', distance: '4.1 km' },
-  { id: 'fc-3', name: 'Westlands Hub', address: 'Wood Avenue', distance: '5.8 km' },
-];
+const fulfillmentCenters: Array<{ id: string; name: string; address: string; distance: string }> = [];
 
 export function VendorDropoffs() {
   const [selectedCenter, setSelectedCenter] = useState<string | null>(null);
@@ -144,28 +140,32 @@ export function VendorDropoffs() {
                   <CardDescription>Choose where you want to drop off your products.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {fulfillmentCenters.map((fc) => (
-                      <div 
-                        key={fc.id}
-                        className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
-                          selectedCenter === fc.id 
-                            ? 'border-[var(--color-accent)] bg-[var(--color-accent-bg)]' 
-                            : 'border-[var(--color-border)] hover:border-[var(--color-primary)] bg-white'
-                        }`}
-                        onClick={() => setSelectedCenter(fc.id)}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <MapPin className={`w-5 h-5 ${selectedCenter === fc.id ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)]'}`} />
-                          <Badge variant="outline" className="bg-white/50 text-[10px] gap-1 border border-black/5 border-transparent">
-                            <Navigation className="w-3 h-3" /> {fc.distance}
-                          </Badge>
+                  {fulfillmentCenters.length === 0 ? (
+                    <div className="text-sm text-[var(--color-text-muted)]">No fulfillment centers are currently configured. Please check back later.</div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {fulfillmentCenters.map((fc) => (
+                        <div
+                          key={fc.id}
+                          className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
+                            selectedCenter === fc.id
+                              ? 'border-[var(--color-accent)] bg-[var(--color-accent-bg)]'
+                              : 'border-[var(--color-border)] hover:border-[var(--color-primary)] bg-white'
+                          }`}
+                          onClick={() => setSelectedCenter(fc.id)}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <MapPin className={`w-5 h-5 ${selectedCenter === fc.id ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)]'}`} />
+                            <Badge variant="outline" className="bg-white/50 text-[10px] gap-1 border border-black/5 border-transparent">
+                              <Navigation className="w-3 h-3" /> {fc.distance}
+                            </Badge>
+                          </div>
+                          <h4 className="font-bold text-[var(--color-text-heading)]">{fc.name}</h4>
+                          <p className="text-sm text-[var(--color-text-muted)] mt-1">{fc.address}</p>
                         </div>
-                        <h4 className="font-bold text-[var(--color-text-heading)]">{fc.name}</h4>
-                        <p className="text-sm text-[var(--color-text-muted)] mt-1">{fc.address}</p>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -185,31 +185,10 @@ export function VendorDropoffs() {
                     </Button>
                   </div>
                   
-                  {/* Mock added orders */}
+                  {/* Added orders will appear here after scanning/entering order IDs */}
                   <div className="border border-[var(--color-border)] rounded-md overflow-hidden bg-[var(--color-bg-page)]">
-                    <div className="p-2 border-b border-[var(--color-border)] bg-[var(--color-bg-card)] flex justify-between items-center">
-                      <span className="text-xs font-semibold text-[var(--color-text-heading)]">2 Orders Added</span>
-                      <Button variant="link" size="sm" className="h-6 text-[var(--color-error)] p-0">Clear All</Button>
-                    </div>
-                    <div className="p-3 space-y-2">
-                      <div className="flex justify-between items-center bg-white p-2 rounded border border-[var(--color-border)] shadow-sm">
-                        <div>
-                          <p className="font-mono text-sm font-bold text-[var(--color-text-heading)]">ORD-7291</p>
-                          <p className="text-xs text-[var(--color-text-muted)]">1 item • African Print Maxi Dress</p>
-                        </div>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 text-[var(--color-error)] p-0">
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <div className="flex justify-between items-center bg-white p-2 rounded border border-[var(--color-border)] shadow-sm">
-                        <div>
-                          <p className="font-mono text-sm font-bold text-[var(--color-text-heading)]">ORD-7292</p>
-                          <p className="text-xs text-[var(--color-text-muted)]">3 items • Mixed Cart</p>
-                        </div>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 text-[var(--color-error)] p-0">
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
+                    <div className="p-3 text-xs text-[var(--color-text-muted)] text-center">
+                      No orders added yet. Scan or enter order IDs above.
                     </div>
                   </div>
                 </CardContent>

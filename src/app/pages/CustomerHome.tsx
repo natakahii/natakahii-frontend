@@ -182,20 +182,7 @@ export function CustomerHome() {
           </div>
         </section>
 
-        {/* RECENTLY VIEWED (Simple Row) */}
-        <section>
-          <h2 className="text-[20px] font-bold text-[var(--color-text-heading)] mb-4 tracking-tight">Jump Back In</h2>
-          <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory -mx-4 px-4 lg:mx-0 lg:px-0">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="snap-start shrink-0 w-[140px] flex flex-col gap-2 group cursor-pointer">
-                <div className="w-full aspect-square rounded-[16px] overflow-hidden bg-[var(--color-bg-card)] border border-[var(--color-border)] group-hover:border-[var(--color-primary)] transition-colors">
-                  <ImageWithFallback src={`https://images.unsplash.com/photo-${i % 2 === 0 ? '1508418717103-8b56bcf03360' : '1595950653106-6c9ebd614d3a'}?crop=entropy&cs=tinysrgb&fit=crop&w=300&q=80`} alt="Recent" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                </div>
-                <div className="text-[13px] font-medium text-[var(--color-text-heading)] line-clamp-1 group-hover:text-[var(--color-primary)] transition-colors">Product Name {i}</div>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* RECENTLY VIEWED - hidden until recently-viewed API is available */}
 
         {/* BECOME A VENDOR CTA */}
         <section className="mt-4 mb-8">

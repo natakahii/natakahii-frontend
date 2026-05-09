@@ -50,25 +50,15 @@ export function AIAssistant() {
     setInput('');
     setIsTyping(true);
     
-    // Mock AI response
+    // TODO: Replace with real AI service integration
     setTimeout(() => {
       setIsTyping(false);
       setMessages(prev => [
-        ...prev, 
-        { 
+        ...prev,
+        {
           id: (Date.now() + 1).toString(),
-          role: 'assistant', 
-          text: "I found this highly-rated option from a verified vendor in Nairobi that matches your criteria:",
-          embed: {
-            type: 'product',
-            data: {
-              id: 'p1',
-              name: 'Samsung Galaxy S23 Ultra - 256GB',
-              price: formatCurrency(145000),
-              image: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&q=80&w=400',
-              vendor: 'Tech Haven Nairobi'
-            }
-          }
+          role: 'assistant',
+          text: "I'm looking through our marketplace for options that match what you described. In the meantime, you can browse the catalog or refine your request.",
         }
       ]);
     }, 2000);

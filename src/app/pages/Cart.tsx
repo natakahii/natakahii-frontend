@@ -11,9 +11,9 @@ import { toast } from '../components/ui/toast';
 import { getMaxQuantity } from '../services/cartService';
 
 const shippingProviders = [
-  { id: 'fargo', name: 'Fargo Courier', days: '1-2 Days', price: 450, logo: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?crop=entropy&cs=tinysrgb&fit=crop&w=100&q=80' },
-  { id: 'sendy', name: 'Sendy Express', days: 'Same Day', price: 800, logo: 'https://images.unsplash.com/photo-1580674285054-bed31e145f59?crop=entropy&cs=tinysrgb&fit=crop&w=100&q=80' },
-  { id: 'pickup', name: 'Vendor Pickup', days: 'Today', price: 0, logo: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?crop=entropy&cs=tinysrgb&fit=crop&w=100&q=80' }
+  { id: 'fargo', name: 'Fargo Courier', days: '1-2 Days', price: 450 },
+  { id: 'sendy', name: 'Sendy Express', days: 'Same Day', price: 800 },
+  { id: 'pickup', name: 'Vendor Pickup', days: 'Today', price: 0 }
 ];
 
 export function Cart() {
@@ -143,7 +143,7 @@ export function Cart() {
                 {items.map((item, idx) => {
                   const price = item.product?.price || 0;
                   const productName = item.product?.name || 'Product';
-                  const productImage = item.product?.images?.[0]?.image_path || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
+                  const productImage = item.product?.images?.[0]?.image_path || '';
                   const isItemUpdating = isUpdating === item.id;
                   const maxQuantity = getMaxQuantity(item);
 
@@ -257,8 +257,8 @@ export function Cart() {
                       <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${shippingMethod === provider.id ? 'border-[var(--color-primary)]' : 'border-[var(--color-text-muted)]'}`}>
                         {shippingMethod === provider.id && <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]" />}
                       </div>
-                      <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 shrink-0">
-                        <img src={provider.logo} alt={provider.name} className="w-full h-full object-cover" />
+                      <div className="w-8 h-8 rounded-full bg-[var(--color-primary-bg)] flex items-center justify-center shrink-0">
+                        <Truck className="w-4 h-4 text-[var(--color-primary)]" />
                       </div>
                       <div className="flex-1">
                         <div className="font-bold text-[14px] text-[var(--color-text-heading)]">{provider.name}</div>

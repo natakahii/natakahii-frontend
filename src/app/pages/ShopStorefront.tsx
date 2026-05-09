@@ -11,6 +11,8 @@ import { CatalogCategory, CatalogProduct, CatalogVendor, getProductDiscountPerce
 import { fetchVendorStorefront } from '../services/storefrontService';
 import { formatCurrency } from '../utils/currency';
 import { getProductPath } from '../utils/products';
+import { useCart } from '../providers/CartProvider';
+import { useToast } from '../components/ui/toast';
 
 export function ShopStorefront() {
   const { shopSlug } = useParams();
@@ -23,6 +25,8 @@ export function ShopStorefront() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const { addToCart } = useCart();
+  const { toast } = useToast();
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
   const previousFilterKey = useRef('');
 
@@ -453,7 +457,21 @@ export function ShopStorefront() {
                             {formatCurrency(price)}
                           </div>
                         </div>
-                        <Button variant="secondary" size="xs" className="w-8 h-8 rounded-full p-0 flex items-center justify-center bg-[var(--color-primary-bg)] border-transparent hover:bg-[var(--color-primary)] hover:text-white transition-colors group-hover:bg-[var(--color-primary)] group-hover:text-white">
+                        <Button
+                          variant="secondary"
+                          size="xs"
+                          className="w-8 h-8 rounded-full p-0 flex items-center justify-center bg-[var(--color-primary-bg)] border-transparent hover:bg-[var(--color-primary)] hover:text-white transition-colors group-hover:bg-[var(--color-primary)] group-hover:text-white"
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            try {
+                              await addToCart(product.id, 1);
+                              toast({ type: 'success', title: 'Added to cart!' });
+                            } catch (err: any) {
+                              toast({ type: 'error', title: err?.message || 'Failed to add to cart' });
+                            }
+                          }}
+                        >
                           <ShoppingCart className="w-4 h-4" />
                         </Button>
                       </div>

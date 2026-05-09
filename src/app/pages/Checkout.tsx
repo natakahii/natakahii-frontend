@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { ShieldCheck, Truck, CreditCard, Banknote, CheckCircle, ChevronRight, ChevronLeft, MapPin, Package, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { formatCurrency } from '../utils/currency';
+import { useCart } from '../providers/CartProvider';
 
-// Dummy data
 const shippingProviders = [
-  { id: 'fargo', name: 'Fargo Courier', level: 'Express', days: '1-2 Days', price: 450, logo: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?crop=entropy&cs=tinysrgb&fit=crop&w=100&q=80' },
-  { id: 'sendy', name: 'Sendy', level: 'Same Day', days: 'Today', price: 800, logo: 'https://images.unsplash.com/photo-1580674285054-bed31e145f59?crop=entropy&cs=tinysrgb&fit=crop&w=100&q=80' }
+  { id: 'fargo', name: 'Fargo Courier', level: 'Express', days: '1-2 Days', price: 450 },
+  { id: 'sendy', name: 'Sendy', level: 'Same Day', days: 'Today', price: 800 }
 ];
 
 export function Checkout() {
@@ -19,9 +20,10 @@ export function Checkout() {
   const [shippingMethod, setShippingMethod] = useState(shippingProviders[0].id);
   const [paymentMethod, setPaymentMethod] = useState('mpesa');
   const navigate = useNavigate();
+  const { items, totalAmount } = useCart();
 
-  const subtotal = 16900;
-  const platformFee = 338;
+  const subtotal = totalAmount || items.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+  const platformFee = Math.round(subtotal * 0.02);
   const shippingCost = shippingProviders.find(p => p.id === shippingMethod)?.price || 0;
   const total = subtotal + platformFee + shippingCost;
 
@@ -83,7 +85,7 @@ export function Checkout() {
           <div className="bg-white rounded-[24px] p-8 shadow-[var(--shadow-level-2)] border border-[var(--color-border)]/50 mb-10 max-w-sm mx-auto">
             <div className="text-[13px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Order Number</div>
             <div className="text-[32px] font-mono font-bold text-[var(--color-primary-darker)] tracking-widest">
-              #NH-8492-X
+              #{Math.random().toString(36).substring(2, 8).toUpperCase()}
             </div>
           </div>
 
@@ -211,8 +213,8 @@ export function Checkout() {
                               </div>
                             )}
                             
-                            <div className="w-12 h-12 rounded-[12px] overflow-hidden bg-[var(--color-bg-page)] mb-3 border border-[var(--color-border)]/50">
-                              <img src={provider.logo} alt={provider.name} className="w-full h-full object-cover" />
+                            <div className="w-12 h-12 rounded-[12px] bg-[var(--color-primary-bg)] flex items-center justify-center mb-3 border border-[var(--color-border)]/50">
+                              <Truck className="w-6 h-6 text-[var(--color-primary)]" />
                             </div>
                             
                             <h4 className="font-bold text-[16px] text-[var(--color-text-heading)] tracking-tight">{provider.name}</h4>
@@ -284,7 +286,7 @@ export function Checkout() {
                           <p className="text-[14px] text-[var(--color-text-muted)] leading-relaxed">
                             Enter your M-Pesa number. A prompt will appear on your phone to complete the payment.
                           </p>
-                          <Input type="tel" defaultValue="0712 345 678" className="font-mono text-[16px] focus:border-[#4CAF50] focus:ring-[#4CAF50] max-w-sm" />
+                          <Input type="tel" placeholder="+254 7XX XXX XXX" className="font-mono text-[16px] focus:border-[#4CAF50] focus:ring-[#4CAF50] max-w-sm" />
                         </motion.div>
                       )}
                     </div>
@@ -362,28 +364,22 @@ export function Checkout() {
               </h2>
 
               <div className="flex flex-col gap-4 mb-6 pb-6 border-b border-[var(--color-border)]">
-                {/* Micro Item Row */}
-                <div className="flex gap-3 items-center">
-                  <div className="w-12 h-12 rounded-[8px] bg-[var(--color-bg-card)] overflow-hidden border border-[var(--color-border)]/50 shrink-0">
-                    <ImageWithFallback src="https://images.unsplash.com/photo-1508418717103-8b56bcf03360?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" alt="Item" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-bold text-[var(--color-text-heading)] truncate">African Print Maxi Dress</div>
-                    <div className="text-[12px] text-[var(--color-text-muted)]">Qty: 1</div>
-                  </div>
-                  <div className="text-[13px] font-bold text-[var(--color-text-heading)]">{formatCurrency(4500)}</div>
-                </div>
-                {/* Micro Item Row */}
-                <div className="flex gap-3 items-center">
-                  <div className="w-12 h-12 rounded-[8px] bg-[var(--color-bg-card)] overflow-hidden border border-[var(--color-border)]/50 shrink-0">
-                    <ImageWithFallback src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" alt="Item" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-bold text-[var(--color-text-heading)] truncate">Handcrafted Leather Sneakers</div>
-                    <div className="text-[12px] text-[var(--color-text-muted)]">Qty: 2</div>
-                  </div>
-                  <div className="text-[13px] font-bold text-[var(--color-text-heading)]">{formatCurrency(12400)}</div>
-                </div>
+                {items.length === 0 ? (
+                  <div className="text-[13px] text-[var(--color-text-muted)]">Your cart is empty.</div>
+                ) : (
+                  items.map((item) => (
+                    <div key={item.id} className="flex gap-3 items-center">
+                      <div className="w-12 h-12 rounded-[8px] bg-[var(--color-bg-card)] overflow-hidden border border-[var(--color-border)]/50 shrink-0">
+                        <ImageWithFallback src={item.product?.images?.[0]?.image_path || ''} alt={item.product?.name || 'Item'} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] font-bold text-[var(--color-text-heading)] truncate">{item.product?.name || 'Product'}</div>
+                        <div className="text-[12px] text-[var(--color-text-muted)]">Qty: {item.quantity}</div>
+                      </div>
+                      <div className="text-[13px] font-bold text-[var(--color-text-heading)]">{formatCurrency((item.product?.price || 0) * item.quantity)}</div>
+                    </div>
+                  ))
+                )}
               </div>
 
               <div className="space-y-4 mb-6 pt-2">

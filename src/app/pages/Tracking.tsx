@@ -2,15 +2,14 @@ import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { ChevronLeft, Package, MapPin, Search, MessageSquare, AlertCircle, CheckCircle, Truck, Store, Map } from 'lucide-react';
+import { ChevronLeft, Package, MapPin, MessageSquare, AlertCircle, CheckCircle, Truck, Store, Map } from 'lucide-react';
 
 const trackingSteps = [
-  { id: 'placed', label: 'Order Placed', status: 'completed', time: 'Mon, 12 Oct 09:30 AM', icon: Package },
-  { id: 'dropoff', label: 'Vendor Dropoff', status: 'completed', time: 'Tue, 13 Oct 14:15 PM', icon: Store },
-  { id: 'quality', label: 'Quality Check', status: 'completed', time: 'Wed, 14 Oct 10:00 AM', icon: CheckCircle },
+  { id: 'placed', label: 'Order Placed', status: 'completed', time: 'Order confirmed', icon: Package },
+  { id: 'dropoff', label: 'Vendor Dropoff', status: 'completed', time: 'Handed to courier', icon: Store },
+  { id: 'quality', label: 'Quality Check', status: 'completed', time: 'Passed inspection', icon: CheckCircle },
   { id: 'transit', label: 'In Transit', status: 'active', time: 'In progress', icon: Truck },
-  { id: 'delivered', label: 'Delivered', status: 'upcoming', time: 'Estimated: Fri, 16 Oct', icon: MapPin },
+  { id: 'delivered', label: 'Delivered', status: 'upcoming', time: 'Estimated soon', icon: MapPin },
 ];
 
 export function Tracking() {
@@ -27,7 +26,7 @@ export function Tracking() {
             <div>
               <h1 className="text-[24px] md:text-[28px] font-bold text-[var(--color-text-heading)] tracking-tight">Track Order</h1>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-[14px] font-mono font-bold text-[var(--color-text-muted)]">#NH-8492-X</span>
+                <span className="text-[14px] font-mono font-bold text-[var(--color-text-muted)]">#ORDER-ID</span>
                 <span className="w-1 h-1 rounded-full bg-[var(--color-text-muted)]" />
                 <Badge variant="hot-deal" className="bg-[var(--color-primary)]">In Transit</Badge>
               </div>
@@ -57,14 +56,14 @@ export function Tracking() {
               </h3>
               
               <div className="flex gap-4 mb-4">
-                <div className="w-16 h-16 rounded-[12px] overflow-hidden bg-[var(--color-bg-card)] border border-[var(--color-border)] shrink-0">
-                  <ImageWithFallback src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" alt="Item" className="w-full h-full object-cover" />
+                <div className="w-16 h-16 rounded-[12px] bg-[var(--color-primary-bg)] border border-[var(--color-border)] shrink-0 flex items-center justify-center">
+                  <Package className="w-8 h-8 text-[var(--color-primary)]" />
                 </div>
                 <div className="flex flex-col justify-center">
-                  <div className="font-bold text-[14px] text-[var(--color-text-heading)] leading-tight mb-1">Handcrafted Leather Sneakers</div>
-                  <div className="text-[12px] text-[var(--color-text-muted)]">Qty: 2 • Size 42 • Brown</div>
+                  <div className="font-bold text-[14px] text-[var(--color-text-heading)] leading-tight mb-1">Your Order</div>
+                  <div className="text-[12px] text-[var(--color-text-muted)]">Details will appear here</div>
                   <div className="text-[12px] font-bold text-[var(--color-primary)] mt-1 flex items-center gap-1">
-                    <Store className="w-3 h-3" /> Kazi Kicks
+                    <Store className="w-3 h-3" /> Verified Vendor
                   </div>
                 </div>
               </div>
@@ -73,12 +72,12 @@ export function Tracking() {
                 <div>
                   <div className="text-[var(--color-text-muted)] mb-1">Courier</div>
                   <div className="font-bold text-[var(--color-text-heading)] flex items-center gap-1">
-                    Fargo Courier <CheckCircle className="w-3 h-3 text-[var(--color-primary)]" />
+                    Assigned Courier <CheckCircle className="w-3 h-3 text-[var(--color-primary)]" />
                   </div>
                 </div>
                 <div>
                   <div className="text-[var(--color-text-muted)] mb-1">Est. Delivery</div>
-                  <div className="font-bold text-[var(--color-text-heading)]">Fri, 16 Oct</div>
+                  <div className="font-bold text-[var(--color-text-heading)]">Pending</div>
                 </div>
               </div>
             </div>
@@ -128,7 +127,7 @@ export function Tracking() {
                         
                         {isActive && (
                           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-3 bg-[var(--color-bg-page)] rounded-[12px] p-3 border border-[var(--color-border)] text-[13px] text-[var(--color-text-muted)] leading-relaxed">
-                            Package has arrived at the Nairobi sorting facility and is out for delivery. Our rider will contact you shortly.
+                            Tracking updates will appear here once your order is in transit.
                           </motion.div>
                         )}
                       </div>
@@ -146,8 +145,8 @@ export function Tracking() {
               
               {/* Overlay Map UI */}
               <div className="absolute inset-0 bg-[#E5E9EC]">
-                {/* Abstract map lines */}
-                <div className="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080')] bg-cover bg-center mix-blend-multiply filter grayscale" />
+                {/* Abstract map background */}
+                <div className="absolute inset-0 opacity-20 bg-[var(--color-primary-bg)]" />
                 
                 {/* Map route mock */}
                 <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">

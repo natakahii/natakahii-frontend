@@ -317,7 +317,7 @@ export function Home() {
         </section>
 
         <section className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-[var(--color-primary-darker)] to-[var(--color-primary)] text-white p-8 md:p-12 shadow-[var(--shadow-level-2)]">
-          <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-[url('https://images.unsplash.com/photo-1556452576-3e2d58536f62?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhZnJpY2FuJTIwbWFuJTIwcG9ydHJhaXR8ZW58MXx8fHwxNzc2MjEyMDM1fDA&ixlib=rb-4.1.0&q=80&w=1080')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-white/10 to-transparent opacity-40 mix-blend-overlay"></div>
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-primary-darker)] via-[var(--color-primary-darker)]/80 to-transparent"></div>
 
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 justify-between">
@@ -392,7 +392,7 @@ export function Home() {
                 <Link key={video.id} to={`/video?v=${video.id}`} className="relative aspect-[9/16] rounded-[16px] overflow-hidden bg-[var(--color-bg-card)] group cursor-pointer shadow-[var(--shadow-level-1)] block">
                   {/* Video Thumbnail or Placeholder */}
                   <ImageWithFallback
-                    src={video.product?.images?.[0]?.image_path || 'https://images.unsplash.com/photo-1508418717103-8b56bcf03360?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&w=600'}
+                    src={video.product?.images?.[0]?.image_path || ''}
                     alt={video.title || 'Video'}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
@@ -417,7 +417,7 @@ export function Home() {
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-6 h-6 rounded-full overflow-hidden border border-white/50">
                         <ImageWithFallback
-                          src={video.vendor?.logo || 'https://images.unsplash.com/photo-1556452576-3e2d58536f62?crop=entropy&cs=tinysrgb&fit=facearea&facepad=2&w=100&h=100&q=80'}
+                          src={video.vendor?.logo || ''}
                           alt={video.vendor?.shop_name || 'Vendor'}
                         />
                       </div>

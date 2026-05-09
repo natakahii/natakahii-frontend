@@ -18,6 +18,8 @@ import {
 } from '../services/productService';
 import { formatCurrency } from '../utils/currency';
 import { getProductPath } from '../utils/products';
+import { useCart } from '../providers/CartProvider';
+import { useToast } from '../components/ui/toast';
 
 function parseNumberParam(value: string | null): number | undefined {
   if (!value) {
@@ -41,6 +43,8 @@ export function Explore() {
   const [draftMinPrice, setDraftMinPrice] = useState(searchParams.get('min_price') || '');
   const [draftMaxPrice, setDraftMaxPrice] = useState(searchParams.get('max_price') || '');
   const previousFilterKey = useRef('');
+  const { addToCart } = useCart();
+  const { toast } = useToast();
 
   const currentPage = Math.max(1, Number(searchParams.get('page') || '1') || 1);
   const categoryParam = searchParams.get('category') || '';
@@ -525,7 +529,21 @@ export function Explore() {
                                 {formatCurrency(price)}
                               </div>
                             </div>
-                            <Button variant="secondary" size="xs" className="w-8 h-8 rounded-full p-0 flex items-center justify-center bg-[var(--color-primary-bg)] border-transparent hover:bg-[var(--color-primary)] hover:text-white transition-colors group-hover:bg-[var(--color-primary)] group-hover:text-white">
+                            <Button
+                              variant="secondary"
+                              size="xs"
+                              className="w-8 h-8 rounded-full p-0 flex items-center justify-center bg-[var(--color-primary-bg)] border-transparent hover:bg-[var(--color-primary)] hover:text-white transition-colors group-hover:bg-[var(--color-primary)] group-hover:text-white"
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                try {
+                                  await addToCart(product.id, 1);
+                                  toast({ type: 'success', title: 'Added to cart!' });
+                                } catch (err: any) {
+                                  toast({ type: 'error', title: err?.message || 'Failed to add to cart' });
+                                }
+                              }}
+                            >
                               <ShoppingCart className="w-4 h-4" />
                             </Button>
                           </div>

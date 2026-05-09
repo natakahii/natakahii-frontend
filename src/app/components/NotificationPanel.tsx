@@ -2,54 +2,25 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Bell, X, CheckCircle2, Box, MessageSquare, AlertCircle, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { Button } from "./ui/button";
 
 import { EmptyState } from "./ui/empty-state";
-import { formatCurrency } from "../utils/currency";
+
+interface NotificationItem {
+  id: number;
+  type: string;
+  title: string;
+  desc: string;
+  time: string;
+  unread: boolean;
+  group: string;
+}
 
 interface NotificationPanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const mockNotifications = [
-  {
-    id: 1,
-    type: "order",
-    title: "Order #ORD-9982 Shipped",
-    desc: "Your order is on the way via Delivery Run #RUN-8920.",
-    time: "10m ago",
-    unread: true,
-    group: "today",
-  },
-  {
-    id: 2,
-    type: "message",
-    title: "New Message from Vendor",
-    desc: "Tech Haven Nairobi has responded to your query.",
-    time: "2h ago",
-    unread: true,
-    group: "today",
-  },
-  {
-    id: 3,
-    type: "alert",
-    title: "Price Drop Alert",
-    desc: "Samsung Galaxy S23 is now 10% cheaper.",
-    time: "Yesterday, 14:30",
-    unread: false,
-    group: "yesterday",
-  },
-  {
-    id: 4,
-    type: "success",
-    title: "Refund Processed",
-    desc: `${formatCurrency(4500)} has been credited to your wallet.`,
-    time: "Oct 22, 2023",
-    unread: false,
-    group: "older",
-  },
-];
+const mockNotifications: NotificationItem[] = [];
 
 export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   const [notifications, setNotifications] = useState(mockNotifications);
