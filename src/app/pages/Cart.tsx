@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from '../components/ui/button';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { Minus, Plus, Trash2, ShieldCheck, Truck, ChevronRight, AlertCircle, Loader, Info } from 'lucide-react';
+import { Minus, Plus, Trash2, ShieldCheck, Truck, ChevronRight, AlertCircle, Loader } from 'lucide-react';
 import { EmptyState } from '../components/ui/empty-state';
 import { formatCurrency } from '../utils/currency';
 import { useCart } from '../providers/CartProvider';
 import { useAuth } from '../providers/AuthProvider';
 import { toast } from '../components/ui/toast';
-import { getAvailableStock, getMaxQuantity } from '../services/cartService';
+import { getMaxQuantity } from '../services/cartService';
 
 const shippingProviders = [
   { id: 'fargo', name: 'Fargo Courier', days: '1-2 Days', price: 450, logo: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?crop=entropy&cs=tinysrgb&fit=crop&w=100&q=80' },
@@ -145,6 +145,7 @@ export function Cart() {
                   const productName = item.product?.name || 'Product';
                   const productImage = item.product?.images?.[0]?.image_path || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080';
                   const isItemUpdating = isUpdating === item.id;
+                  const maxQuantity = getMaxQuantity(item);
 
                   return (
                     <div key={item.id} className={`grid grid-cols-1 sm:grid-cols-12 gap-4 items-start sm:items-center ${idx !== items.length - 1 ? 'pb-6 border-b border-[var(--color-border)]/50' : ''}`}>
@@ -178,11 +179,16 @@ export function Cart() {
                           <button 
                             onClick={() => handleUpdateQuantity(item.id, 1)}
                             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white hover:shadow-sm text-[var(--color-text-heading)] transition-all disabled:opacity-50"
-                            disabled={isItemUpdating}
+                            disabled={isItemUpdating || item.quantity >= maxQuantity}
                           >
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>
+                        {maxQuantity > 0 && (
+                          <span className="text-[11px] text-[var(--color-text-muted)] mt-1 text-center block">
+                            {maxQuantity} available
+                          </span>
+                        )}
                       </div>
                       
                       {/* Price (Desktop) */}

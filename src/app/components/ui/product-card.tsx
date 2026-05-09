@@ -10,23 +10,10 @@ import { getProductPath } from "../../utils/products";
 import { useAuth } from "../../providers/AuthProvider";
 import { useToast } from "../../components/ui/toast";
 import { likeProduct, unlikeProduct } from "../../services/videoFeedService";
+import { CatalogProduct, getProductPrimaryImage } from "../../services/productService";
 
 interface ProductCardProps {
-  product: {
-    id: string | number;
-    slug?: string | null;
-    title: string;
-    vendor?: string;
-    price: string | number;
-    rating?: number;
-    img: string;
-    is_liked?: boolean;
-    vendor_location?: {
-      street?: string | null;
-      region?: string | null;
-      city?: string | null;
-    };
-  };
+  product: CatalogProduct & { is_liked?: boolean };
   onAddToCart?: (e: React.MouseEvent) => void;
   onLikeToggle?: (isLiked: boolean) => void;
 }
@@ -41,8 +28,8 @@ export function ProductCard({ product, onAddToCart, onLikeToggle }: ProductCardP
   const { toast } = useToast();
 
   // Build location string from vendor location fields
-  const locationText = product.vendor_location
-    ? [product.vendor_location.street, product.vendor_location.region, product.vendor_location.city]
+  const locationText = product.vendor
+    ? [product.vendor.street, product.vendor.region, product.vendor.city]
         .filter(Boolean)
         .join(', ')
     : null;
@@ -98,9 +85,9 @@ export function ProductCard({ product, onAddToCart, onLikeToggle }: ProductCardP
         <Card className="group cursor-pointer hover:shadow-[var(--shadow-level-2)] transition-shadow h-full flex flex-col border border-[var(--color-border)]/60">
           <div className="relative aspect-square overflow-hidden bg-[var(--color-bg-card)] rounded-t-[16px]">
             <ImageWithFallback 
-              src={product.img} 
-              alt={product.title} 
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+              src={getProductPrimaryImage(product)} 
+              alt={product.name} 
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
             />
             <button 
               onClick={handleLike}
@@ -115,15 +102,15 @@ export function ProductCard({ product, onAddToCart, onLikeToggle }: ProductCardP
           </div>
           <div className="p-4 flex flex-col flex-1">
             <div className="text-[12px] text-[var(--color-text-muted)] mb-1 flex items-center justify-between">
-              {product.vendor && (
+              {product.vendor?.shop_name && (
                 <span className="truncate flex items-center gap-1">
-                  {product.vendor}
+                  {product.vendor.shop_name}
                   <CheckCircle className="w-3 h-3 text-[var(--color-primary)] inline" />
                 </span>
               )}
-              {product.rating && (
+              {product.reviews_avg_rating != null && (
                 <span className="flex items-center gap-1 text-[var(--color-text-heading)] font-medium">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /> {product.rating}
+                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /> {product.reviews_avg_rating.toFixed(1)}
                 </span>
               )}
             </div>
@@ -134,12 +121,10 @@ export function ProductCard({ product, onAddToCart, onLikeToggle }: ProductCardP
                 <span className="truncate">{locationText}</span>
               </div>
             )}
-            <h3 className="font-semibold text-[14px] text-[var(--color-text-heading)] line-clamp-2 mb-2 group-hover:text-[var(--color-primary)] transition-colors">
-              {product.title}
-            </h3>
+            <h4 className="text-[13px] font-bold text-[var(--color-text-heading)] truncate group-hover:text-[var(--color-primary)] transition-colors">{product.name}</h4>
             <div className="mt-auto flex items-end justify-between relative">
               <div className="text-[18px] font-bold text-[var(--color-accent)] tracking-tight">
-                {typeof product.price === 'number' ? formatCurrency(product.price) : product.price}
+                {formatCurrency(product.effective_price)}
               </div>
               <motion.div animate={cartControls}>
                 <Button 

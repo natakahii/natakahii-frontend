@@ -1,19 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { motion } from 'motion/react';
-import { 
-  Play, Heart, Star, ShoppingCart, Search, 
-  Smartphone, Shirt, Home as HomeIcon, Watch, Sparkles, Zap, ChevronRight, CheckCircle, Package, Store
+import {
+  Search,
+  Smartphone, Shirt, Home as HomeIcon, Watch, Sparkles, Zap, ChevronRight, Store
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { ProductCard } from '../components/ui/product-card';
 import { formatCurrency } from '../utils/currency';
 import { getProductPath } from '../utils/products';
+import { useAuth } from '../providers/AuthProvider';
+import { useCart } from '../providers/CartProvider';
+import { useToast } from '../components/ui/toast';
+import { fetchProducts, CatalogProduct, getProductPrimaryImage } from '../services/productService';
 
-// Reusing dummy data from Home
 const categories = [
   { name: 'Fashion', icon: Shirt },
   { name: 'Electronics', icon: Smartphone },
@@ -23,15 +24,44 @@ const categories = [
   { name: 'Sports', icon: Zap },
 ];
 
-const mockProducts = [
-  { id: 1, title: "African Print Maxi Dress", vendor: "Nairobi Styles", price: 4500, rating: 4.8, likes: 234, img: "https://images.unsplash.com/photo-1508418717103-8b56bcf03360?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
-  { id: 2, title: "Handcrafted Leather Sneakers", vendor: "Kazi Kicks", price: 6200, rating: 4.9, likes: 512, img: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
-  { id: 3, title: "Samsung Galaxy S24 Ultra", vendor: "Tech Hub KE", price: 145000, rating: 4.7, likes: 120, img: "https://images.unsplash.com/photo-1684132925971-31c258718bd1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
-  { id: 4, title: "Organic Shea Butter 500g", vendor: "Natural Essence", price: 1200, rating: 4.9, likes: 890, img: "https://images.unsplash.com/photo-1643168343279-3f93c2e592ef?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080" },
-];
-
 export function CustomerHome() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { addToCart } = useCart();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoading(true);
+    setError(null);
+
+    fetchProducts({ per_page: 8, status: 'active' })
+      .then((response) => {
+        if (!isMounted) return;
+        setProducts(response.products);
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        setError(err?.message || 'Failed to load products');
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => { isMounted = false; };
+  }, []);
+
+  const handleAddToCart = async (product: CatalogProduct) => {
+    try {
+      await addToCart(product.id, 1);
+      toast({ type: 'success', title: 'Added to cart!' });
+    } catch (err: any) {
+      toast({ type: 'error', title: err?.message || 'Failed to add to cart' });
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8 lg:gap-16 pb-20">
@@ -42,7 +72,7 @@ export function CustomerHome() {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
             <div>
               <h1 className="text-[32px] md:text-[40px] font-bold text-[var(--color-text-heading)] tracking-tight">
-                Karibu, <span className="text-[var(--color-primary)]">Jane!</span> 👋
+                Karibu, <span className="text-[var(--color-primary)]">{user?.name || 'there'}!</span> 👋
               </h1>
               <p className="text-[16px] text-[var(--color-text-muted)] mt-1">Ready to discover something new today?</p>
             </div>
@@ -77,17 +107,29 @@ export function CustomerHome() {
             </div>
 
             <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar w-full relative z-10">
-              {mockProducts.slice(0,3).map(prod => (
-                <Link to={getProductPath(prod)} key={prod.id} className="shrink-0 w-[200px] bg-white rounded-[12px] p-2 flex gap-3 items-center shadow-sm hover:shadow-md transition-shadow group border border-[var(--color-border)]/50">
-                  <div className="w-16 h-16 rounded-[8px] overflow-hidden bg-[var(--color-bg-page)] shrink-0">
-                    <ImageWithFallback src={prod.img} alt={prod.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+              {isLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="shrink-0 w-[200px] bg-white rounded-[12px] p-2 flex gap-3 items-center shadow-sm border border-[var(--color-border)]/50">
+                    <div className="w-16 h-16 rounded-[8px] bg-[var(--color-bg-page)] shrink-0 animate-pulse" />
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="h-3 bg-[var(--color-bg-page)] rounded animate-pulse w-3/4" />
+                      <div className="h-3 bg-[var(--color-bg-page)] rounded animate-pulse w-1/2" />
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-[13px] font-bold text-[var(--color-text-heading)] truncate group-hover:text-[var(--color-primary)] transition-colors">{prod.title}</h4>
-                    <p className="text-[14px] font-bold text-[var(--color-accent)] mt-1">{formatCurrency(prod.price)}</p>
-                  </div>
-                </Link>
-              ))}
+                ))
+              ) : (
+                products.slice(0,3).map(prod => (
+                  <Link to={getProductPath(prod)} key={prod.id} className="shrink-0 w-[200px] bg-white rounded-[12px] p-2 flex gap-3 items-center shadow-sm hover:shadow-md transition-shadow group border border-[var(--color-border)]/50">
+                    <div className="w-16 h-16 rounded-[8px] overflow-hidden bg-[var(--color-bg-page)] shrink-0">
+                      <ImageWithFallback src={getProductPrimaryImage(prod)} alt={prod.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-[13px] font-bold text-[var(--color-text-heading)] truncate group-hover:text-[var(--color-primary)] transition-colors">{prod.name}</h4>
+                      <p className="text-[14px] font-bold text-[var(--color-accent)] mt-1">{formatCurrency(prod.effective_price)}</p>
+                    </div>
+                  </Link>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -122,10 +164,21 @@ export function CustomerHome() {
               See All <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-[12px] text-red-700 text-sm">
+              {error}
+            </div>
+          )}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {mockProducts.map((prod) => (
-              <ProductCard key={prod.id} product={prod} />
-            ))}
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="aspect-square bg-[var(--color-bg-card)] rounded-[16px] animate-pulse border border-[var(--color-border)]/60" />
+              ))
+            ) : (
+              products.map((prod) => (
+                <ProductCard key={prod.id} product={prod} onAddToCart={() => handleAddToCart(prod)} />
+              ))
+            )}
           </div>
         </section>
 

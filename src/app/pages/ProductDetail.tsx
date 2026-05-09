@@ -11,6 +11,7 @@ import { FloatingCart } from '../components/ui/floating-cart';
 import { Skeleton } from '../components/ui/skeleton';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { useToast } from '../components/ui/toast';
+import { useCart } from '../providers/CartProvider';
 import {
   CatalogProduct,
   CatalogProductVariant,
@@ -193,12 +194,26 @@ export function ProductDetail() {
   const reviewsCount = product?.reviews_count || recentReviews.length;
   const vendorStorefrontPath = getVendorStorefrontPath(product?.vendor);
 
-  const handleCatalogOnlyAction = () => {
-    toast({
-      type: 'info',
-      title: 'Catalog is live',
-      message: 'Real cart and checkout wiring are the next step, so this action is coming next.',
-    });
+  const { addToCart: addToCartContext } = useCart();
+
+  const handleAddToCart = async () => {
+    if (!product) return;
+    try {
+      await addToCartContext(product.id, qty, selectedVariant?.id);
+      toast({ type: 'success', title: 'Added to cart!' });
+    } catch (err: any) {
+      toast({ type: 'error', title: err?.message || 'Failed to add to cart' });
+    }
+  };
+
+  const handleBuyNow = async () => {
+    if (!product) return;
+    try {
+      await addToCartContext(product.id, qty, selectedVariant?.id);
+      navigate('/cart');
+    } catch (err: any) {
+      toast({ type: 'error', title: err?.message || 'Failed to add to cart' });
+    }
   };
 
   if (isLoading) {
@@ -248,7 +263,7 @@ export function ProductDetail() {
 
   return (
     <div className="container mx-auto px-4 py-8 lg:py-12">
-      <FloatingCart price={formatCurrency(totalPrice)} onAddToCart={handleCatalogOnlyAction} />
+      <FloatingCart price={formatCurrency(totalPrice)} onAddToCart={handleAddToCart} />
 
       <div className="text-[13px] text-[var(--color-text-muted)] mb-8 flex flex-wrap items-center gap-2 font-medium">
         <Link to="/" className="hover:text-[var(--color-primary)]">Home</Link>
@@ -371,25 +386,27 @@ export function ProductDetail() {
               <div className="flex items-center bg-[var(--color-bg-card)] rounded-full h-14 p-1 border-2 border-[var(--color-border)] w-fit shrink-0">
                 <button
                   onClick={() => setQty((currentQty) => Math.max(1, currentQty - 1))}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-text-heading)] hover:bg-white hover:shadow-sm transition-all"
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-text-heading)] hover:bg-white hover:shadow-sm transition-all disabled:opacity-40"
+                  disabled={qty <= 1}
                 >
                   <Minus className="w-5 h-5" />
                 </button>
                 <span className="w-8 text-center font-bold text-[16px] text-[var(--color-text-heading)]">{qty}</span>
                 <button
-                  onClick={() => setQty((currentQty) => currentQty + 1)}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-text-heading)] hover:bg-white hover:shadow-sm transition-all"
+                  onClick={() => setQty((currentQty) => Math.min(currentStock, currentQty + 1))}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-text-heading)] hover:bg-white hover:shadow-sm transition-all disabled:opacity-40"
+                  disabled={qty >= currentStock}
                 >
                   <Plus className="w-5 h-5" />
                 </button>
               </div>
 
-              <Button variant="primary" size="l" className="flex-1 shadow-md" onClick={handleCatalogOnlyAction} disabled={currentStock <= 0}>
+              <Button variant="primary" size="l" className="flex-1 shadow-md" onClick={handleAddToCart} disabled={currentStock <= 0}>
                 Add to Cart
               </Button>
             </div>
 
-            <Button variant="primary" size="l" className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] shadow-[var(--shadow-level-2)] border-none text-[18px]" onClick={handleCatalogOnlyAction} disabled={currentStock <= 0}>
+            <Button variant="primary" size="l" className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] shadow-[var(--shadow-level-2)] border-none text-[18px]" onClick={handleBuyNow} disabled={currentStock <= 0}>
               Buy Now
             </Button>
           </div>
