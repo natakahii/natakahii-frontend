@@ -4,11 +4,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { ShieldCheck, Truck, CreditCard, Banknote, CheckCircle, ChevronRight, ChevronLeft, MapPin, Package, Info } from 'lucide-react';
+import { ShieldCheck, Truck, CreditCard, Banknote, CheckCircle, ChevronRight, ChevronLeft, MapPin, Package, Info, Loader2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { formatCurrency } from '../utils/currency';
 import { useCart } from '../providers/CartProvider';
+import { orderService } from '../services/orderService';
 
 const shippingProviders = [
   { id: 'fargo', name: 'Fargo Courier', level: 'Express', days: '1-2 Days', price: 450 },
@@ -19,46 +20,159 @@ export function Checkout() {
   const [step, setStep] = useState(1);
   const [shippingMethod, setShippingMethod] = useState(shippingProviders[0].id);
   const [paymentMethod, setPaymentMethod] = useState('mpesa');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [orderResult, setOrderResult] = useState<any>(null);
   const navigate = useNavigate();
   const { items, totalAmount } = useCart();
+
+  // Delivery form state
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [region, setRegion] = useState('Nairobi');
+  const [ward, setWard] = useState('');
+  const [street, setStreet] = useState('');
+
+  // Payment form state
+  const [mpesaPhone, setMpesaPhone] = useState('');
+  const [pin, setPin] = useState('');
+  const [showPinModal, setShowPinModal] = useState(false);
 
   const subtotal = totalAmount || items.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
   const platformFee = Math.round(subtotal * 0.02);
   const shippingCost = shippingProviders.find(p => p.id === shippingMethod)?.price || 0;
   const total = subtotal + platformFee + shippingCost;
 
+  const isMobileMoney = ['mpesa', 'airtel_money', 'tigo_pesa', 'halopesa'].includes(paymentMethod);
+
   const handleNext = () => {
-    if (step === 2) {
-      // Trigger confetti on success
-      const duration = 3 * 1000;
-      const end = Date.now() + duration;
-
-      const frame = () => {
-        confetti({
-          particleCount: 5,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: ['#142490', '#F05A28']
-        });
-        confetti({
-          particleCount: 5,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: ['#142490', '#F05A28']
-        });
-
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      };
-      frame();
+    if (step === 1) {
+      if (!firstName || !lastName || !phone || !ward || !street) {
+        setError('Please fill in all required delivery fields');
+        return;
+      }
+      setError('');
+      setStep(2);
+      return;
     }
-    setStep(s => Math.min(s + 1, 3));
   };
 
-  const handleBack = () => setStep(s => Math.max(s - 1, 1));
+  const handleBack = () => {
+    setStep(s => Math.max(s - 1, 1));
+    setError('');
+  };
+
+  const handlePlaceOrder = async () => {
+    if (items.length === 0) {
+      setError('Your cart is empty');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+
+    try {
+      const cartItems = items.map(item => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+      }));
+
+      const deliveryAddress = {
+        street,
+        city: ward,
+        region,
+      };
+
+      const phoneNumber = isMobileMoney ? (mpesaPhone || phone) : phone;
+
+      const payload: any = {
+        items: cartItems,
+        delivery_address: deliveryAddress,
+        phone_number: phoneNumber,
+        payment_method: paymentMethod,
+      };
+
+      if (isMobileMoney && pin) {
+        payload.pin = pin;
+      }
+
+      const result = await orderService.createOrder(payload);
+
+      if (result.requires_pin) {
+        setShowPinModal(true);
+        setLoading(false);
+        return;
+      }
+
+      setOrderResult(result);
+      triggerConfetti();
+      setStep(3);
+    } catch (err: any) {
+      if (err.message?.includes('PIN is required')) {
+        setShowPinModal(true);
+      } else {
+        setError(err.message || 'Order failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmPin = async () => {
+    if (!pin || pin.length < 4) {
+      setError('Please enter a valid PIN');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const phoneNumber = mpesaPhone || phone;
+      const result = await orderService.confirmPayment(orderResult?.order?.id || 0, {
+        pin,
+        phone_number: phoneNumber,
+        payment_method: paymentMethod,
+      });
+
+      setOrderResult(result);
+      setShowPinModal(false);
+      triggerConfetti();
+      setStep(3);
+    } catch (err: any) {
+      setError(err.message || 'Payment confirmation failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const triggerConfetti = () => {
+    const duration = 3 * 1000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+      confetti({
+        particleCount: 5,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: ['#142490', '#F05A28']
+      });
+      confetti({
+        particleCount: 5,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: ['#142490', '#F05A28']
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+    frame();
+  };
 
   if (step === 3) {
     return (
@@ -73,11 +187,11 @@ export function Checkout() {
             <CheckCircle className="w-16 h-16 text-green-500 relative z-10" />
             <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-20" />
           </motion.div>
-          
+
           <h1 className="text-[36px] md:text-[48px] font-bold text-[var(--color-text-heading)] mb-4 tracking-tight">
             Order Confirmed!
           </h1>
-          
+
           <p className="text-[18px] text-[var(--color-text-muted)] mb-8 max-w-md mx-auto">
             Your payment is secure in escrow. The vendor has been notified to prepare your order.
           </p>
@@ -85,12 +199,12 @@ export function Checkout() {
           <div className="bg-white rounded-[24px] p-8 shadow-[var(--shadow-level-2)] border border-[var(--color-border)]/50 mb-10 max-w-sm mx-auto">
             <div className="text-[13px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-2">Order Number</div>
             <div className="text-[32px] font-mono font-bold text-[var(--color-primary-darker)] tracking-widest">
-              #{Math.random().toString(36).substring(2, 8).toUpperCase()}
+              #{orderResult?.order?.order_number || 'PENDING'}
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button onClick={() => navigate('/tracking')} variant="primary" size="xl" className="w-full sm:w-auto bg-[var(--color-primary)] shadow-md px-10">
+            <Button onClick={() => navigate(`/orders/${orderResult?.order?.id}`)} variant="primary" size="xl" className="w-full sm:w-auto bg-[var(--color-primary)] shadow-md px-10">
               <Package className="w-5 h-5 mr-2" /> Track Your Order
             </Button>
             <Button onClick={() => navigate('/customer')} variant="secondary" size="xl" className="w-full sm:w-auto bg-white px-10 font-bold">
@@ -104,13 +218,13 @@ export function Checkout() {
 
   return (
     <div className="bg-[var(--color-bg-page)] min-h-[calc(100vh-72px)] py-8 lg:py-12 relative overflow-hidden">
-      
+
       {/* Decorative background shapes */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[var(--color-primary)]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[var(--color-accent)]/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4 pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
-        
+
         {/* PROGRESS BAR */}
         <div className="flex items-center justify-center mb-10">
           <div className="flex items-center gap-4 w-full max-w-md">
@@ -127,11 +241,11 @@ export function Checkout() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-          
+
           {/* MAIN CONTENT */}
           <div className="w-full lg:w-2/3">
             <AnimatePresence mode="wait" initial={false}>
-              
+
               {/* STEP 1: DELIVERY */}
               {step === 1 && (
                 <motion.div
@@ -156,38 +270,39 @@ export function Checkout() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-1.5">
                         <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">First Name</label>
-                        <Input placeholder="Jane" required className="focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
+                        <Input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Jane" required className="focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Last Name</label>
-                        <Input placeholder="Doe" required className="focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
+                        <Input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Doe" required className="focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
                       <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Phone Number</label>
-                      <Input type="tel" placeholder="+254 7XX XXX XXX" required className="focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
+                      <Input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+255 7XX XXX XXX" required className="focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-1.5">
                         <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Region / County</label>
-                        <select className="w-full rounded-[8px] border-2 border-[var(--color-border)] bg-white px-4 py-3 text-[14px] text-[var(--color-text-heading)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-shadow">
-                          <option>Nairobi</option>
-                          <option>Mombasa</option>
-                          <option>Kisumu</option>
-                          <option>Nakuru</option>
+                        <select value={region} onChange={e => setRegion(e.target.value)} className="w-full rounded-[8px] border-2 border-[var(--color-border)] bg-white px-4 py-3 text-[14px] text-[var(--color-text-heading)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-shadow">
+                          <option>Dar es Salaam</option>
+                          <option>Arusha</option>
+                          <option>Mwanza</option>
+                          <option>Dodoma</option>
+                          <option>Zanzibar</option>
                         </select>
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Ward / Estate</label>
-                        <Input placeholder="e.g. Kilimani" required className="focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
+                        <Input value={ward} onChange={e => setWard(e.target.value)} placeholder="e.g. Kinondoni" required className="focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
                       <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Street Address</label>
-                      <Input placeholder="Building, Floor, Apartment number" required className="focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
+                      <Input value={street} onChange={e => setStreet(e.target.value)} placeholder="Building, Floor, Apartment number" required className="focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]" />
                     </div>
 
                     <div className="pt-6 border-t border-[var(--color-border)]">
@@ -195,15 +310,15 @@ export function Checkout() {
                         <Truck className="w-5 h-5 text-[var(--color-primary)]" />
                         Shipping Options
                       </h3>
-                      
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {shippingProviders.map(provider => (
-                          <div 
-                            key={provider.id} 
+                          <div
+                            key={provider.id}
                             onClick={() => setShippingMethod(provider.id)}
                             className={`cursor-pointer rounded-[16px] border-2 p-4 transition-all relative overflow-hidden bg-white shadow-sm ${
-                              shippingMethod === provider.id 
-                              ? 'border-[var(--color-primary)] shadow-md' 
+                              shippingMethod === provider.id
+                              ? 'border-[var(--color-primary)] shadow-md'
                               : 'border-[var(--color-border)] hover:border-[var(--color-border-hover)]'
                             }`}
                           >
@@ -212,18 +327,18 @@ export function Checkout() {
                                 <CheckCircle className="w-6 h-6 text-[var(--color-primary)] fill-[var(--color-primary-bg)]" />
                               </div>
                             )}
-                            
+
                             <div className="w-12 h-12 rounded-[12px] bg-[var(--color-primary-bg)] flex items-center justify-center mb-3 border border-[var(--color-border)]/50">
                               <Truck className="w-6 h-6 text-[var(--color-primary)]" />
                             </div>
-                            
+
                             <h4 className="font-bold text-[16px] text-[var(--color-text-heading)] tracking-tight">{provider.name}</h4>
                             <div className="flex items-center gap-2 mt-1 mb-3">
                               <span className="text-[13px] font-semibold text-[var(--color-primary)]">{provider.level}</span>
                               <span className="w-1 h-1 rounded-full bg-[var(--color-text-muted)]" />
                               <span className="text-[13px] font-medium text-[var(--color-text-muted)]">{provider.days}</span>
                             </div>
-                            
+
                             <div className="text-[18px] font-bold text-[var(--color-text-heading)]">
                               {provider.price === 0 ? 'Free' : formatCurrency(provider.price)}
                             </div>
@@ -231,6 +346,8 @@ export function Checkout() {
                         ))}
                       </div>
                     </div>
+
+                    {error && <div className="text-red-500 text-[14px] font-medium">{error}</div>}
 
                     <div className="pt-8 flex justify-end">
                       <Button type="submit" variant="primary" size="xl" className="w-full sm:w-auto px-12 shadow-[var(--shadow-level-2)] bg-[var(--color-primary)] hover:bg-[var(--color-primary-darker)]">
@@ -263,11 +380,11 @@ export function Checkout() {
 
                   <div className="space-y-4">
                     {/* M-PESA */}
-                    <div 
+                    <div
                       onClick={() => setPaymentMethod('mpesa')}
                       className={`cursor-pointer rounded-[16px] border-2 p-5 transition-all bg-white shadow-sm ${
-                        paymentMethod === 'mpesa' 
-                        ? 'border-[#4CAF50] ring-4 ring-[#4CAF50]/10' 
+                        paymentMethod === 'mpesa'
+                        ? 'border-[#4CAF50] ring-4 ring-[#4CAF50]/10'
                         : 'border-[var(--color-border)] hover:border-[var(--color-border-hover)]'
                       }`}
                     >
@@ -280,23 +397,24 @@ export function Checkout() {
                         </div>
                         <div className="font-bold text-[24px] text-[#4CAF50] tracking-tighter italic">M-PESA</div>
                       </div>
-                      
+
                       {paymentMethod === 'mpesa' && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="pl-10 space-y-4 overflow-hidden">
                           <p className="text-[14px] text-[var(--color-text-muted)] leading-relaxed">
-                            Enter your M-Pesa number. A prompt will appear on your phone to complete the payment.
+                            Enter your M-Pesa number and PIN to complete the payment.
                           </p>
-                          <Input type="tel" placeholder="+254 7XX XXX XXX" className="font-mono text-[16px] focus:border-[#4CAF50] focus:ring-[#4CAF50] max-w-sm" />
+                          <Input type="tel" value={mpesaPhone} onChange={e => setMpesaPhone(e.target.value)} placeholder="+255 7XX XXX XXX" className="font-mono text-[16px] focus:border-[#4CAF50] focus:ring-[#4CAF50] max-w-sm" />
+                          <Input type="password" inputMode="numeric" maxLength={6} value={pin} onChange={e => setPin(e.target.value)} placeholder="Enter M-Pesa PIN" className="font-mono text-[16px] focus:border-[#4CAF50] focus:ring-[#4CAF50] max-w-sm" />
                         </motion.div>
                       )}
                     </div>
 
                     {/* CREDIT CARD */}
-                    <div 
+                    <div
                       onClick={() => setPaymentMethod('card')}
                       className={`cursor-pointer rounded-[16px] border-2 p-5 transition-all bg-white shadow-sm ${
-                        paymentMethod === 'card' 
-                        ? 'border-[var(--color-primary)] ring-4 ring-[var(--color-primary)]/10' 
+                        paymentMethod === 'card'
+                        ? 'border-[var(--color-primary)] ring-4 ring-[var(--color-primary)]/10'
                         : 'border-[var(--color-border)] hover:border-[var(--color-border-hover)]'
                       }`}
                     >
@@ -309,7 +427,7 @@ export function Checkout() {
                         </div>
                         <CreditCard className="w-6 h-6 text-[var(--color-text-muted)]" />
                       </div>
-                      
+
                       {paymentMethod === 'card' && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="pl-10 space-y-4 overflow-hidden pt-2">
                           <Input placeholder="Card Number" className="font-mono" />
@@ -322,11 +440,11 @@ export function Checkout() {
                     </div>
 
                     {/* CASH ON DELIVERY */}
-                    <div 
+                    <div
                       onClick={() => setPaymentMethod('cod')}
                       className={`cursor-pointer rounded-[16px] border-2 p-5 transition-all bg-white shadow-sm ${
-                        paymentMethod === 'cod' 
-                        ? 'border-[var(--color-primary)] ring-4 ring-[var(--color-primary)]/10' 
+                        paymentMethod === 'cod'
+                        ? 'border-[var(--color-primary)] ring-4 ring-[var(--color-primary)]/10'
                         : 'border-[var(--color-border)] hover:border-[var(--color-border-hover)]'
                       }`}
                     >
@@ -342,18 +460,63 @@ export function Checkout() {
                     </div>
                   </div>
 
+                  {error && <div className="text-red-500 text-[14px] font-medium">{error}</div>}
+
                   <div className="pt-8 flex items-center justify-between gap-4 border-t border-[var(--color-border)]">
                     <Button onClick={handleBack} variant="ghost" className="text-[var(--color-text-muted)] font-bold px-0 hover:bg-transparent hover:text-[var(--color-text-heading)]">
                       <ChevronLeft className="w-5 h-5 mr-1" /> Back
                     </Button>
-                    <Button onClick={handleNext} variant="primary" size="xl" className="flex-1 max-w-xs px-12 shadow-[var(--shadow-level-2)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]">
-                      Place Order
+                    <Button onClick={handlePlaceOrder} disabled={loading} variant="primary" size="xl" className="flex-1 max-w-xs px-12 shadow-[var(--shadow-level-2)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]">
+                      {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Place Order'}
                     </Button>
                   </div>
                 </motion.div>
               )}
 
             </AnimatePresence>
+
+            {/* PIN Confirmation Modal */}
+            {showPinModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+              >
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="bg-white rounded-[24px] p-6 sm:p-8 max-w-md w-full shadow-[var(--shadow-level-3)]"
+                >
+                  <h3 className="text-[20px] font-bold text-[var(--color-text-heading)] mb-2">Confirm Payment</h3>
+                  <p className="text-[14px] text-[var(--color-text-muted)] mb-6">
+                    Please enter your {paymentMethod === 'mpesa' ? 'M-Pesa' : 'mobile money'} PIN to authorize the payment of {formatCurrency(total)}.
+                  </p>
+
+                  <div className="space-y-4">
+                    <Input
+                      type="password"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={pin}
+                      onChange={e => setPin(e.target.value)}
+                      placeholder="Enter PIN"
+                      className="font-mono text-[18px] text-center tracking-[0.3em]"
+                      autoFocus
+                    />
+                    {error && <div className="text-red-500 text-[14px] font-medium">{error}</div>}
+                  </div>
+
+                  <div className="flex gap-3 mt-6">
+                    <Button onClick={() => setShowPinModal(false)} variant="secondary" className="flex-1 bg-[var(--color-bg-page)]">
+                      Cancel
+                    </Button>
+                    <Button onClick={handleConfirmPin} disabled={loading || pin.length < 4} variant="primary" className="flex-1 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]">
+                      {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirm'}
+                    </Button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
           </div>
 
           {/* SIDEBAR: ORDER SUMMARY */}
