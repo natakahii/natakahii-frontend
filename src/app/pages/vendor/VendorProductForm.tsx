@@ -1083,8 +1083,8 @@ export function VendorProductForm() {
                   )}
                 </>
               ) : (
-                <div className="rounded-[18px] border border-dashed border-[var(--color-border)] p-6 text-sm text-[var(--color-text-muted)]">
-                  Variant attributes have not been configured in the backend yet, so this product will save as a simple item for now.
+                <div className="rounded-[18px] border border-dashed border-[var(--color-border)] p-6 text-sm text-[var(--color-text-muted)] text-center">
+                  This product will be sold as a single item. Variant options are not enabled for this platform.
                 </div>
               )}
             </CardContent>
