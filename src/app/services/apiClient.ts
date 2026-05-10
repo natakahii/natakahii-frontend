@@ -73,7 +73,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
 }
 
 export const apiClient = {
-  get: <T>(path: string) => apiRequest<T>(path, { method: 'GET' }),
+  get: <T>(path: string, options?: RequestInit) => apiRequest<T>(path, { method: 'GET', ...options }),
   post: <T>(path: string, body: any) => apiRequest<T>(path, { method: 'POST', body }),
   patch: <T>(path: string, body: any) => apiRequest<T>(path, { method: 'PATCH', body }),
   delete: <T>(path: string) => apiRequest<T>(path, { method: 'DELETE' }),

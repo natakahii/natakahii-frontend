@@ -16,6 +16,11 @@ const tabs = [
 
 export function Profile() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [mobileOpen, setMobileOpen] = useState<Record<string, boolean>>({
+    overview: true,
+    settings: false,
+    security: false,
+  });
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -93,6 +98,108 @@ export function Profile() {
     }
   };
 
+  const toggleMobileTab = (tabId: string) => {
+    setMobileOpen((prev) => ({ ...prev, [tabId]: !prev[tabId] }));
+  };
+
+  const overviewPanel = (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between pb-4 border-b border-[var(--color-border)]">
+        <h2 className="text-[20px] font-bold text-[var(--color-text-heading)] tracking-tight">Account Overview</h2>
+        <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+          <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+          Signed In
+        </Badge>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-[var(--color-bg-card)]">
+          <div className="flex items-center gap-3 text-[var(--color-primary)] mb-3">
+            <User className="w-5 h-5" />
+            <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Identity</h3>
+          </div>
+          <p className="text-[14px] text-[var(--color-text-body)]"><span className="font-semibold">Name:</span> {user.name}</p>
+          <p className="text-[14px] text-[var(--color-text-body)] mt-2"><span className="font-semibold">Email:</span> {user.email}</p>
+        </div>
+
+        <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-[var(--color-bg-card)]">
+          <div className="flex items-center gap-3 text-[var(--color-primary)] mb-3">
+            <Shield className="w-5 h-5" />
+            <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Access</h3>
+          </div>
+          <p className="text-[14px] text-[var(--color-text-body)]"><span className="font-semibold">Roles:</span> {roleNames.join(', ') || 'customer'}</p>
+          <p className="text-[14px] text-[var(--color-text-body)] mt-2"><span className="font-semibold">Status:</span> {user.status || 'active'}</p>
+        </div>
+
+        <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-[var(--color-bg-card)]">
+          <div className="flex items-center gap-3 text-[var(--color-primary)] mb-3">
+            <Phone className="w-5 h-5" />
+            <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Contact</h3>
+          </div>
+          <p className="text-[14px] text-[var(--color-text-body)]">{user.phone || 'Add your phone number in Settings so delivery teams can reach you quickly.'}</p>
+        </div>
+
+        <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-[var(--color-bg-card)]">
+          <div className="flex items-center gap-3 text-[var(--color-primary)] mb-3">
+            <Store className="w-5 h-5" />
+            <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Seller Tools</h3>
+          </div>
+          <p className="text-[14px] text-[var(--color-text-body)]">
+            {hasRole('vendor')
+              ? 'Your vendor access is active. Head to the dashboard to manage your store.'
+              : 'Vendor onboarding is available once you\u2019re ready to start selling.'}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const settingsPanel = (
+    <div className="space-y-6">
+      <h2 className="text-[20px] font-bold text-[var(--color-text-heading)] tracking-tight pb-4 border-b border-[var(--color-border)]">Account Settings</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-1.5">
+          <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Full Name</label>
+          <input type="text" value={name} onChange={(event) => setName(event.target.value)} className="w-full rounded-[8px] border-2 border-[var(--color-border)] bg-white px-4 py-3 text-[14px] text-[var(--color-text-heading)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-shadow" />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Email Address</label>
+          <input type="email" value={user.email} disabled className="w-full rounded-[8px] border-2 border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 text-[14px] text-[var(--color-text-muted)] focus:outline-none transition-shadow" />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Phone Number</label>
+          <input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} className="w-full rounded-[8px] border-2 border-[var(--color-border)] bg-white px-4 py-3 text-[14px] text-[var(--color-text-heading)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-shadow" />
+        </div>
+      </div>
+
+      <div className="pt-4">
+        <Button variant="primary" size="l" className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] shadow-[var(--shadow-level-2)] px-8" isLoading={isSaving} onClick={handleSaveProfile}>
+          Save Changes
+        </Button>
+      </div>
+    </div>
+  );
+
+  const securityPanel = (
+    <div className="flex flex-col items-center justify-center min-h-[300px] text-center opacity-90">
+      <Lock className="w-16 h-16 text-[var(--color-text-muted)] mb-4" />
+      <h3 className="text-[18px] font-bold text-[var(--color-text-heading)] mb-2">Password and recovery</h3>
+      <p className="text-[14px] text-[var(--color-text-muted)] max-w-md">
+        Need to change your password? Use the password reset flow to request a verification code and set a new one securely.
+      </p>
+      <Link to="/forgot-password" className="mt-6">
+        <Button variant="secondary">Reset Password</Button>
+      </Link>
+    </div>
+  );
+
+  const tabPanels: Record<string, React.ReactNode> = {
+    overview: overviewPanel,
+    settings: settingsPanel,
+    security: securityPanel,
+  };
+
   return (
     <div className="bg-[var(--color-bg-page)] min-h-[calc(100vh-72px)] py-8 lg:py-12">
       <div className="container mx-auto px-4 max-w-6xl">
@@ -154,7 +261,8 @@ export function Profile() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Desktop: sidebar + content area */}
+        <div className="hidden lg:grid lg:grid-cols-12 gap-8">
           <div className="lg:col-span-3 flex flex-col gap-6">
             <div className="bg-white rounded-[24px] p-4 shadow-sm border border-[var(--color-border)]/50">
               <nav className="flex flex-col space-y-1">
@@ -208,98 +316,73 @@ export function Profile() {
 
           <div className="lg:col-span-9">
             <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-sm border border-[var(--color-border)]/50 min-h-[500px]">
-              {activeTab === 'overview' && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between pb-4 border-b border-[var(--color-border)]">
-                    <h2 className="text-[20px] font-bold text-[var(--color-text-heading)] tracking-tight">Account Overview</h2>
-                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                      Signed In
-                    </Badge>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-[var(--color-bg-card)]">
-                      <div className="flex items-center gap-3 text-[var(--color-primary)] mb-3">
-                        <User className="w-5 h-5" />
-                        <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Identity</h3>
-                      </div>
-                      <p className="text-[14px] text-[var(--color-text-body)]"><span className="font-semibold">Name:</span> {user.name}</p>
-                      <p className="text-[14px] text-[var(--color-text-body)] mt-2"><span className="font-semibold">Email:</span> {user.email}</p>
-                    </div>
-
-                    <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-[var(--color-bg-card)]">
-                      <div className="flex items-center gap-3 text-[var(--color-primary)] mb-3">
-                        <Shield className="w-5 h-5" />
-                        <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Access</h3>
-                      </div>
-                      <p className="text-[14px] text-[var(--color-text-body)]"><span className="font-semibold">Roles:</span> {roleNames.join(', ') || 'customer'}</p>
-                      <p className="text-[14px] text-[var(--color-text-body)] mt-2"><span className="font-semibold">Status:</span> {user.status || 'active'}</p>
-                    </div>
-
-                    <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-[var(--color-bg-card)]">
-                      <div className="flex items-center gap-3 text-[var(--color-primary)] mb-3">
-                        <Phone className="w-5 h-5" />
-                        <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Contact</h3>
-                      </div>
-                      <p className="text-[14px] text-[var(--color-text-body)]">{user.phone || 'Add your phone number in Settings so delivery teams can reach you quickly.'}</p>
-                    </div>
-
-                    <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-[var(--color-bg-card)]">
-                      <div className="flex items-center gap-3 text-[var(--color-primary)] mb-3">
-                        <Store className="w-5 h-5" />
-                        <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Seller Tools</h3>
-                      </div>
-                      <p className="text-[14px] text-[var(--color-text-body)]">
-                        {hasRole('vendor')
-                          ? 'Your vendor access is active. Head to the dashboard to manage your store.'
-                          : 'Vendor onboarding is available once you’re ready to start selling.'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'settings' && (
-                <div className="space-y-6">
-                  <h2 className="text-[20px] font-bold text-[var(--color-text-heading)] tracking-tight pb-4 border-b border-[var(--color-border)]">Account Settings</h2>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-1.5">
-                      <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Full Name</label>
-                      <input type="text" value={name} onChange={(event) => setName(event.target.value)} className="w-full rounded-[8px] border-2 border-[var(--color-border)] bg-white px-4 py-3 text-[14px] text-[var(--color-text-heading)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-shadow" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Email Address</label>
-                      <input type="email" value={user.email} disabled className="w-full rounded-[8px] border-2 border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 text-[14px] text-[var(--color-text-muted)] focus:outline-none transition-shadow" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Phone Number</label>
-                      <input type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} className="w-full rounded-[8px] border-2 border-[var(--color-border)] bg-white px-4 py-3 text-[14px] text-[var(--color-text-heading)] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-shadow" />
-                    </div>
-                  </div>
-
-                  <div className="pt-4">
-                    <Button variant="primary" size="l" className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] shadow-[var(--shadow-level-2)] px-8" isLoading={isSaving} onClick={handleSaveProfile}>
-                      Save Changes
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'security' && (
-                <div className="flex flex-col items-center justify-center min-h-[300px] text-center opacity-90">
-                  <Lock className="w-16 h-16 text-[var(--color-text-muted)] mb-4" />
-                  <h3 className="text-[18px] font-bold text-[var(--color-text-heading)] mb-2">Password and recovery</h3>
-                  <p className="text-[14px] text-[var(--color-text-muted)] max-w-md">
-                    Need to change your password? Use the password reset flow to request a verification code and set a new one securely.
-                  </p>
-                  <Link to="/forgot-password" className="mt-6">
-                    <Button variant="secondary">Reset Password</Button>
-                  </Link>
-                </div>
-              )}
+              {activeTab === 'overview' && overviewPanel}
+              {activeTab === 'settings' && settingsPanel}
+              {activeTab === 'security' && securityPanel}
             </div>
+          </div>
+        </div>
+
+        {/* Mobile: accordion with slideToggle */}
+        <div className="lg:hidden space-y-4">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isOpen = mobileOpen[tab.id];
+            return (
+              <div key={tab.id} className="bg-white rounded-[24px] shadow-sm border border-[var(--color-border)]/50 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => toggleMobileTab(tab.id)}
+                  className={`w-full flex items-center justify-between p-4 font-bold text-[14px] transition-colors ${isOpen ? 'bg-[var(--color-primary-bg)] text-[var(--color-primary)]' : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-page)] hover:text-[var(--color-text-heading)]'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className={`w-5 h-5 ${isOpen ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`} />
+                    {tab.label}
+                  </div>
+                  <ChevronRight className={`w-4 h-4 transition-transform duration-300 ease-out ${isOpen ? 'rotate-90' : ''}`} />
+                </button>
+                <div
+                  className={`grid transition-[grid-template-rows] duration-[400ms] ease-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+                >
+                  <div className="overflow-hidden">
+                    <div className="p-4 pt-0">
+                      {tabPanels[tab.id]}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          <div className="bg-white rounded-[24px] shadow-sm border border-[var(--color-border)]/50 overflow-hidden">
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full flex items-center gap-3 p-4 font-bold text-[14px] text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+            >
+              <LogOut className="w-5 h-5" /> {isLoggingOut ? 'Signing out...' : 'Logout'}
+            </button>
+          </div>
+
+          <div className="bg-gradient-to-br from-[var(--color-accent)] to-[#D84515] rounded-[24px] p-6 text-white shadow-[var(--shadow-level-2)] relative overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4 pointer-events-none group-hover:scale-110 transition-transform" />
+
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-[12px] flex items-center justify-center mb-4 border border-white/30">
+              <Store className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-[18px] font-bold tracking-tight mb-2">{hasRole('vendor') ? 'Vendor Dashboard' : 'Become a Vendor'}</h3>
+            <p className="text-[13px] opacity-90 leading-relaxed mb-6">
+              {hasRole('vendor')
+                ? 'Manage products, analytics, and fulfillment from your seller workspace.'
+                : 'Start selling to active buyers across East Africa today. Affordable setup fees.'}
+            </p>
+
+            <Link to={hasRole('vendor') ? '/vendor/dashboard' : '/vendor/apply'} className="w-full">
+              <Button variant="secondary" className="w-full bg-white text-[var(--color-accent)] border-none hover:bg-gray-50 shadow-md font-bold">
+                {hasRole('vendor') ? 'Open Dashboard' : 'Open Store'} <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

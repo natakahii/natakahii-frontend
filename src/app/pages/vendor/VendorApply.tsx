@@ -91,7 +91,7 @@ function getStepErrors(form: VendorApplicationPayload, targetStep: ApplicationSt
   const nextErrors: FieldErrors = {};
 
   for (const field of requiredFieldsByStep[targetStep]) {
-    if (!form[field].trim()) {
+    if (!form[field]?.trim()) {
       nextErrors[field] = 'This field is required.';
     }
   }
@@ -226,6 +226,13 @@ export function VendorApply() {
       if (!latestApplication) {
         setForm((currentForm) => (hasStartedForm(currentForm) ? currentForm : buildInitialForm(user)));
         setView('form');
+        if (options.silent) {
+          toast({
+            type: 'info',
+            title: 'Application Status',
+            message: 'No application found.',
+          });
+        }
         return;
       }
 
@@ -238,6 +245,14 @@ export function VendorApply() {
       setForm(buildInitialForm(user, latestApplication));
       setStep(1);
       setView(latestApplication.status === 'pending' ? 'pending' : 'rejected');
+
+      if (options.silent) {
+        toast({
+          type: latestApplication.status === 'rejected' ? 'error' : 'info',
+          title: 'Application Status',
+          message: `Current status: ${latestApplication.status}`,
+        });
+      }
     } catch (error: any) {
       setPageError(error?.message || 'Unable to load your vendor application right now.');
       setForm((currentForm) => (hasStartedForm(currentForm) ? currentForm : buildInitialForm(user)));
@@ -340,11 +355,11 @@ export function VendorApply() {
         full_name: form.full_name.trim(),
         phone: form.phone.trim(),
         region: form.region.trim(),
-        city: form.city.trim(),
+        city: form.city?.trim() ?? '',
         ward: form.ward.trim(),
         street: form.street.trim(),
         address: form.address.trim(),
-        description: form.description.trim(),
+        description: form.description?.trim() ?? '',
         subscription_plan: form.subscription_plan.trim(),
       };
 

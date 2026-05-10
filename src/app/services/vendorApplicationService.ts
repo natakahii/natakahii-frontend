@@ -71,7 +71,7 @@ export function submitVendorApplication(payload: VendorApplicationPayload) {
 }
 
 export function fetchVendorApplicationStatus() {
-  return apiClient.get<VendorApplicationStatusResponse>('/vendor-application/status');
+  return apiClient.get<VendorApplicationStatusResponse>('/vendor-application/status', { cache: 'no-store' });
 }
 
 export function fetchVendorSubscriptionPlans() {
