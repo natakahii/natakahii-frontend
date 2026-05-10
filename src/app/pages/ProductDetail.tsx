@@ -216,6 +216,14 @@ export function ProductDetail() {
     }
   };
 
+  const handleCatalogOnlyAction = () => {
+    toast({ 
+      type: 'info', 
+      title: 'Feature Coming Soon', 
+      message: 'This feature will be available in the next update.' 
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 lg:py-12">
