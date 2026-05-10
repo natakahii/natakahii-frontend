@@ -34,6 +34,9 @@ export function ProductCard({ product, onAddToCart, onLikeToggle }: ProductCardP
         .join(', ')
     : null;
 
+  // DEBUG: log vendor data to browser console
+  console.log('[ProductCard] vendor:', product.vendor, '| locationText:', locationText);
+
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -115,10 +118,15 @@ export function ProductCard({ product, onAddToCart, onLikeToggle }: ProductCardP
               )}
             </div>
             {/* Vendor Location */}
-            {locationText && (
-              <div className="text-[11px] text-[var(--color-text-muted)] mb-2 flex items-center gap-1">
+            {locationText ? (
+              <div className="text-[11px] text-white bg-red-500 mb-2 flex items-center gap-1 px-1 rounded">
                 <MapPin className="w-3 h-3 shrink-0" />
                 <span className="truncate">{locationText}</span>
+              </div>
+            ) : (
+              <div className="text-[11px] text-white bg-blue-500 mb-2 flex items-center gap-1 px-1 rounded">
+                <MapPin className="w-3 h-3 shrink-0" />
+                <span>NO LOC: {product.vendor ? `${product.vendor.shop_name} | s=${product.vendor.street} r=${product.vendor.region} c=${product.vendor.city}` : 'null vendor'}</span>
               </div>
             )}
             <h4 className="text-[13px] font-bold text-[var(--color-text-heading)] truncate group-hover:text-[var(--color-primary)] transition-colors">{product.name}</h4>
