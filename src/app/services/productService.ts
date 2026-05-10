@@ -117,6 +117,10 @@ export interface CatalogProduct {
   reviews_count?: number;
   reviews_avg_rating?: number | null;
   video_count?: number;
+  likes_count?: number;
+  shares_count?: number;
+  is_liked?: boolean;
+  is_wishlisted?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -268,6 +272,10 @@ export function normalizeProduct(product: any): CatalogProduct {
     reviews_count: product?.reviews_count == null ? undefined : toNumber(product.reviews_count),
     reviews_avg_rating: product?.reviews_avg_rating == null ? null : toNumber(product.reviews_avg_rating),
     video_count: product?.video_count == null ? undefined : toNumber(product.video_count),
+    likes_count: product?.likes_count == null ? undefined : toNumber(product.likes_count),
+    shares_count: product?.shares_count == null ? undefined : toNumber(product.shares_count),
+    is_liked: product?.is_liked_by_user ?? product?.is_liked ?? false,
+    is_wishlisted: product?.is_wishlisted_by_user ?? product?.is_wishlisted ?? false,
     created_at: product?.created_at || undefined,
     updated_at: product?.updated_at || undefined,
   };
@@ -357,4 +365,13 @@ export async function fetchCategories(): Promise<CatalogCategory[]> {
 
 export function createVendorProduct(formData: FormData) {
   return apiClient.post<{ message: string; product: any }>('/vendor/products', formData);
+}
+
+export interface WishlistToggleResponse {
+  message: string;
+  wishlisted: boolean;
+}
+
+export async function toggleWishlist(productId: number): Promise<WishlistToggleResponse> {
+  return apiClient.post<WishlistToggleResponse>('/wishlists/toggle', JSON.stringify({ product_id: productId }));
 }

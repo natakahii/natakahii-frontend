@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { motion } from 'motion/react';
-import { BellRing, CheckCircle, ChevronRight, Clock, Heart, Minus, Plus, Share2, ShieldCheck, Sparkles, Star } from 'lucide-react';
+import { motion, useAnimationControls } from 'motion/react';
+import { Bookmark, CheckCircle, ChevronRight, Clock, Heart, Minus, Plus, Share2, ShieldCheck, Sparkles, Star } from 'lucide-react';
 import { AnimatedPrice } from '../components/ui/animated-price';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -12,16 +12,27 @@ import { Skeleton } from '../components/ui/skeleton';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { useToast } from '../components/ui/toast';
 import { useCart } from '../providers/CartProvider';
+import { useAuth } from '../providers/AuthProvider';
 import {
   CatalogProduct,
   CatalogProductVariant,
   fetchProduct,
   getProductPrice,
   getProductPrimaryImage,
+  toggleWishlist,
 } from '../services/productService';
+import { likeProduct, unlikeProduct, shareProduct } from '../services/videoFeedService';
 import { formatCurrency } from '../utils/currency';
 import { getProductPath } from '../utils/products';
 import { getVendorStorefrontPath } from '../utils/storefront';
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from '../components/ui/drawer';
 
 function getVariantSelections(variant: CatalogProductVariant) {
   return variant.attribute_values.reduce<Record<string, string>>((selection, attributeValue) => {
@@ -47,7 +58,16 @@ export function ProductDetail() {
   const [activeTab, setActiveTab] = useState('Description');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isWishlistLoading, setIsWishlistLoading] = useState(false);
+  const [sharesCount, setSharesCount] = useState(0);
+  const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
+  const heartControls = useAnimationControls();
 
   useEffect(() => {
     if (!productIdentifier) {
@@ -77,6 +97,10 @@ export function ProductDetail() {
         setActiveImage(getProductPrimaryImage(response.product));
         setQty(1);
         setActiveTab('Description');
+        setIsLiked(response.product.is_liked || false);
+        setLikesCount(response.product.likes_count || 0);
+        setIsWishlisted(response.product.is_wishlisted || false);
+        setSharesCount(response.product.shares_count || 0);
 
         const initialSelections: Record<string, string> = {};
         const firstVariant = response.product.variants[0];
@@ -217,11 +241,103 @@ export function ProductDetail() {
   };
 
   const handleCatalogOnlyAction = () => {
-    toast({ 
-      type: 'info', 
-      title: 'Feature Coming Soon', 
-      message: 'This feature will be available in the next update.' 
+    toast({
+      type: 'info',
+      title: 'Feature Coming Soon',
+      message: 'This feature will be available in the next update.'
     });
+  };
+
+  const handleLike = async () => {
+    if (!product) return;
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: { pathname: window.location.pathname } } });
+      return;
+    }
+    if (isLikeLoading) return;
+
+    const newIsLiked = !isLiked;
+    setIsLiked(newIsLiked);
+    setLikesCount((prev) => (newIsLiked ? prev + 1 : Math.max(0, prev - 1)));
+
+    if (newIsLiked) {
+      await heartControls.start({ scale: [1, 1.3, 0.9, 1.1, 1], transition: { duration: 0.4 } });
+    }
+
+    setIsLikeLoading(true);
+    try {
+      if (newIsLiked) {
+        await likeProduct(Number(product.id));
+      } else {
+        await unlikeProduct(Number(product.id));
+      }
+    } catch (err) {
+      setIsLiked(!newIsLiked);
+      setLikesCount((prev) => (newIsLiked ? Math.max(0, prev - 1) : prev + 1));
+      toast({ type: 'error', title: 'Failed to update like' });
+    } finally {
+      setIsLikeLoading(false);
+    }
+  };
+
+  const handleWishlist = async () => {
+    if (!product) return;
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: { pathname: window.location.pathname } } });
+      return;
+    }
+    if (isWishlistLoading) return;
+
+    const newIsWishlisted = !isWishlisted;
+    setIsWishlisted(newIsWishlisted);
+    setIsWishlistLoading(true);
+    try {
+      await toggleWishlist(Number(product.id));
+      toast({
+        type: 'success',
+        title: newIsWishlisted ? 'Added to wishlist' : 'Removed from wishlist',
+      });
+    } catch (err) {
+      setIsWishlisted(!newIsWishlisted);
+      toast({ type: 'error', title: 'Failed to update wishlist' });
+    } finally {
+      setIsWishlistLoading(false);
+    }
+  };
+
+  const handleShare = async (platform: string) => {
+    if (!product) return;
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: { pathname: window.location.pathname } } });
+      return;
+    }
+
+    try {
+      await shareProduct(Number(product.id), platform);
+      setSharesCount((prev) => prev + 1);
+
+      const shareUrl = `${window.location.origin}${getProductPath(product)}`;
+      const shareText = `Check out ${product.name} by ${product.vendor?.shop_name || 'Nataka Hii'}!`;
+
+      switch (platform) {
+        case 'whatsapp':
+          window.open(`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`, '_blank');
+          break;
+        case 'facebook':
+          window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
+          break;
+        case 'twitter':
+          window.open(`https://instagram.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, '_blank');
+          break;
+        case 'copy':
+          await navigator.clipboard.writeText(shareUrl);
+          toast({ type: 'success', title: 'Link copied to clipboard!' });
+          break;
+      }
+      setShareDrawerOpen(false);
+    } catch (err) {
+      toast({ type: 'error', title: 'Failed to share' });
+    }
   };
 
   if (isLoading) {
@@ -421,15 +537,80 @@ export function ProductDetail() {
 
           <div className="flex items-center justify-between py-4 border-b border-[var(--color-border)]">
             <div className="flex items-center gap-6">
-              <button className="flex items-center gap-2 text-[14px] font-semibold text-[var(--color-text-body)] hover:text-[var(--color-primary)] transition-colors">
-                <Heart className="w-5 h-5" /> Wishlist
+              <button
+                onClick={handleLike}
+                disabled={isLikeLoading}
+                className="flex items-center gap-2 text-[14px] font-semibold text-[var(--color-text-body)] hover:text-[var(--color-primary)] transition-colors disabled:opacity-50"
+              >
+                <motion.div animate={heartControls}>
+                  <Heart
+                    className={`w-5 h-5 ${isLiked ? 'fill-[var(--color-accent)] text-[var(--color-accent)]' : ''}`}
+                  />
+                </motion.div>
+                <span>{likesCount > 0 ? `${likesCount} Like${likesCount === 1 ? '' : 's'}` : 'Like'}</span>
               </button>
-              <button className="flex items-center gap-2 text-[14px] font-semibold text-[var(--color-text-body)] hover:text-[var(--color-primary)] transition-colors">
-                <Share2 className="w-5 h-5" /> Share
+              <button
+                onClick={handleWishlist}
+                disabled={isWishlistLoading}
+                className="flex items-center gap-2 text-[14px] font-semibold text-[var(--color-text-body)] hover:text-[var(--color-primary)] transition-colors disabled:opacity-50"
+              >
+                <Bookmark className={`w-5 h-5 ${isWishlisted ? 'fill-[var(--color-primary)] text-[var(--color-primary)]' : ''}`} />
+                <span>{isWishlisted ? 'Wishlisted' : 'Wishlist'}</span>
               </button>
-              <button className="flex items-center gap-2 text-[14px] font-semibold text-[var(--color-text-body)] hover:text-[var(--color-primary)] transition-colors">
-                <BellRing className="w-5 h-5" /> Alert
-              </button>
+              <Drawer open={shareDrawerOpen} onOpenChange={setShareDrawerOpen}>
+                <DrawerTrigger asChild>
+                  <button className="flex items-center gap-2 text-[14px] font-semibold text-[var(--color-text-body)] hover:text-[var(--color-primary)] transition-colors">
+                    <Share2 className="w-5 h-5" />
+                    <span>{sharesCount > 0 ? `${sharesCount} Share${sharesCount === 1 ? '' : 's'}` : 'Share'}</span>
+                  </button>
+                </DrawerTrigger>
+                <DrawerContent className="bg-white text-[var(--color-text-body)]">
+                  <DrawerHeader>
+                    <DrawerTitle className="flex items-center gap-2">
+                      <img src="/Nataka Hii_favicon updated.png" alt="Nataka Hii" className="w-6 h-6" />
+                      Share Product
+                    </DrawerTitle>
+                    <DrawerDescription>
+                      Share {product.name} from {product.vendor?.shop_name || 'Nataka Hii'}
+                    </DrawerDescription>
+                  </DrawerHeader>
+                  <div className="p-4 grid grid-cols-4 gap-4">
+                    <button onClick={() => handleShare('whatsapp')} className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[var(--color-bg-hover)] transition-colors">
+                      <div className="w-14 h-14 rounded-full bg-[#25D366] flex items-center justify-center">
+                        <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.3A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                        </svg>
+                      </div>
+                      <span className="text-[12px] font-medium">WhatsApp</span>
+                    </button>
+                    <button onClick={() => handleShare('facebook')} className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[var(--color-bg-hover)] transition-colors">
+                      <div className="w-14 h-14 rounded-full bg-[#1877F2] flex items-center justify-center">
+                        <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                        </svg>
+                      </div>
+                      <span className="text-[12px] font-medium">Facebook</span>
+                    </button>
+                    <button onClick={() => handleShare('twitter')} className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[var(--color-bg-hover)] transition-colors">
+                      <div className="w-14 h-14 rounded-full bg-black flex items-center justify-center">
+                        <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                      </div>
+                      <span className="text-[12px] font-medium">X (Twitter)</span>
+                    </button>
+                    <button onClick={() => handleShare('copy')} className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[var(--color-bg-hover)] transition-colors">
+                      <div className="w-14 h-14 rounded-full bg-[var(--color-bg-card)] border-2 border-[var(--color-border)] flex items-center justify-center">
+                        <svg className="w-6 h-6 text-[var(--color-text-heading)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                        </svg>
+                      </div>
+                      <span className="text-[12px] font-medium">Copy Link</span>
+                    </button>
+                  </div>
+                </DrawerContent>
+              </Drawer>
             </div>
           </div>
 
