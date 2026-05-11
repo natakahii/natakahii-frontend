@@ -226,7 +226,7 @@ export function Checkout() {
     if (!mobileNumber.trim()) { setError('Mobile number is required'); return; }
     if (!streetAddress.trim()) { setError('Street address is required'); return; }
     if (!selectedRegion || !selectedDistrict || !selectedWard) { setError('Please select Region, District and Ward'); return; }
-    if (!pickupStation) { setError('Please select a pickup station'); return; }
+    if (availableStations.length > 0 && !pickupStation) { setError('Please select a pickup station'); return; }
     setError('');
     setSavedAddress(true);
     setAddressDrawerOpen(false);
