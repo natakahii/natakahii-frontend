@@ -168,19 +168,6 @@ export function Home() {
           <p className="text-[18px] sm:text-[20px] md:text-[22px] text-white/95 mb-12 max-w-3xl mx-auto leading-[1.6] font-medium">
             East Africa's premier marketplace connecting you with verified local vendors, AI-curated products, and a fully protected shopping experience.
           </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 text-[13px] text-white/80 font-medium">
-          
-            {(topCategories.length > 0 ? topCategories : [{ id: 0, name: 'Explore', slug: 'explore', parent_id: null, children: [] } as CatalogCategory]).slice(0, 4).map((category) => (
-              <button
-                key={category.id}
-                onClick={() => navigate(category.id ? `/explore?category=${category.id}` : '/explore')}
-                className="px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 cursor-pointer transition-colors backdrop-blur-sm border border-white/5"
-              >
-                {category.name}
-              </button>
-            ))}
-          </div>
         </div>
       </section>
 
