@@ -381,26 +381,26 @@ export function Checkout() {
     const statusIndex = timelineSteps.findIndex(s => s.id === orderStatus);
 
     return (
-      <div className="bg-[var(--color-bg-page)] min-h-[calc(100vh-72px)] py-8 lg:py-12 relative overflow-hidden">
+      <div className="bg-[var(--color-bg-page)] min-h-[calc(100vh-72px)] py-8 lg:py-12 pb-20 sm:pb-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[var(--color-primary)]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[var(--color-accent)]/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4 pointer-events-none" />
         <div className="container mx-auto px-4 relative z-10 max-w-6xl">
           {/* PROGRESS BAR */}
           <div className="flex items-center justify-center mb-10">
-            <div className="flex items-center gap-4 w-full max-w-md">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-[16px] transition-all shadow-sm border-2 bg-[var(--color-primary)] text-white border-[var(--color-primary)]">1</div>
-                <span className="text-[13px] font-bold text-[var(--color-primary)]">Checkout</span>
+            <div className="flex items-center gap-2 sm:gap-4 w-full max-w-md px-2">
+              <div className="flex flex-col items-center gap-2 min-w-0">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 bg-[var(--color-primary)] text-white border-[var(--color-primary)]">1</div>
+                <span className="text-[10px] sm:text-[13px] font-bold text-[var(--color-primary)] whitespace-nowrap">Checkout</span>
               </div>
               <div className="h-[3px] flex-1 rounded-full transition-all bg-[var(--color-primary)]" />
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-[16px] transition-all shadow-sm border-2 bg-[var(--color-primary)] text-white border-[var(--color-primary)]">2</div>
-                <span className="text-[13px] font-bold text-[var(--color-primary)]">Payment Method</span>
+              <div className="flex flex-col items-center gap-2 min-w-0">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 bg-[var(--color-primary)] text-white border-[var(--color-primary)]">2</div>
+                <span className="text-[10px] sm:text-[13px] font-bold text-[var(--color-primary)] whitespace-nowrap">Payment</span>
               </div>
               <div className="h-[3px] flex-1 rounded-full transition-all bg-[var(--color-primary)]" />
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-[16px] transition-all shadow-sm border-2 bg-[var(--color-primary)] text-white border-[var(--color-primary)]">3</div>
-                <span className="text-[13px] font-bold text-[var(--color-primary)]">Done</span>
+              <div className="flex flex-col items-center gap-2 min-w-0">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 bg-[var(--color-primary)] text-white border-[var(--color-primary)]">3</div>
+                <span className="text-[10px] sm:text-[13px] font-bold text-[var(--color-primary)] whitespace-nowrap">Done</span>
               </div>
             </div>
           </div>
@@ -530,12 +530,12 @@ export function Checkout() {
                   Order Tracking
                 </h2>
                 <div className="space-y-4">
-                  {timelineSteps.map((step, index) => {
-                    const Icon = step.icon;
+                  {timelineSteps.map((timelineStep, index) => {
+                    const Icon = timelineStep.icon;
                     const isCompleted = index <= statusIndex;
                     const isCurrent = index === statusIndex;
                     return (
-                      <div key={step.id} className="flex items-start gap-4">
+                      <div key={timelineStep.id} className="flex items-start gap-4">
                         <div className={cn(
                           'w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all',
                           isCompleted ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-bg-page)] text-[var(--color-text-muted)] border-2 border-[var(--color-border)]'
@@ -544,7 +544,7 @@ export function Checkout() {
                         </div>
                         <div className="flex-1 pt-1">
                           <p className={cn('text-[15px] font-bold', isCompleted ? 'text-[var(--color-text-heading)]' : 'text-[var(--color-text-muted)]')}>
-                            {step.label}
+                            {timelineStep.label}
                           </p>
                           {isCurrent && (
                             <p className="text-[13px] text-[var(--color-primary)] font-medium mt-0.5">
@@ -607,7 +607,7 @@ export function Checkout() {
   }
 
   return (
-    <div className="bg-[var(--color-bg-page)] min-h-[calc(100vh-72px)] py-8 lg:py-12 relative overflow-hidden">
+    <div className="bg-[var(--color-bg-page)] min-h-[calc(100vh-72px)] py-8 lg:py-12 pb-24 sm:pb-8 relative overflow-hidden">
 
       {/* Decorative background shapes */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[var(--color-primary)]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
@@ -617,20 +617,20 @@ export function Checkout() {
 
         {/* PROGRESS BAR */}
         <div className="flex items-center justify-center mb-10">
-          <div className="flex items-center gap-4 w-full max-w-lg">
-            <div className="flex flex-col items-center gap-2">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-[16px] transition-all shadow-sm border-2 ${step >= 1 ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>1</div>
-              <span className={`text-[13px] font-bold ${step >= 1 ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>Checkout</span>
+          <div className="flex items-center gap-2 sm:gap-4 w-full max-w-lg px-2">
+            <div className="flex flex-col items-center gap-2 min-w-0">
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 ${step >= 1 ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>1</div>
+              <span className={`text-[10px] sm:text-[13px] font-bold whitespace-nowrap ${step >= 1 ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>Checkout</span>
             </div>
             <div className={`h-[3px] flex-1 rounded-full transition-all ${step >= 2 ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]'}`} />
-            <div className="flex flex-col items-center gap-2">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-[16px] transition-all shadow-sm border-2 ${step >= 2 ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>2</div>
-              <span className={`text-[13px] font-bold ${step >= 2 ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>Payment Method</span>
+            <div className="flex flex-col items-center gap-2 min-w-0">
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 ${step >= 2 ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>2</div>
+              <span className={`text-[10px] sm:text-[13px] font-bold whitespace-nowrap ${step >= 2 ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>Payment</span>
             </div>
             <div className={`h-[3px] flex-1 rounded-full transition-all ${step >= 3 ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]'}`} />
-            <div className="flex flex-col items-center gap-2">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-[16px] transition-all shadow-sm border-2 ${step >= 3 ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>3</div>
-              <span className={`text-[13px] font-bold ${step >= 3 ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>Done</span>
+            <div className="flex flex-col items-center gap-2 min-w-0">
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 ${step >= 3 ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>3</div>
+              <span className={`text-[10px] sm:text-[13px] font-bold whitespace-nowrap ${step >= 3 ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>Done</span>
             </div>
           </div>
         </div>
@@ -1047,7 +1047,7 @@ export function Checkout() {
                       {locView === 'region' && (
                         <>
                           <p className="text-[13px] font-bold text-[var(--color-text-heading)] mb-2">1. Select Region</p>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {regions.map((r) => (
                               <button
                                 key={r}
@@ -1072,7 +1072,7 @@ export function Checkout() {
                             <span className="text-[13px] text-[var(--color-text-muted)]">Region: {selectedRegion}</span>
                           </div>
                           <p className="text-[13px] font-bold text-[var(--color-text-heading)] mb-2">2. Select District</p>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {districts.map((d) => (
                               <button
                                 key={d}
@@ -1097,7 +1097,7 @@ export function Checkout() {
                             <span className="text-[13px] text-[var(--color-text-muted)]">{selectedRegion} › {selectedDistrict}</span>
                           </div>
                           <p className="text-[13px] font-bold text-[var(--color-text-heading)] mb-2">3. Select Ward</p>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {wards.map((w) => (
                               <button
                                 key={w}
@@ -1443,7 +1443,7 @@ export function Checkout() {
 
       {/* Mobile Fixed Bottom Bar */}
       {step === 1 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--color-border)] p-4 flex items-center gap-4 z-40 sm:hidden shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--color-border)] p-4 flex items-center gap-4 z-50 sm:hidden shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
           <div className="flex-1">
             <p className="text-[11px] text-[var(--color-text-muted)]">Total Amount</p>
             <p className="text-[18px] font-bold text-[var(--color-accent)]">{formatCurrency(total)}</p>
@@ -1459,7 +1459,7 @@ export function Checkout() {
         </div>
       )}
       {step === 2 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--color-border)] p-4 flex items-center gap-4 z-40 sm:hidden shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--color-border)] p-4 flex items-center gap-4 z-50 sm:hidden shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
           <div className="flex-1">
             <p className="text-[11px] text-[var(--color-text-muted)]">Pay Amount</p>
             <p className="text-[18px] font-bold text-[var(--color-accent)]">{formatCurrency(total)}</p>
