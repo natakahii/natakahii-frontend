@@ -15,6 +15,7 @@ import {
   Heart,
   Home as HomeIcon,
   Play,
+  MapPin,
   Shirt,
   ShoppingCart,
   Smartphone,
@@ -273,6 +274,14 @@ export function Home() {
                             <span className="text-[11px] font-semibold text-[var(--color-primary)]">New</span>
                           )}
                         </div>
+                        {product.vendor && (
+                          <div className="text-[11px] text-[var(--color-text-muted)] mb-2 flex items-center gap-1">
+                            <MapPin className="w-3 h-3 shrink-0" />
+                            <span className="truncate">
+                              {[product.vendor.street, product.vendor.region, product.vendor.city].filter(Boolean).join(', ') || product.vendor.shop_name || 'Verified Vendor'}
+                            </span>
+                          </div>
+                        )}
                         <h3 className="font-semibold text-[14px] text-[var(--color-text-heading)] line-clamp-2 mb-2 group-hover:text-[var(--color-primary)] transition-colors">
                           {product.name}
                         </h3>
