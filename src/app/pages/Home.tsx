@@ -76,10 +76,9 @@ export function Home() {
       setError(null);
 
       try {
-        const [categoryData, productData, videoData] = await Promise.all([
+        const [categoryData, productData] = await Promise.all([
           fetchCategories(),
           fetchProducts({ per_page: 100 }), // Load 100 featured products on home
-          fetchVideoFeed('for-you', 1, 12), // Fetch page 1, 12 latest videos
         ]);
 
         if (!isMounted) {
@@ -88,7 +87,20 @@ export function Home() {
 
         setCategories(categoryData);
         setFeaturedProducts(productData.products);
-        setVideos(videoData.videos || []);
+
+        // Fetch videos separately - don't let video feed failure break the whole page
+        try {
+          const videoData = await fetchVideoFeed('for-you', 1, 12);
+          if (isMounted) {
+            setVideos(videoData.videos || []);
+          }
+        } catch (videoError) {
+          // Silently fail video feed - categories and products are more important
+          console.warn('Failed to load video feed:', videoError);
+          if (isMounted) {
+            setVideos([]);
+          }
+        }
       } catch (loadError: any) {
         if (!isMounted) {
           return;
