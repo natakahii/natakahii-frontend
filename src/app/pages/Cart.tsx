@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Button } from '../components/ui/button';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { ArrowLeft, Loader, AlertCircle, ChevronRight, CheckCircle, Package } from 'lucide-react';
+import { ArrowLeft, Loader, AlertCircle, ChevronRight, CheckCircle, Package, Trash2, Minus, Plus } from 'lucide-react';
 import { EmptyState } from '../components/ui/empty-state';
 import { formatCurrency } from '../utils/currency';
 import { useCart } from '../providers/CartProvider';
@@ -65,12 +65,59 @@ function findMatchingVariant(product: CatalogProduct, selections: Record<string,
 export function Cart() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { items, totalAmount, isLoading, error, removeItem, addToCart } = useCart();
+  const { items, totalAmount, isLoading, error, removeItem, addToCart, updateQuantity, clearCart } = useCart();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [productDetails, setProductDetails] = useState<Record<number, CatalogProduct>>({});
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [itemSelections, setItemSelections] = useState<Record<number, Record<string, string>>>({});
   const [confirmLoading, setConfirmLoading] = useState(false);
+  const [qtyLoading, setQtyLoading] = useState<Record<number, boolean>>({});
+  const [removeLoading, setRemoveLoading] = useState<Record<number, boolean>>({});
+  const [clearLoading, setClearLoading] = useState(false);
+
+  const handleQtyChange = useCallback(async (itemId: number, delta: number) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+    const maxQty = item.variant?.stock ?? item.product?.stock ?? Infinity;
+    const newQty = item.quantity + delta;
+    if (newQty < 1) return;
+    if (newQty > maxQty) {
+      toast({ type: 'warning', title: `Maximum available quantity is ${maxQty}` });
+      return;
+    }
+    setQtyLoading(prev => ({ ...prev, [itemId]: true }));
+    try {
+      await updateQuantity(itemId, newQty);
+    } catch (err: any) {
+      toast({ type: 'error', title: err?.message || 'Failed to update quantity' });
+    } finally {
+      setQtyLoading(prev => ({ ...prev, [itemId]: false }));
+    }
+  }, [items, updateQuantity]);
+
+  const handleRemove = useCallback(async (itemId: number) => {
+    setRemoveLoading(prev => ({ ...prev, [itemId]: true }));
+    try {
+      await removeItem(itemId);
+    } catch (err: any) {
+      toast({ type: 'error', title: err?.message || 'Failed to remove item' });
+    } finally {
+      setRemoveLoading(prev => ({ ...prev, [itemId]: false }));
+    }
+  }, [removeItem]);
+
+  const handleClearCart = useCallback(async () => {
+    if (!confirm('Are you sure you want to clear your cart?')) return;
+    setClearLoading(true);
+    try {
+      await clearCart();
+      toast({ type: 'success', title: 'Cart cleared' });
+    } catch (err: any) {
+      toast({ type: 'error', title: err?.message || 'Failed to clear cart' });
+    } finally {
+      setClearLoading(false);
+    }
+  }, [clearCart]);
 
   useEffect(() => {
     if (!isAuthenticated) navigate('/login', { replace: true });
@@ -199,8 +246,17 @@ export function Cart() {
             <ArrowLeft className="w-5 h-5 text-[var(--color-text-heading)]" />
           </button>
           <h1 className="text-[24px] sm:text-[32px] font-bold text-[var(--color-text-heading)] tracking-tight">Shopping Cart</h1>
+          <div className="flex-1" />
+          <button
+            onClick={handleClearCart}
+            disabled={clearLoading}
+            className="flex items-center gap-1.5 text-[13px] font-semibold text-red-500 hover:text-red-600 disabled:opacity-50 transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Clear Cart</span>
+          </button>
         </div>
-        <p className="text-[14px] text-[var(--color-text-muted)] ml-13">{items.length} item{items.length === 1 ? '' : 's'} in your cart</p>
+        <p className="text-[14px] text-[var(--color-text-muted)]">{items.length} item{items.length === 1 ? '' : 's'} in your cart</p>
       </div>
 
       {/* Item list */}
@@ -223,9 +279,39 @@ export function Cart() {
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-[15px] text-[var(--color-text-heading)] truncate">{name}</h3>
                   <p className="text-[13px] text-[var(--color-text-muted)] mt-0.5">
-                    {item.variant_id ? `Variant: #${item.variant_id}` : 'Default variant'} · Qty: {item.quantity}
+                    {item.variant_id ? `Variant: #${item.variant_id}` : 'Default variant'}
                   </p>
                   <p className="text-[16px] font-bold text-[var(--color-accent)] mt-1">{formatCurrency(price * item.quantity)}</p>
+                </div>
+                {/* Quantity stepper + delete */}
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleQtyChange(item.id, -1)}
+                      disabled={qtyLoading[item.id] || removeLoading[item.id] || item.quantity <= 1}
+                      className="w-8 h-8 rounded-full bg-[var(--color-bg-page)] border border-[var(--color-border)] flex items-center justify-center hover:bg-[var(--color-primary-bg)] hover:border-[var(--color-primary)] disabled:opacity-40 transition-colors"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="w-8 text-center text-[14px] font-bold text-[var(--color-text-heading)]">
+                      {qtyLoading[item.id] ? <Loader className="w-3.5 h-3.5 animate-spin mx-auto" /> : item.quantity}
+                    </span>
+                    <button
+                      onClick={() => handleQtyChange(item.id, 1)}
+                      disabled={qtyLoading[item.id] || removeLoading[item.id]}
+                      className="w-8 h-8 rounded-full bg-[var(--color-bg-page)] border border-[var(--color-border)] flex items-center justify-center hover:bg-[var(--color-primary-bg)] hover:border-[var(--color-primary)] disabled:opacity-40 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => handleRemove(item.id)}
+                    disabled={removeLoading[item.id]}
+                    className="text-[12px] font-medium text-red-500 hover:text-red-600 disabled:opacity-50 flex items-center gap-1 transition-colors"
+                  >
+                    {removeLoading[item.id] ? <Loader className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    Remove
+                  </button>
                 </div>
               </motion.div>
             );
