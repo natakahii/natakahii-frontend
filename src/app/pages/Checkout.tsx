@@ -19,9 +19,8 @@ import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter,
 } from '../components/ui/drawer';
 import {
-  locationService, type PickupStation,
+  locationService, getCurrentPosition, openGoogleMapsPicker, type PickupStation,
 } from '../services/locationService';
-import { MapPickerDrawer } from '../components/MapPicker';
 import { cn } from '../components/ui/utils';
 import { toast } from '../components/ui/toast';
 
@@ -87,11 +86,11 @@ export function Checkout() {
   const [savedAddress, setSavedAddress] = useState(false);
   const [locView, setLocView] = useState<'none' | 'region' | 'district' | 'ward'>('none');
   const [customCoords, setCustomCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [mapDrawerOpen, setMapDrawerOpen] = useState(false);
   const [regions, setRegions] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
   const [wards, setWards] = useState<string[]>([]);
   const [availableStations, setAvailableStations] = useState<PickupStation[]>([]);
+  const [locLoading, setLocLoading] = useState(false);
 
   // Payment form state
   const [mpesaPhone, setMpesaPhone] = useState('');
@@ -236,9 +235,17 @@ export function Checkout() {
     toast({ type: 'success', title: 'Shipping address saved' });
   };
 
-  const handleMapSelect = (coords: { lat: number; lng: number }) => {
-    setCustomCoords(coords);
-    toast({ type: 'success', title: 'Location picked on map' });
+  const handleUseMyLocation = async () => {
+    setLocLoading(true);
+    try {
+      const coords = await getCurrentPosition();
+      setCustomCoords(coords);
+      openGoogleMapsPicker(coords.lat, coords.lng);
+    } catch (err: any) {
+      toast({ type: 'error', title: err?.message || 'Failed to get location' });
+    } finally {
+      setLocLoading(false);
+    }
   };
 
   const handlePlaceOrder = async () => {
@@ -1220,15 +1227,14 @@ export function Checkout() {
                         </div>
                       )}
 
-                      {/* Pick on Map */}
+                      {/* Use My Location */}
                       <button
-                        onClick={() => setMapDrawerOpen(true)}
+                        onClick={handleUseMyLocation}
+                        disabled={locLoading}
                         className="w-full flex items-center justify-center gap-2 p-3 rounded-[12px] border-2 border-[var(--color-border)] text-[var(--color-text-heading)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-all bg-white"
                       >
-                        <MapPin className="w-4 h-4" />
-                        <span className="text-[13px] font-semibold">
-                          {customCoords ? 'Change Map Location' : 'Pick Location on Map'}
-                        </span>
+                        {locLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
+                        <span className="text-[13px] font-semibold">Use My Location</span>
                       </button>
                       {customCoords && (
                         <p className="text-[11px] text-[var(--color-text-muted)] text-center">
@@ -1262,14 +1268,6 @@ export function Checkout() {
                 )}
               </DrawerContent>
             </Drawer>
-
-            {/* ─── Map Picker Drawer ─── */}
-            <MapPickerDrawer
-              open={mapDrawerOpen}
-              onOpenChange={setMapDrawerOpen}
-              onConfirm={handleMapSelect}
-              initialCoords={customCoords}
-            />
 
             {/* ─── Payment Method Drawer ─── */}
             <Drawer open={paymentDrawerOpen} onOpenChange={setPaymentDrawerOpen}>
