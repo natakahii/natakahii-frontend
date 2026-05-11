@@ -120,7 +120,7 @@ export function Cart() {
   }, [clearCart]);
 
   useEffect(() => {
-    if (!isAuthenticated) navigate('/login', { replace: true });
+    if (!isAuthenticated) navigate('/', { replace: true });
   }, [isAuthenticated, navigate]);
 
   /* fetch full product details when drawer opens */

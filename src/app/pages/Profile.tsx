@@ -92,7 +92,7 @@ export function Profile() {
 
     try {
       await logout();
-      navigate('/login', { replace: true });
+      navigate('/', { replace: true });
     } finally {
       setIsLoggingOut(false);
     }

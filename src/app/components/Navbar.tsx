@@ -29,7 +29,7 @@ export function Navbar() {
     try {
       await logout();
       setIsMobileMenuOpen(false);
-      navigate('/login', { replace: true });
+      navigate('/', { replace: true });
     } finally {
       setIsLoggingOut(false);
     }
