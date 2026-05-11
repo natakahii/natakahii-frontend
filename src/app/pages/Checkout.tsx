@@ -566,24 +566,6 @@ export function Checkout() {
 
             {/* RIGHT COLUMN: Actions */}
             <div className="space-y-6">
-              {/* Order Summary */}
-              <div className="bg-white rounded-[24px] p-6 shadow-[var(--shadow-level-2)] border border-[var(--color-border)]/50">
-                <h2 className="text-[18px] font-bold text-[var(--color-text-heading)] mb-4">Order Summary</h2>
-                <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto">
-                  {items.map((item) => (
-                    <div key={item.id} className="flex gap-3 items-center">
-                      <div className="w-12 h-12 rounded-[8px] bg-[var(--color-bg-card)] overflow-hidden border border-[var(--color-border)]/50 shrink-0">
-                        <ImageWithFallback src={item.product?.images?.[0]?.image_path || ''} alt={item.product?.name || 'Item'} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-bold text-[var(--color-text-heading)] truncate">{item.product?.name || 'Product'}</p>
-                        <p className="text-[12px] text-[var(--color-text-muted)]">Qty: {item.quantity}</p>
-                      </div>
-                      <p className="text-[13px] font-bold text-[var(--color-text-heading)]">{formatCurrency((item.product?.price || 0) * item.quantity)}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
               {/* Action Buttons */}
               <div className="bg-white rounded-[24px] p-6 shadow-[var(--shadow-level-2)] border border-[var(--color-border)]/50">
