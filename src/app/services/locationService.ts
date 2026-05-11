@@ -45,8 +45,13 @@ export async function getCurrentPosition(): Promise<{ lat: number; lng: number }
   });
 }
 
-export function openGoogleMapsPicker(lat?: number, lng?: number) {
-  const query = lat != null && lng != null ? `${lat},${lng}` : '';
+export function openGoogleMapsPicker(lat?: number, lng?: number, queryText?: string) {
+  let query = '';
+  if (queryText) {
+    query = encodeURIComponent(queryText);
+  } else if (lat != null && lng != null) {
+    query = `${lat},${lng}`;
+  }
   const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
   window.open(url, '_blank', 'noopener,noreferrer');
 }

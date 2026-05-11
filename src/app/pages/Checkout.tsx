@@ -19,7 +19,7 @@ import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter,
 } from '../components/ui/drawer';
 import {
-  locationService, getCurrentPosition, openGoogleMapsPicker, type PickupStation,
+  locationService, openGoogleMapsPicker, type PickupStation,
 } from '../services/locationService';
 import { cn } from '../components/ui/utils';
 import { toast } from '../components/ui/toast';
@@ -85,12 +85,10 @@ export function Checkout() {
   const [isDefaultAddress, setIsDefaultAddress] = useState(true);
   const [savedAddress, setSavedAddress] = useState(false);
   const [locView, setLocView] = useState<'none' | 'region' | 'district' | 'ward'>('none');
-  const [customCoords, setCustomCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [regions, setRegions] = useState<string[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
   const [wards, setWards] = useState<string[]>([]);
   const [availableStations, setAvailableStations] = useState<PickupStation[]>([]);
-  const [locLoading, setLocLoading] = useState(false);
 
   // Payment form state
   const [mpesaPhone, setMpesaPhone] = useState('');
@@ -235,17 +233,13 @@ export function Checkout() {
     toast({ type: 'success', title: 'Shipping address saved' });
   };
 
-  const handleUseMyLocation = async () => {
-    setLocLoading(true);
-    try {
-      const coords = await getCurrentPosition();
-      setCustomCoords(coords);
-      openGoogleMapsPicker(coords.lat, coords.lng);
-    } catch (err: any) {
-      toast({ type: 'error', title: err?.message || 'Failed to get location' });
-    } finally {
-      setLocLoading(false);
+  const handleUseMyLocation = () => {
+    if (!selectedRegion || !selectedDistrict || !selectedWard) {
+      toast({ type: 'error', title: 'Please select Region, District and Ward first' });
+      return;
     }
+    const query = `${selectedWard}, ${selectedDistrict}, ${selectedRegion}, Tanzania`;
+    openGoogleMapsPicker(undefined, undefined, query);
   };
 
   const handlePlaceOrder = async () => {
@@ -269,7 +263,6 @@ export function Checkout() {
         district: selectedDistrict,
         region: selectedRegion,
         pickup_station: pickupStation?.name || '',
-        coordinates: customCoords || undefined,
       };
 
       const phoneNumber = isMobileMoney ? (mpesaPhone || mobileNumber) : mobileNumber;
@@ -1227,20 +1220,23 @@ export function Checkout() {
                         </div>
                       )}
 
-                      {/* Use My Location */}
-                      <button
-                        onClick={handleUseMyLocation}
-                        disabled={locLoading}
-                        className="w-full flex items-center justify-center gap-2 p-3 rounded-[12px] border-2 border-[var(--color-border)] text-[var(--color-text-heading)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-all bg-white"
-                      >
-                        {locLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
-                        <span className="text-[13px] font-semibold">Use My Location</span>
-                      </button>
-                      {customCoords && (
-                        <p className="text-[11px] text-[var(--color-text-muted)] text-center">
-                          Coordinates: {customCoords.lat.toFixed(5)}, {customCoords.lng.toFixed(5)}
-                        </p>
-                      )}
+                      {/* Preview on Map (Optional) */}
+                      <div className="space-y-1">
+                        <button
+                          onClick={handleUseMyLocation}
+                          disabled={!selectedRegion || !selectedDistrict || !selectedWard}
+                          className={cn(
+                            "w-full flex items-center justify-center gap-2 p-3 rounded-[12px] border-2 transition-all bg-white",
+                            selectedRegion && selectedDistrict && selectedWard
+                              ? "border-[var(--color-border)] text-[var(--color-text-heading)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                              : "border-[var(--color-border)] text-[var(--color-text-muted)] opacity-60 cursor-not-allowed"
+                          )}
+                        >
+                          <MapPinned className="w-4 h-4" />
+                          <span className="text-[13px] font-semibold">Preview on Map</span>
+                        </button>
+                        <p className="text-[11px] text-[var(--color-text-muted)] text-center">Optional — verify where your order will be shipped</p>
+                      </div>
 
                       {/* Default Address Toggle */}
                       <div className="flex items-center justify-between bg-[var(--color-bg-page)] rounded-[12px] p-4">
