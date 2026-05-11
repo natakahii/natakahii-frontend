@@ -250,7 +250,7 @@ export function Cart() {
       </div>
 
       {/* Mobile sticky bottom bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--color-border)] p-4 flex gap-3 z-40 sm:hidden shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--color-border)] p-4 flex gap-3 z-50 sm:hidden shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
         <Button variant="secondary" size="l" className="flex-1" onClick={() => navigate('/customer')}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Back
         </Button>
