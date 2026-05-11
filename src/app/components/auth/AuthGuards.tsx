@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router';
+import { Navigate, Outlet } from 'react-router';
 import { useAuth } from '../../providers/AuthProvider';
 
 function AuthLoadingScreen() {
@@ -29,14 +29,13 @@ export function RedirectIfAuthenticated({ children }: { children: ReactNode }) {
 
 export function RequireAuth({ children }: { children?: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
 
   if (isLoading) {
     return <AuthLoadingScreen />;
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="/" replace />;
   }
 
   return children ? <>{children}</> : <Outlet />;
@@ -52,14 +51,13 @@ export function RequireRole({
   roles: string[];
 }) {
   const { hasRole, isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
 
   if (isLoading) {
     return <AuthLoadingScreen />;
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="/" replace />;
   }
 
   if (!roles.some((role) => hasRole(role))) {
