@@ -608,7 +608,10 @@ export function VendorProductForm() {
         status: nextStatus,
         images: newImages.map((image) => image.file),
         keep_image_ids: existingImages.map((image) => image.id),
-        variants: normalizedVariants,
+        variants: normalizedVariants.map((variant) => {
+          const { image, ...variantWithoutImage } = variant;
+          return variantWithoutImage;
+        }),
       };
 
       // Create FormData for multipart/form-data to handle variant images
@@ -627,10 +630,10 @@ export function VendorProductForm() {
         }
       });
 
-      // Append variant images separately
+      // Append variant images separately with Laravel's expected format
       normalizedVariants.forEach((variant, index) => {
         if (variant.image instanceof File) {
-          formData.append(`variants.${index}.image`, variant.image);
+          formData.append(`variants[${index}][image]`, variant.image);
         }
       });
 
