@@ -271,6 +271,10 @@ export function ShopStorefront() {
                   {vendor.city}, {vendor.region}
                 </span>
               )}
+              <span className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-[var(--color-border)]" />
+                {totalFollowers.toLocaleString()} follower{totalFollowers === 1 ? '' : 's'}
+              </span>
             </div>
           </div>
         </div>
