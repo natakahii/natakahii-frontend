@@ -101,12 +101,10 @@ export function CustomerHome() {
           </div>
 
           {/* AI Recommendation Strip */}
-          <div className="bg-gradient-to-r from-[var(--color-primary-bg)] to-[var(--color-accent-bg)] rounded-[16px] p-5 md:p-6 flex flex-col md:flex-row items-center gap-6 border border-[var(--color-border)] relative overflow-hidden">
-            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white/40 to-transparent pointer-events-none" />
-            
-            <div className="flex items-center gap-4 shrink-0 bg-white/60 backdrop-blur-sm p-4 rounded-[12px] shadow-sm">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-accent)] flex items-center justify-center shadow-md">
-                <Sparkles className="w-6 h-6 text-white" />
+          <div className="bg-white rounded-[16px] p-5 md:p-6 flex flex-col md:flex-row items-center gap-6 border border-[var(--color-border)] shadow-sm">
+            <div className="flex items-center gap-4 shrink-0 bg-[var(--color-bg-card)] p-4 rounded-[12px] border border-[var(--color-border)]">
+              <div className="w-12 h-12 rounded-full bg-[var(--color-accent-bg)] flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-[var(--color-accent)]" />
               </div>
               <div>
                 <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] flex items-center gap-2">
@@ -118,7 +116,7 @@ export function CustomerHome() {
 
             <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar w-full relative z-10">
               {isLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
+                Array.from({ length: 10 }).map((_, i) => (
                   <div key={i} className="shrink-0 w-[200px] bg-white rounded-[12px] p-2 flex gap-3 items-center shadow-sm border border-[var(--color-border)]/50">
                     <div className="w-16 h-16 rounded-[8px] bg-[var(--color-bg-page)] shrink-0 animate-pulse" />
                     <div className="flex-1 min-w-0 space-y-2">
