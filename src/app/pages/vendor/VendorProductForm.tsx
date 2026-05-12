@@ -128,8 +128,6 @@ function buildVariantRowsFromProduct(productResponse: VendorProductDetailRespons
 
       return selection;
     }, {}),
-    imageFile: null,
-    imagePreview: null,
   }));
 }
 
@@ -608,10 +606,7 @@ export function VendorProductForm() {
         status: nextStatus,
         images: newImages.map((image) => image.file),
         keep_image_ids: existingImages.map((image) => image.id),
-        variants: normalizedVariants.map((variant) => {
-          const { image, ...variantWithoutImage } = variant;
-          return variantWithoutImage;
-        }),
+        variants: normalizedVariants,
       };
 
       // Create FormData for multipart/form-data to handle variant images
@@ -630,10 +625,10 @@ export function VendorProductForm() {
         }
       });
 
-      // Append variant images separately with Laravel's expected format
+      // Append variant images separately
       normalizedVariants.forEach((variant, index) => {
         if (variant.image instanceof File) {
-          formData.append(`variants[${index}][image]`, variant.image);
+          formData.append(`variants.${index}.image`, variant.image);
         }
       });
 

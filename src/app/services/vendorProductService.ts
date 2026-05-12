@@ -55,7 +55,6 @@ export interface VendorProductVariantPayload {
   price: number;
   discount_price?: number | null;
   stock: number;
-  image?: File;
   attributes: Array<{
     attribute_id: number;
     attribute_value_id: number;
@@ -229,9 +228,8 @@ export async function fetchVendorProductOptions(): Promise<VendorProductAttribut
   return extractResourceArray<any>(response?.variant_attributes).map(normalizeAttribute);
 }
 
-export async function createVendorProduct(payload: VendorProductPayload | FormData): Promise<VendorProductDetailResponse & { message: string }> {
-  const formData = payload instanceof FormData ? payload : buildVendorProductFormData(payload);
-  const response = await apiClient.post<any>('/vendor/products', formData);
+export async function createVendorProduct(payload: VendorProductPayload): Promise<VendorProductDetailResponse & { message: string }> {
+  const response = await apiClient.post<any>('/vendor/products', buildVendorProductFormData(payload));
 
   return {
     message: response?.message || 'Product created successfully.',
@@ -240,9 +238,8 @@ export async function createVendorProduct(payload: VendorProductPayload | FormDa
   };
 }
 
-export async function updateVendorProduct(productId: string | number, payload: VendorProductPayload | FormData): Promise<VendorProductDetailResponse & { message: string }> {
-  const formData = payload instanceof FormData ? payload : buildVendorProductFormData(payload, 'PATCH');
-  const response = await apiClient.post<any>(`/vendor/products/${productId}`, formData);
+export async function updateVendorProduct(productId: string | number, payload: VendorProductPayload): Promise<VendorProductDetailResponse & { message: string }> {
+  const response = await apiClient.post<any>(`/vendor/products/${productId}`, buildVendorProductFormData(payload, 'PATCH'));
 
   return {
     message: response?.message || 'Product updated successfully.',
