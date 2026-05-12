@@ -73,8 +73,6 @@ type VariantRowState = {
   discountPrice: string;
   stock: string;
   attributeSelections: Record<string, string>;
-  imageFile: File | null;
-  imagePreview: string | null;
 };
 
 function flattenCategories(categories: CatalogCategory[], depth = 0): Array<{ id: string; name: string }> {
@@ -310,8 +308,6 @@ export function VendorProductForm() {
         discountPrice: '',
         stock: stock || '0',
         attributeSelections,
-        imageFile: null,
-        imagePreview: null,
       },
     ]);
     clearFieldError('variants');
@@ -325,13 +321,7 @@ export function VendorProductForm() {
   }
 
   function removeVariantRow(rowId: string) {
-    setVariantRows((currentRows) => {
-      const rowToRemove = currentRows.find((row) => row.id === rowId);
-      if (rowToRemove?.imagePreview && !rowToRemove.imagePreview.startsWith('http')) {
-        URL.revokeObjectURL(rowToRemove.imagePreview);
-      }
-      return currentRows.filter((row) => row.id !== rowId);
-    });
+    setVariantRows((currentRows) => currentRows.filter((row) => row.id !== rowId));
   }
 
   function toggleVariantAttribute(attributeId: number) {
@@ -536,7 +526,6 @@ export function VendorProductForm() {
             price: Number(row.price),
             discount_price: row.discountPrice ? Number(row.discountPrice) : null,
             stock: Number(row.stock),
-            image: row.imageFile || undefined,
             attributes: normalizedAttributes,
           };
         })
@@ -609,32 +598,9 @@ export function VendorProductForm() {
         variants: normalizedVariants,
       };
 
-      // Create FormData for multipart/form-data to handle variant images
-      const formData = new FormData();
-      Object.entries(payload).forEach(([key, value]) => {
-        if (key === 'variants' && Array.isArray(value)) {
-          formData.append(key, JSON.stringify(value));
-        } else if (key === 'images' && Array.isArray(value)) {
-          (value as File[]).forEach((file) => formData.append('images[]', file));
-        } else if (key === 'keep_image_ids' && Array.isArray(value)) {
-          formData.append(key, JSON.stringify(value));
-        } else if (key === 'status') {
-          formData.append(key, String(value));
-        } else if (typeof value === 'string' || typeof value === 'number') {
-          formData.append(key, String(value));
-        }
-      });
-
-      // Append variant images separately
-      normalizedVariants.forEach((variant, index) => {
-        if (variant.image instanceof File) {
-          formData.append(`variants.${index}.image`, variant.image);
-        }
-      });
-
       const response = isEditMode && productId
-        ? await updateVendorProduct(productId, formData)
-        : await createVendorProduct(formData);
+        ? await updateVendorProduct(productId, payload)
+        : await createVendorProduct(payload);
 
       setCurrentProductId(response.product.id);
       setCurrentProductSlug(response.product.slug || null);
@@ -1099,58 +1065,6 @@ export function VendorProductForm() {
                                     placeholder="0"
                                   />
                                 </div>
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <Label>Variant Image (Optional)</Label>
-                                {row.imagePreview ? (
-                                  <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-[var(--color-border)]">
-                                    <ImageWithFallback
-                                      src={row.imagePreview}
-                                      alt={`Variant ${rowIndex + 1}`}
-                                      className="w-full h-full object-cover"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        if (row.imagePreview && !row.imagePreview.startsWith('http')) {
-                                          URL.revokeObjectURL(row.imagePreview);
-                                        }
-                                        updateVariantRow(row.id, { imageFile: null, imagePreview: null });
-                                      }}
-                                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-white/90 text-[var(--color-error)] flex items-center justify-center shadow-sm"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <label className="inline-flex items-center justify-center w-24 h-24 rounded-lg border-2 border-dashed border-[var(--color-border)] cursor-pointer hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-bg)]/30 transition-colors">
-                                    <input
-                                      type="file"
-                                      accept="image/jpeg,image/png,image/webp"
-                                      className="hidden"
-                                      onChange={(event) => {
-                                        const file = event.target.files?.[0] || null;
-                                        if (file && isSupportedProductImage(file)) {
-                                          if (file.size > MAX_PRODUCT_IMAGE_SIZE_BYTES) {
-                                            toast({
-                                              type: 'error',
-                                              title: 'Image too large',
-                                              message: 'Variant images must be 5 MB or smaller.',
-                                            });
-                                            return;
-                                          }
-                                          updateVariantRow(row.id, {
-                                            imageFile: file,
-                                            imagePreview: URL.createObjectURL(file),
-                                          });
-                                        }
-                                        event.target.value = '';
-                                      }}
-                                    />
-                                    <ImagePlus className="w-6 h-6 text-[var(--color-text-muted)]" />
-                                  </label>
-                                )}
                               </div>
                             </div>
                           ))}
