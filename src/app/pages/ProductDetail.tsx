@@ -654,18 +654,6 @@ export function ProductDetail() {
                     ))}
                   </ul>
                 )}
-                <div className="bg-[var(--color-primary-bg)] rounded-[16px] p-6 border border-[var(--color-border)] flex flex-col md:flex-row items-center gap-6 mt-8">
-                  <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shrink-0">
-                    <Sparkles className="w-8 h-8 text-[var(--color-primary)]" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] mb-2">AI: Ask About This Product</h3>
-                    <div className="flex w-full gap-2">
-                      <input type="text" placeholder="Is this true to size?" className="flex-1 bg-white border border-[var(--color-border)] rounded-full px-4 text-[14px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
-                      <Button size="s" variant="primary" className="rounded-full px-6">Ask</Button>
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
 
