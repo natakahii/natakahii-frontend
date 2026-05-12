@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import {
   Search,
-  Smartphone, Shirt, Home as HomeIcon, Watch, Sparkles, Zap, ChevronRight, Store
+  Smartphone, Shirt, Home as HomeIcon, Watch, Sparkles, Zap, ChevronRight, Store, Dumbbell
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -13,19 +13,25 @@ import { getProductPath } from '../utils/products';
 import { useAuth } from '../providers/AuthProvider';
 import { useCart } from '../providers/CartProvider';
 import { useToast } from '../components/ui/toast';
-import { fetchProducts, CatalogProduct, getProductPrimaryImage } from '../services/productService';
+import { fetchProducts, fetchCategories, CatalogProduct, getProductPrimaryImage, CatalogCategory } from '../services/productService';
 
-const categories = [
-  { name: 'Fashion', icon: Shirt },
-  { name: 'Electronics', icon: Smartphone },
-  { name: 'Home & Living', icon: HomeIcon },
-  { name: 'Accessories', icon: Watch },
-  { name: 'Beauty', icon: Sparkles },
-  { name: 'Sports', icon: Zap },
+const CATEGORY_ICON_MAP = [
+  { pattern: /fashion|apparel|clothing|dress/, icon: Shirt },
+  { pattern: /electronics|phone|tech|device/, icon: Smartphone },
+  { pattern: /home|living|furniture|decor/, icon: HomeIcon },
+  { pattern: /accessories|watch|jewelry/, icon: Watch },
+  { pattern: /beauty|cosmetic|skin/, icon: Sparkles },
+  { pattern: /sport|fitness/, icon: Dumbbell },
 ];
+
+function getCategoryIcon(category: CatalogCategory) {
+  const label = `${category.icon || ''} ${category.slug} ${category.name}`.toLowerCase();
+  return CATEGORY_ICON_MAP.find((entry) => entry.pattern.test(label))?.icon || Zap;
+}
 
 export function CustomerHome() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [categories, setCategories] = useState<CatalogCategory[]>([]);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,14 +44,18 @@ export function CustomerHome() {
     setIsLoading(true);
     setError(null);
 
-    fetchProducts({ per_page: 8, status: 'active' })
-      .then((response) => {
+    Promise.all([
+      fetchCategories(),
+      fetchProducts({ per_page: 8, status: 'active' })
+    ])
+      .then(([categoryData, productData]) => {
         if (!isMounted) return;
-        setProducts(response.products);
+        setCategories(categoryData);
+        setProducts(productData.products);
       })
       .catch((err) => {
         if (!isMounted) return;
-        setError(err?.message || 'Failed to load products');
+        setError(err?.message || 'Failed to load data');
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
@@ -140,15 +150,15 @@ export function CustomerHome() {
         {/* CATEGORIES */}
         <section>
           <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory -mx-4 px-4 lg:mx-0 lg:px-0">
-            {categories.map((cat, i) => {
-              const Icon = cat.icon;
+            {categories.slice(0, 6).map((category) => {
+              const Icon = getCategoryIcon(category);
               return (
-                <Link to={`/category/${cat.name.toLowerCase()}`} key={i} className="snap-start shrink-0 w-[100px] md:w-[120px] group flex flex-col items-center gap-3">
+                <Link to={`/explore?category=${category.id}`} key={category.id} className="snap-start shrink-0 w-[100px] md:w-[120px] group flex flex-col items-center gap-3">
                   <div className="w-[80px] h-[80px] md:w-[100px] md:h-[100px] rounded-[24px] bg-white border border-[var(--color-border)] flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:border-[var(--color-primary)] transition-all duration-300 group-hover:-translate-y-1">
                     <Icon className="w-8 h-8 text-[var(--color-text-heading)] group-hover:text-[var(--color-primary)] transition-colors" />
                   </div>
                   <span className="text-[13px] md:text-[14px] font-medium text-center text-[var(--color-text-heading)] group-hover:text-[var(--color-primary)]">
-                    {cat.name}
+                    {category.name}
                   </span>
                 </Link>
               );
