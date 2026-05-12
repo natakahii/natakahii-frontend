@@ -87,7 +87,7 @@ export function CustomerHome() {
               <p className="text-[16px] text-[var(--color-text-muted)] mt-1">Ready to discover something new today?</p>
             </div>
             
-            <div className="w-full md:w-auto flex-1 max-w-md bg-[var(--color-bg-page)] rounded-full flex items-center p-1.5 border border-[var(--color-border)] focus-within:border-[var(--color-primary)] focus-within:ring-2 focus-within:ring-[var(--color-primary-lighter)] transition-all">
+            <div className="w-full md:w-auto flex-1 max-w-md bg-white rounded-full flex items-center p-1.5 border border-[var(--color-border)] focus-within:border-[var(--color-primary)] focus-within:ring-2 focus-within:ring-[var(--color-primary-lighter)] transition-all">
               <Search className="w-5 h-5 text-[var(--color-text-muted)] ml-3" />
               <input 
                 type="text" 
@@ -102,7 +102,7 @@ export function CustomerHome() {
 
           {/* AI Recommendation Strip */}
           <div className="bg-white rounded-[16px] p-5 md:p-6 flex flex-col md:flex-row items-center gap-6 border border-[var(--color-border)] shadow-sm">
-            <div className="flex items-center gap-4 shrink-0 bg-[var(--color-bg-card)] p-4 rounded-[12px] border border-[var(--color-border)]">
+            <div className="flex items-center gap-4 shrink-0 bg-white p-4 rounded-[12px] border border-[var(--color-border)]">
               <div className="w-12 h-12 rounded-full bg-[var(--color-accent-bg)] flex items-center justify-center">
                 <Sparkles className="w-6 h-6 text-[var(--color-accent)]" />
               </div>
@@ -118,17 +118,17 @@ export function CustomerHome() {
               {isLoading ? (
                 Array.from({ length: 10 }).map((_, i) => (
                   <div key={i} className="shrink-0 w-[200px] bg-white rounded-[12px] p-2 flex gap-3 items-center shadow-sm border border-[var(--color-border)]/50">
-                    <div className="w-16 h-16 rounded-[8px] bg-[var(--color-bg-page)] shrink-0 animate-pulse" />
+                    <div className="w-16 h-16 rounded-[8px] bg-gray-100 shrink-0 animate-pulse" />
                     <div className="flex-1 min-w-0 space-y-2">
-                      <div className="h-3 bg-[var(--color-bg-page)] rounded animate-pulse w-3/4" />
-                      <div className="h-3 bg-[var(--color-bg-page)] rounded animate-pulse w-1/2" />
+                      <div className="h-3 bg-gray-100 rounded animate-pulse w-3/4" />
+                      <div className="h-3 bg-gray-100 rounded animate-pulse w-1/2" />
                     </div>
                   </div>
                 ))
               ) : (
                 products.slice(0,3).map(prod => (
                   <Link to={getProductPath(prod)} key={prod.id} className="shrink-0 w-[200px] bg-white rounded-[12px] p-2 flex gap-3 items-center shadow-sm hover:shadow-md transition-shadow group border border-[var(--color-border)]/50">
-                    <div className="w-16 h-16 rounded-[8px] overflow-hidden bg-[var(--color-bg-page)] shrink-0">
+                    <div className="w-16 h-16 rounded-[8px] overflow-hidden bg-gray-100 shrink-0">
                       <ImageWithFallback src={getProductPrimaryImage(prod)} alt={prod.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -180,7 +180,7 @@ export function CustomerHome() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="aspect-square bg-[var(--color-bg-card)] rounded-[16px] animate-pulse border border-[var(--color-border)]/60" />
+                <div key={i} className="aspect-square bg-white rounded-[16px] animate-pulse border border-[var(--color-border)]/60" />
               ))
             ) : (
               products.map((prod) => (
@@ -194,26 +194,22 @@ export function CustomerHome() {
 
         {/* BECOME A VENDOR CTA */}
         <section className="mt-4 mb-8">
-          <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-[var(--color-primary-darker)] via-[var(--color-primary)] to-[var(--color-primary-light)] p-8 md:p-10 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-[var(--shadow-level-2)]">
-            {/* Abstract bg shapes */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-[var(--color-accent)]/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
-            
-            <div className="relative z-10 max-w-xl">
-              <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1.5 rounded-full text-[12px] font-bold tracking-wide uppercase mb-4 backdrop-blur-sm">
+          <div className="bg-white rounded-[24px] p-8 md:p-10 border border-[var(--color-border)] shadow-sm flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="max-w-xl">
+              <div className="inline-flex items-center gap-2 bg-[var(--color-accent-bg)] px-3 py-1.5 rounded-full text-[12px] font-bold tracking-wide uppercase mb-4 text-[var(--color-accent)]">
                 <Store className="w-4 h-4" /> Grow with us
               </div>
-              <h2 className="text-[28px] md:text-[32px] font-bold leading-tight mb-3 tracking-tight">
+              <h2 className="text-[28px] md:text-[32px] font-bold text-[var(--color-text-heading)] leading-tight mb-3 tracking-tight">
                 Turn your passion into profit
               </h2>
-              <p className="text-[15px] opacity-90 leading-relaxed mb-0">
+              <p className="text-[15px] text-[var(--color-text-body)] leading-relaxed mb-0">
                 Join thousands of verified vendors on Nataka Hii. Start selling to active buyers across East Africa today with 0% setup fees.
               </p>
             </div>
             
-            <div className="relative z-10 w-full md:w-auto shrink-0 flex flex-col sm:flex-row gap-3">
+            <div className="w-full md:w-auto shrink-0 flex flex-col sm:flex-row gap-3">
               <Link to="/vendor/apply">
-                <Button variant="secondary" className="bg-white text-[var(--color-primary-darker)] border-none hover:bg-[var(--color-bg-page)] px-8 shadow-md h-12">
+                <Button variant="primary" className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white border-none px-8 shadow-md h-12">
                   Open Your Store
                 </Button>
               </Link>

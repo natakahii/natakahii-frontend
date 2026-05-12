@@ -84,7 +84,7 @@ export function ProductCard({ product, onAddToCart, onLikeToggle }: ProductCardP
         className="h-full"
       >
         <Card className="group cursor-pointer hover:shadow-[var(--shadow-level-2)] transition-shadow h-full flex flex-col border border-[var(--color-border)]/60">
-          <div className="relative aspect-square overflow-hidden bg-[var(--color-bg-card)] rounded-t-[16px]">
+          <div className="relative aspect-square overflow-hidden bg-gray-100 rounded-t-[16px]">
             <ImageWithFallback 
               src={getProductPrimaryImage(product)} 
               alt={product.name} 
