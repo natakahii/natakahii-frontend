@@ -237,61 +237,85 @@ export function ShopStorefront() {
         <span className="text-[var(--color-text-heading)] line-clamp-1 max-w-[220px] truncate">{vendor.shop_name}</span>
       </div>
 
-      <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[var(--color-primary-darker)] via-[var(--color-primary)] to-[var(--color-primary-light)] text-white p-6 md:p-8 lg:p-10 shadow-[var(--shadow-level-2)] mb-8">
-        <div className="absolute top-0 right-0 w-[320px] h-[320px] bg-white/10 rounded-full blur-[80px] -translate-y-1/3 translate-x-1/4 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[260px] h-[260px] bg-[var(--color-accent)]/20 rounded-full blur-[70px] translate-y-1/3 -translate-x-1/4 pointer-events-none" />
+      <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#07091a] via-[var(--color-primary-darker)] to-[var(--color-primary)] text-white p-6 md:p-8 lg:p-10 shadow-[var(--shadow-level-2)] mb-8">
 
-        <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="flex items-start gap-4 md:gap-5">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-[24px] overflow-hidden border border-white/15 shadow-md shrink-0 bg-white/10">
-                <ImageWithFallback src={vendor.logo || '/natakahii-logo.png'} alt={vendor.shop_name} className="w-full h-full object-cover" />
-              </div>
-              <div>
-                <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/10 mb-3">
-                  <ShoppingBag className="w-4 h-4 text-[var(--color-accent)]" />
-                  <span className="text-[13px] font-semibold">Direct Storefront</span>
-                </div>
-                <h1 className="text-[30px] md:text-[40px] font-bold leading-tight tracking-[-0.8px] flex flex-wrap items-center gap-2">
-                  {vendor.shop_name}
-                  {vendor.status === 'approved' && <CheckCircle className="w-5 h-5 text-[var(--color-accent)]" />}
-                </h1>
-                <p className="text-[14px] text-white/80 mt-2">
-                  @{vendor.shop_slug || 'store'}
-                </p>
-                <p className="text-[15px] md:text-[16px] text-white/90 leading-relaxed mt-4 max-w-2xl">
-                  {vendor.description || 'This shop is now live on Nataka Hii. Browse products directly from the vendor storefront and discover everything they have published.'}
-                </p>
-              </div>
-            </div>
-          </div>
+      {/* Dark anchor top-left kills the flat-blue look */}
+      <div className="absolute -top-24 right-0 w-[480px] h-[480px] bg-[var(--color-primary-light)]/15 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[260px] h-[260px] bg-[var(--color-accent)]/20 rounded-full blur-[70px] translate-y-1/2 -translate-x-1/4 pointer-events-none" />
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 lg:min-w-[360px]">
-            <div className="rounded-[18px] bg-white/10 backdrop-blur-sm border border-white/10 p-4">
-              <p className="text-[12px] uppercase tracking-[0.4px] text-white/70 font-semibold">Products</p>
-              <p className="text-[24px] font-bold mt-1">{totalProducts.toLocaleString()}</p>
+      <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+
+        <div className="max-w-3xl">
+          <div className="flex items-start gap-4 md:gap-6">
+
+            {/* Logo — more presence with double ring */}
+            <div className="w-20 h-20 md:w-[88px] md:h-[88px] rounded-[20px] overflow-hidden border-2 border-white/20 ring-4 ring-white/5 shadow-xl shrink-0 bg-white/10">
+              <ImageWithFallback src={vendor.logo || '/natakahii-logo.png'} alt={vendor.shop_name} className="w-full h-full object-cover" />
             </div>
-            <div className="rounded-[18px] bg-white/10 backdrop-blur-sm border border-white/10 p-4">
-              <p className="text-[12px] uppercase tracking-[0.4px] text-white/70 font-semibold">Followers</p>
-              <p className="text-[24px] font-bold mt-1 flex items-center gap-2">
-                <Users className="w-5 h-5 text-[var(--color-accent)]" />
-                {totalFollowers.toLocaleString()}
+
+            <div className="flex-1 min-w-0">
+
+              {/* Badge — accent-tinted instead of plain glass */}
+              <div className="inline-flex items-center gap-2 bg-[var(--color-accent)]/15 px-3 py-1.5 rounded-full border border-[var(--color-accent)]/30 mb-3">
+                <ShoppingBag className="w-3.5 h-3.5 text-[var(--color-accent)]" />
+                <span className="text-[12px] font-semibold tracking-wide text-[var(--color-accent)]">Direct Storefront</span>
+              </div>
+
+              <h1 className="text-[26px] md:text-[36px] font-bold leading-tight tracking-[-0.5px] flex flex-wrap items-center gap-2">
+                {vendor.shop_name}
+                {vendor.status === 'approved' && <CheckCircle className="w-5 h-5 text-[var(--color-accent)]" />}
+              </h1>
+
+              {/* Slug — monospace feels intentional, lower opacity = hierarchy */}
+              <p className="text-[13px] text-white/45 mt-1 font-mono tracking-tight">
+                @{vendor.shop_slug || 'store'}
               </p>
-            </div>
-            <div className="rounded-[18px] bg-white/10 backdrop-blur-sm border border-white/10 p-4 col-span-2 md:col-span-1">
-              <p className="text-[12px] uppercase tracking-[0.4px] text-white/70 font-semibold">Categories</p>
-              <p className="text-[24px] font-bold mt-1">{categories.length.toLocaleString()}</p>
+
+              <p className="text-[14px] md:text-[15px] text-white/70 leading-relaxed mt-3 max-w-xl">
+                {vendor.description || 'This shop is now live on Nataka Hii. Browse products directly from the vendor storefront and discover everything they have published.'}
+              </p>
             </div>
           </div>
         </div>
 
-        {storefrontLabel ? (
-          <div className="relative z-10 mt-6 inline-flex max-w-full items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-[13px] text-white/85 backdrop-blur-sm border border-white/10">
-            <span className="font-semibold text-white">Store URL</span>
-            <span className="truncate">{storefrontLabel}</span>
+        {/* Stats — all 3 in a row always, first card accent-highlighted */}
+        <div className="grid grid-cols-3 gap-3 lg:min-w-[320px] lg:max-w-[360px] shrink-0">
+
+          {/* Products — accent card, this is the hero number */}
+          <div className="rounded-[16px] bg-[var(--color-accent)]/10 backdrop-blur-sm border border-[var(--color-accent)]/25 p-4">
+            <p className="text-[11px] uppercase tracking-[0.5px] text-[var(--color-accent)]/80 font-semibold">Products</p>
+            <p className="text-[26px] font-bold mt-1">{totalProducts.toLocaleString()}</p>
           </div>
-        ) : null}
-      </section>
+
+          {/* Followers */}
+          <div className="rounded-[16px] bg-white/[0.07] backdrop-blur-sm border border-white/10 p-4">
+            <p className="text-[11px] uppercase tracking-[0.5px] text-white/45 font-semibold">Followers</p>
+            <p className="text-[26px] font-bold mt-1 flex items-center gap-1">
+              <Users className="w-4 h-4 text-[var(--color-accent)]" />
+              {totalFollowers.toLocaleString()}
+            </p>
+          </div>
+
+          {/* Categories */}
+          <div className="rounded-[16px] bg-white/[0.07] backdrop-blur-sm border border-white/10 p-4">
+            <p className="text-[11px] uppercase tracking-[0.5px] text-white/45 font-semibold">Categories</p>
+            <p className="text-[26px] font-bold mt-1">{categories.length.toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Store URL — divider lines give it context, accent URL color draws the eye */}
+      {storefrontLabel ? (
+        <div className="relative z-10 mt-6 flex items-center gap-3 max-w-full">
+          <div className="h-px flex-1 bg-white/10" />
+          <div className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white/[0.07] px-4 py-2 text-[13px] backdrop-blur-sm border border-white/10">
+            <span className="font-semibold text-white/80">Store URL</span>
+            <span className="truncate text-[var(--color-accent)] font-medium">{storefrontLabel}</span>
+          </div>
+          <div className="h-px flex-1 bg-white/10" />
+        </div>
+      ) : null}
+    </section>
 
       <section className="mb-8 flex flex-col gap-4">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
