@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { motion, useAnimationControls } from 'motion/react';
-import { Bookmark, CheckCircle, ChevronRight, Clock, Heart, Minus, Plus, Share2, ShieldCheck, Sparkles, Star } from 'lucide-react';
+import { Bookmark, CheckCircle, ChevronRight, Clock, Heart, Minus, Plus, Share2, Sparkles, Star } from 'lucide-react';
 import { AnimatedPrice } from '../components/ui/animated-price';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -614,15 +614,7 @@ export function ProductDetail() {
             </div>
           </div>
 
-          <div className="mt-6 flex items-start gap-4 bg-[var(--color-primary-bg)] p-4 rounded-[12px] border border-[var(--color-primary-light)]/20">
-            <ShieldCheck className="w-8 h-8 text-[var(--color-primary)] shrink-0" />
-            <div>
-              <h4 className="font-bold text-[14px] text-[var(--color-primary-darker)] mb-1">Secure Escrow Payment</h4>
-              <p className="text-[13px] text-[var(--color-text-body)] leading-snug">
-                Your money is held safely until you receive and confirm the item is exactly as described.
-              </p>
-            </div>
-          </div>
+
         </div>
       </div>
 
