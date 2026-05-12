@@ -98,7 +98,7 @@ export function VendorLayout() {
         <header className="md:hidden flex items-center justify-between p-4 bg-[var(--color-primary-darker)] text-white sticky top-0 z-20">
           <div className="font-bold flex gap-2 items-center">
             <Store className="w-5 h-5 text-[var(--color-accent)]" />
-            <span>Nataka Hii Vendor</span>
+            <span>{displayName}</span>
           </div>
           <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
             <Bell className="w-5 h-5" />
