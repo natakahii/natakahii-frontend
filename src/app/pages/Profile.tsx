@@ -203,8 +203,7 @@ export function Profile() {
   return (
     <div className="bg-[var(--color-bg-page)] min-h-[calc(100vh-72px)] py-8 lg:py-12">
       <div className="container mx-auto px-4 max-w-6xl">
-        <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-sm border border-[var(--color-border)]/50 mb-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[var(--color-primary-bg)] to-transparent pointer-events-none" />
+        <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-sm border border-[var(--color-border)]/50 mb-8">
 
           <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10">
             <div className="relative shrink-0">
@@ -293,21 +292,19 @@ export function Profile() {
               </nav>
             </div>
 
-            <div className="bg-gradient-to-br from-[var(--color-accent)] to-[#D84515] rounded-[24px] p-6 text-white shadow-[var(--shadow-level-2)] relative overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4 pointer-events-none group-hover:scale-110 transition-transform" />
-
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-[12px] flex items-center justify-center mb-4 border border-white/30">
-                <Store className="w-6 h-6 text-white" />
+            <div className="bg-white rounded-[24px] p-6 shadow-sm border border-[var(--color-border)]/50 relative overflow-hidden group cursor-pointer hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-[var(--color-accent-bg)] rounded-[12px] flex items-center justify-center mb-4">
+                <Store className="w-6 h-6 text-[var(--color-accent)]" />
               </div>
-              <h3 className="text-[18px] font-bold tracking-tight mb-2">{hasRole('vendor') ? 'Vendor Dashboard' : 'Become a Vendor'}</h3>
-              <p className="text-[13px] opacity-90 leading-relaxed mb-6">
+              <h3 className="text-[18px] font-bold text-[var(--color-text-heading)] tracking-tight mb-2">{hasRole('vendor') ? 'Vendor Dashboard' : 'Become a Vendor'}</h3>
+              <p className="text-[13px] text-[var(--color-text-body)] leading-relaxed mb-6">
                 {hasRole('vendor')
                   ? 'Manage products, analytics, and fulfillment from your seller workspace.'
                   : 'Start selling to active buyers across East Africa today. Affordable setup fees.'}
               </p>
 
               <Link to={hasRole('vendor') ? '/vendor/dashboard' : '/vendor/apply'} className="w-full">
-                <Button variant="secondary" className="w-full bg-white text-[var(--color-accent)] border-none hover:bg-gray-50 shadow-md font-bold">
+                <Button variant="primary" className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white border-none shadow-md font-bold">
                   {hasRole('vendor') ? 'Open Dashboard' : 'Open Store'} <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </Link>
@@ -365,21 +362,19 @@ export function Profile() {
             </button>
           </div>
 
-          <div className="bg-gradient-to-br from-[var(--color-accent)] to-[#D84515] rounded-[24px] p-6 text-white shadow-[var(--shadow-level-2)] relative overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4 pointer-events-none group-hover:scale-110 transition-transform" />
-
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-[12px] flex items-center justify-center mb-4 border border-white/30">
-              <Store className="w-6 h-6 text-white" />
+          <div className="bg-white rounded-[24px] p-6 shadow-sm border border-[var(--color-border)]/50 relative overflow-hidden group cursor-pointer hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 bg-[var(--color-accent-bg)] rounded-[12px] flex items-center justify-center mb-4">
+              <Store className="w-6 h-6 text-[var(--color-accent)]" />
             </div>
-            <h3 className="text-[18px] font-bold tracking-tight mb-2">{hasRole('vendor') ? 'Vendor Dashboard' : 'Become a Vendor'}</h3>
-            <p className="text-[13px] opacity-90 leading-relaxed mb-6">
+            <h3 className="text-[18px] font-bold text-[var(--color-text-heading)] tracking-tight mb-2">{hasRole('vendor') ? 'Vendor Dashboard' : 'Become a Vendor'}</h3>
+            <p className="text-[13px] text-[var(--color-text-body)] leading-relaxed mb-6">
               {hasRole('vendor')
                 ? 'Manage products, analytics, and fulfillment from your seller workspace.'
                 : 'Start selling to active buyers across East Africa today. Affordable setup fees.'}
             </p>
 
             <Link to={hasRole('vendor') ? '/vendor/dashboard' : '/vendor/apply'} className="w-full">
-              <Button variant="secondary" className="w-full bg-white text-[var(--color-accent)] border-none hover:bg-gray-50 shadow-md font-bold">
+              <Button variant="primary" className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white border-none shadow-md font-bold">
                 {hasRole('vendor') ? 'Open Dashboard' : 'Open Store'} <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
