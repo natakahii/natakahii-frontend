@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
-import { CheckCircle, ChevronRight, Heart, Search, ShoppingBag, ShoppingCart, Star, Users } from 'lucide-react';
+import { CheckCircle, ChevronRight, Heart, MapPin, Search, ShoppingBag, ShoppingCart, Star, Users } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
@@ -244,36 +244,37 @@ export function ShopStorefront() {
           </div>
 
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <h1 className="text-[22px] md:text-[28px] font-bold text-[var(--color-text-heading)] leading-tight flex items-center gap-2">
-                  {vendor.shop_name}
-                  {vendor.status === 'approved' && <CheckCircle className="w-5 h-5 text-[var(--color-primary)]" />}
-                </h1>
-                <p className="text-[13px] text-[var(--color-text-muted)] mt-1">
-                  @{vendor.shop_slug || 'store'}
-                </p>
-              </div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-[22px] md:text-[28px] font-bold text-[var(--color-text-heading)] leading-tight flex items-center gap-2">
+                {vendor.shop_name}
+                {vendor.status === 'approved' && <CheckCircle className="w-5 h-5 text-[var(--color-primary)]" />}
+              </h1>
+              <p className="text-[13px] text-[var(--color-text-muted)]">
+                @{vendor.shop_slug || 'store'}
+              </p>
             </div>
 
-            <p className="text-[14px] text-[var(--color-text-body)] leading-relaxed mt-3 max-w-2xl">
+            <p className="text-[14px] text-[var(--color-text-body)] leading-relaxed mt-2 max-w-2xl">
               {vendor.description || 'This shop is now live on Nataka Hii. Browse products directly from the vendor storefront and discover everything they have published.'}
             </p>
 
             <div className="flex flex-wrap items-center gap-4 mt-4 text-[13px] text-[var(--color-text-muted)]">
               <span className="flex items-center gap-1.5">
                 <ShoppingBag className="w-4 h-4" />
-                {totalProducts.toLocaleString()} product{totalProducts === 1 ? '' : 's'}
+                <span className="text-[var(--color-text-heading)] font-semibold">{totalProducts.toLocaleString()}</span>
+                <span>product{totalProducts === 1 ? '' : 's'}</span>
               </span>
               {vendor.city && (
                 <span className="flex items-center gap-1.5">
                   <span className="w-1 h-1 rounded-full bg-[var(--color-border)]" />
+                  <MapPin className="w-4 h-4" />
                   {vendor.city}, {vendor.region}
                 </span>
               )}
               <span className="flex items-center gap-1.5">
                 <span className="w-1 h-1 rounded-full bg-[var(--color-border)]" />
-                {totalFollowers.toLocaleString()} follower{totalFollowers === 1 ? '' : 's'}
+                <span className="text-[var(--color-text-heading)] font-semibold">{totalFollowers.toLocaleString()}</span>
+                <span>follower{totalFollowers === 1 ? '' : 's'}</span>
               </span>
             </div>
           </div>
