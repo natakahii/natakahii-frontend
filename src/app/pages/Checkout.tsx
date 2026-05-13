@@ -595,24 +595,26 @@ export function Checkout() {
     const statusIndex = timelineSteps.findIndex(s => s.id === orderStatus);
 
     return (
-      <div className="bg-black/50 fixed inset-0 z-40 flex items-start justify-center overflow-y-auto py-6 sm:py-10 backdrop-blur-sm">
-        <div className="w-full max-w-6xl px-4 relative z-10 pb-10">
+      <div className="bg-black/50 fixed inset-0 z-40 flex items-start justify-center overflow-y-auto p-4 sm:p-6 backdrop-blur-sm">
+        <div className="w-full max-w-6xl relative z-10 my-auto">
           {/* PROGRESS BAR */}
-          <div className="flex items-center justify-center mb-10">
-            <div className="flex items-center gap-2 sm:gap-4 w-full max-w-md px-2">
-              <div className="flex flex-col items-center gap-2 min-w-0">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 bg-[var(--color-primary)] text-white border-[var(--color-primary)]">1</div>
-                <span className="text-[10px] sm:text-[13px] font-bold text-[var(--color-primary)] whitespace-nowrap">Checkout</span>
-              </div>
-              <div className="h-[3px] flex-1 rounded-full transition-all bg-[var(--color-primary)]" />
-              <div className="flex flex-col items-center gap-2 min-w-0">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 bg-[var(--color-primary)] text-white border-[var(--color-primary)]">2</div>
-                <span className="text-[10px] sm:text-[13px] font-bold text-[var(--color-primary)] whitespace-nowrap">Payment</span>
-              </div>
-              <div className="h-[3px] flex-1 rounded-full transition-all bg-[var(--color-primary)]" />
-              <div className="flex flex-col items-center gap-2 min-w-0">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 bg-[var(--color-primary)] text-white border-[var(--color-primary)]">3</div>
-                <span className="text-[10px] sm:text-[13px] font-bold text-[var(--color-primary)] whitespace-nowrap">Done</span>
+          <div className="bg-white rounded-[24px] shadow-lg p-4 sm:p-6 mb-6">
+            <div className="flex items-center justify-center">
+              <div className="flex items-center gap-2 sm:gap-4 w-full max-w-md px-2">
+                <div className="flex flex-col items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 bg-[var(--color-primary)] text-white border-[var(--color-primary)]">1</div>
+                  <span className="text-[10px] sm:text-[13px] font-bold text-[var(--color-primary)] whitespace-nowrap">Checkout</span>
+                </div>
+                <div className="h-[3px] flex-1 rounded-full transition-all bg-[var(--color-primary)]" />
+                <div className="flex flex-col items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 bg-[var(--color-primary)] text-white border-[var(--color-primary)]">2</div>
+                  <span className="text-[10px] sm:text-[13px] font-bold text-[var(--color-primary)] whitespace-nowrap">Payment</span>
+                </div>
+                <div className="h-[3px] flex-1 rounded-full transition-all bg-[var(--color-primary)]" />
+                <div className="flex flex-col items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 bg-[var(--color-primary)] text-white border-[var(--color-primary)]">3</div>
+                  <span className="text-[10px] sm:text-[13px] font-bold text-[var(--color-primary)] whitespace-nowrap">Done</span>
+                </div>
               </div>
             </div>
           </div>
@@ -819,34 +821,33 @@ export function Checkout() {
   }
 
   return (
-    <div className="bg-black/50 fixed inset-0 z-40 flex items-start justify-center overflow-y-auto py-6 sm:py-10 backdrop-blur-sm">
+    <div className="bg-black/50 fixed inset-0 z-40 flex items-start justify-center overflow-y-auto p-4 sm:p-6 backdrop-blur-sm">
 
-      <div className="w-full max-w-6xl px-4 relative z-10 pb-10">
+      <div className="w-full max-w-[720px] relative z-10 my-auto">
 
         {/* PROGRESS BAR */}
-        <div className="flex items-center justify-center mb-10">
-          <div className="flex items-center gap-2 sm:gap-4 w-full max-w-lg px-2">
-            <div className="flex flex-col items-center gap-2 min-w-0">
-              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 ${step >= 1 ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>1</div>
-              <span className={`text-[10px] sm:text-[13px] font-bold whitespace-nowrap ${step >= 1 ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>Checkout</span>
-            </div>
-            <div className={`h-[3px] flex-1 rounded-full transition-all ${step >= 2 ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]'}`} />
-            <div className="flex flex-col items-center gap-2 min-w-0">
-              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 ${step >= 2 ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>2</div>
-              <span className={`text-[10px] sm:text-[13px] font-bold whitespace-nowrap ${step >= 2 ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>Payment</span>
-            </div>
-            <div className={`h-[3px] flex-1 rounded-full transition-all ${step >= 3 ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]'}`} />
-            <div className="flex flex-col items-center gap-2 min-w-0">
-              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 ${step >= 3 ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>3</div>
-              <span className={`text-[10px] sm:text-[13px] font-bold whitespace-nowrap ${step >= 3 ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>Done</span>
+        <div className="bg-white rounded-[24px] shadow-lg p-4 sm:p-6 mb-6">
+          <div className="flex items-center justify-center">
+            <div className="flex items-center gap-2 sm:gap-4 w-full max-w-lg px-2">
+              <div className="flex flex-col items-center gap-2 min-w-0">
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 ${step >= 1 ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>1</div>
+                <span className={`text-[10px] sm:text-[13px] font-bold whitespace-nowrap ${step >= 1 ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>Checkout</span>
+              </div>
+              <div className={`h-[3px] flex-1 rounded-full transition-all ${step >= 2 ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]'}`} />
+              <div className="flex flex-col items-center gap-2 min-w-0">
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 ${step >= 2 ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>2</div>
+                <span className={`text-[10px] sm:text-[13px] font-bold whitespace-nowrap ${step >= 2 ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>Payment</span>
+              </div>
+              <div className={`h-[3px] flex-1 rounded-full transition-all ${step >= 3 ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]'}`} />
+              <div className="flex flex-col items-center gap-2 min-w-0">
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-[14px] sm:text-[16px] transition-all shadow-sm border-2 ${step >= 3 ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]' : 'bg-white text-[var(--color-text-muted)] border-[var(--color-border)]'}`}>3</div>
+                <span className={`text-[10px] sm:text-[13px] font-bold whitespace-nowrap ${step >= 3 ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>Done</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-
-          {/* MAIN CONTENT */}
-          <div className="w-full lg:w-2/3">
+        <div className="w-full">
             <AnimatePresence mode="wait" initial={false}>
 
               {/* STEP 1: DELIVERY */}
@@ -964,6 +965,21 @@ export function Checkout() {
                   </div>
 
                   {error && <div className="text-red-500 text-[14px] font-medium bg-red-50 rounded-[8px] p-3">{error}</div>}
+
+                  {/* Desktop action buttons */}
+                  <div className="hidden sm:flex items-center justify-between gap-4 pt-6 border-t border-[var(--color-border)]">
+                    <Button onClick={handleBack} variant="ghost" className="text-[var(--color-text-muted)] font-bold px-0 hover:bg-transparent hover:text-[var(--color-text-heading)]">
+                      <ChevronLeft className="w-5 h-5 mr-1" /> Back
+                    </Button>
+                    <Button
+                      onClick={handleNext}
+                      variant="primary"
+                      size="xl"
+                      className="px-12 shadow-[var(--shadow-level-2)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]"
+                    >
+                      CONFIRM ORDER <ChevronRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  </div>
                 </motion.div>
               )}
 
@@ -1690,7 +1706,6 @@ export function Checkout() {
             </Dialog>
           </div>
         </div>
-      </div>
 
       {/* Mobile Fixed Bottom Bar */}
       {step === 1 && (
