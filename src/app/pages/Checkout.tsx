@@ -60,7 +60,7 @@ const shippingProviders = [
 
 export function Checkout() {
   const [step, setStep] = useState(1);
-  const [shippingMethod, setShippingMethod] = useState(shippingProviders[0].id);
+  const [shippingMethod] = useState(shippingProviders[0].id);
   const [paymentMethod, setPaymentMethod] = useState('mpesa');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -98,7 +98,7 @@ export function Checkout() {
   // Payment execution sub-flow (within step 2)
   const [paymentFlowStep, setPaymentFlowStep] = useState<'select' | 'request' | 'confirm' | 'processing'>('select');
   const [paymentPhoneError, setPaymentPhoneError] = useState('');
-  const [providerResponse, setProviderResponse] = useState<'idle' | 'success' | 'incorrect_pin' | 'insufficient_balance' | 'cancelled' | 'timeout'>('idle');
+  const [_providerResponse, setProviderResponse] = useState<'idle' | 'success' | 'incorrect_pin' | 'insufficient_balance' | 'cancelled' | 'timeout'>('idle');
 
   /* ── provider-specific phone validation ── */
   function validateProviderPhone(providerId: string, phone: string): { valid: boolean; message: string } {
@@ -1190,6 +1190,11 @@ export function Checkout() {
                           </label>
                           {availableStations.length > 0 ? (
                             <div className="space-y-2">
+                              {availableStations.some(s => s.ward !== selectedWard) && (
+                                <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-[8px] px-3 py-2">
+                                  Showing nearest stations to {selectedWard}, {selectedDistrict}
+                                </p>
+                              )}
                               {availableStations.map((station) => (
                                 <button
                                   key={station.id}

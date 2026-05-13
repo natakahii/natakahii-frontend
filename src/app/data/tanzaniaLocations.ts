@@ -256,26 +256,60 @@ export interface PickupStation {
 }
 
 const pickupStations: PickupStation[] = [
+  // Dar es Salaam
   { id: 'ps1', name: 'Dar Central Hub', region: 'Dar es Salaam', district: 'Ilala', ward: 'Kariakoo', lat: -6.8235, lng: 39.2695 },
   { id: 'ps2', name: 'Kinondoni Drop Point', region: 'Dar es Salaam', district: 'Kinondoni', ward: 'Mikocheni', lat: -6.765, lng: 39.25 },
   { id: 'ps3', name: 'Temeke Station', region: 'Dar es Salaam', district: 'Temeke', ward: 'Temeke', lat: -6.865, lng: 39.26 },
+  { id: 'ps12', name: 'Kigamboni Ferry Point', region: 'Dar es Salaam', district: 'Kigamboni', ward: 'Kigamboni', lat: -6.85, lng: 39.30 },
+  { id: 'ps13', name: 'Ubungo Bus Terminal Hub', region: 'Dar es Salaam', district: 'Ubungo', ward: 'Ubungo', lat: -6.79, lng: 39.22 },
+  // Arusha
   { id: 'ps4', name: 'Arusha Town Center', region: 'Arusha', district: 'Arusha City', ward: 'Kaloleni', lat: -3.3667, lng: 36.6833 },
+  { id: 'ps14', name: 'Arumeru Junction Point', region: 'Arusha', district: 'Arumeru', ward: 'Maji Ya Chai', lat: -3.40, lng: 36.78 },
+  { id: 'ps15', name: 'Monduli Drop Point', region: 'Arusha', district: 'Monduli', ward: 'Monduli Mjini', lat: -3.32, lng: 36.45 },
+  // Mwanza
   { id: 'ps5', name: 'Mwanza Port Pickup', region: 'Mwanza', district: 'Nyamagana', ward: 'Nyamagana', lat: -2.5167, lng: 32.9 },
+  { id: 'ps16', name: 'Ilemela Collection Point', region: 'Mwanza', district: 'Ilemela', ward: 'Ilemela', lat: -2.50, lng: 32.88 },
+  // Dodoma
   { id: 'ps6', name: 'Dodoma Main Office', region: 'Dodoma', district: 'Dodoma Urban', ward: 'Madukani', lat: -6.163, lng: 35.751 },
+  { id: 'ps17', name: 'Chamwino Collection Point', region: 'Dodoma', district: 'Chamwino', ward: 'Chamwino', lat: -6.10, lng: 35.80 },
+  // Moshi
   { id: 'ps7', name: 'Moshi Mountain Hub', region: 'Moshi', district: 'Moshi Urban', ward: 'Moshi Mjini', lat: -3.35, lng: 37.3333 },
+  { id: 'ps18', name: 'Moshi Rural Drop Point', region: 'Moshi', district: 'Moshi Rural', ward: 'Mabogini', lat: -3.40, lng: 37.30 },
+  // Morogoro
   { id: 'ps8', name: 'Morogoro Campus Point', region: 'Morogoro', district: 'Morogoro Urban', ward: 'Kihonda', lat: -6.8235, lng: 37.6579 },
+  { id: 'ps19', name: 'Mvomero Collection Center', region: 'Morogoro', district: 'Mvomero', ward: 'Mvomero', lat: -6.75, lng: 37.55 },
+  // Mbeya
   { id: 'ps9', name: 'Mbeya Highlands', region: 'Mbeya', district: 'Mbeya City', ward: 'Iyunga', lat: -8.9, lng: 33.45 },
+  { id: 'ps20', name: 'Tukuyu Drop Point', region: 'Mbeya', district: 'Mbeya Rural', ward: 'Tukuyu', lat: -9.25, lng: 33.65 },
+  // Tanga
   { id: 'ps10', name: 'Tanga Beach Drop', region: 'Tanga', district: 'Tanga City', ward: 'Mzingani', lat: -5.0667, lng: 39.1 },
+  { id: 'ps21', name: 'Muheza Junction Point', region: 'Tanga', district: 'Muheza', ward: 'Muheza', lat: -5.17, lng: 38.78 },
+  // Zanzibar
   { id: 'ps11', name: 'Zanzibar Stone Town', region: 'Zanzibar', district: 'Zanzibar Urban/West', ward: 'Malindi', lat: -6.1659, lng: 39.1994 },
+  { id: 'ps22', name: 'Zanzibar North Point', region: 'Zanzibar', district: 'Zanzibar North', ward: 'Kivunge', lat: -5.93, lng: 39.28 },
 ];
 
 export function getPickupStations(region?: string, district?: string, ward?: string): PickupStation[] {
-  return pickupStations.filter((s) => {
-    if (region && s.region !== region) return false;
-    if (district && s.district !== district) return false;
-    if (ward && s.ward !== ward) return false;
-    return true;
-  });
+  if (!region) return pickupStations;
+
+  // Try exact ward match first
+  if (ward && district) {
+    const wardMatch = pickupStations.filter(
+      (s) => s.region === region && s.district === district && s.ward === ward
+    );
+    if (wardMatch.length > 0) return wardMatch;
+  }
+
+  // Fallback: same district
+  if (district) {
+    const districtMatch = pickupStations.filter(
+      (s) => s.region === region && s.district === district
+    );
+    if (districtMatch.length > 0) return districtMatch;
+  }
+
+  // Fallback: same region
+  return pickupStations.filter((s) => s.region === region);
 }
 
 export function getNearestPickupStation(region: string, district: string, ward: string): PickupStation | null {
