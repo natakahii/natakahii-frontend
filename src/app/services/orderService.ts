@@ -1,3 +1,5 @@
+import { apiClient } from './apiClient';
+
 interface CartItem {
   product_id: number;
   quantity: number;
@@ -12,21 +14,9 @@ interface CheckoutBreakdown {
   total: number;
 }
 
-const getHeaders = () => ({
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${localStorage.getItem('token')}`,
-});
-
 export const orderService = {
   async calculateCheckout(items: CartItem[]): Promise<CheckoutBreakdown> {
-    const response = await fetch('/api/v1/orders/calculate', {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ items }),
-    });
-
-    if (!response.ok) throw new Error('Failed to calculate checkout');
-    return response.json();
+    return apiClient.post<CheckoutBreakdown>('/orders/calculate', JSON.stringify({ items }));
   },
 
   async createOrder(data: {
@@ -36,19 +26,7 @@ export const orderService = {
     payment_method: string;
     pin?: string;
   }) {
-    const response = await fetch('/api/v1/orders', {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || 'Order creation failed');
-    }
-
-    return result;
+    return apiClient.post<any>('/orders', JSON.stringify(data));
   },
 
   async confirmPayment(orderId: number, data: {
@@ -56,19 +34,7 @@ export const orderService = {
     phone_number: string;
     payment_method: string;
   }) {
-    const response = await fetch(`/api/v1/orders/${orderId}/confirm-payment`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || 'Payment confirmation failed');
-    }
-
-    return result;
+    return apiClient.post<any>(`/orders/${orderId}/confirm-payment`, JSON.stringify(data));
   },
 
   async getRefundEligibleOrders(): Promise<Array<{
@@ -87,13 +53,7 @@ export const orderService = {
     }>;
     created_at: string;
   }>> {
-    const response = await fetch('/api/v1/orders/refund-eligible', {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-
-    if (!response.ok) throw new Error('Failed to fetch eligible orders');
-    const data = await response.json();
+    const data = await apiClient.get<any>('/orders/refund-eligible');
     return data.data || data;
   },
 };

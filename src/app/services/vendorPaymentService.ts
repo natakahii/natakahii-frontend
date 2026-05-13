@@ -5,6 +5,8 @@
  * - Payout requests and history
  */
 
+import { apiClient } from './apiClient';
+
 export interface VendorWalletData {
   id: number;
   vendor_id: number;
@@ -61,26 +63,12 @@ export interface PayoutResponse {
   items: PayoutItem[];
 }
 
-const getHeaders = () => ({
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${localStorage.getItem('token')}`,
-});
-
 export const vendorPaymentService = {
   /**
    * Get vendor wallet details including all balance tiers
    */
   async getWallet(): Promise<VendorWalletData> {
-    const response = await fetch('/api/v1/vendor/wallet', {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch wallet');
-    }
-
-    return response.json();
+    return apiClient.get<VendorWalletData>('/vendor/wallet');
   },
 
   /**
@@ -104,18 +92,9 @@ export const vendorPaymentService = {
     }
 
     const queryString = params.toString();
-    const url = `/api/v1/vendor/wallet/transactions${queryString ? '?' + queryString : ''}`;
+    const path = `/vendor/wallet/transactions${queryString ? '?' + queryString : ''}`;
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch wallet transactions');
-    }
-
-    return response.json();
+    return apiClient.get<{ data: WalletTransaction[]; total: number; pagination: any }>(path);
   },
 
   /**
@@ -154,18 +133,7 @@ export const vendorPaymentService = {
       throw new Error('Minimum payout amount is 10,000 TZS');
     }
 
-    const response = await fetch('/api/v1/vendor/wallet/payout', {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to request payout');
-    }
-
-    return response.json();
+    return apiClient.post<VendorPayout>('/vendor/wallet/payout', JSON.stringify(data));
   },
 
   /**
@@ -189,34 +157,16 @@ export const vendorPaymentService = {
     }
 
     const queryString = params.toString();
-    const url = `/api/v1/vendor/payouts${queryString ? '?' + queryString : ''}`;
+    const path = `/vendor/payouts${queryString ? '?' + queryString : ''}`;
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch payouts');
-    }
-
-    return response.json();
+    return apiClient.get<{ data: VendorPayout[]; total: number; pagination: any }>(path);
   },
 
   /**
    * Get detailed information about a specific payout
    */
   async getPayoutDetails(payoutId: number): Promise<PayoutResponse> {
-    const response = await fetch(`/api/v1/vendor/payouts/${payoutId}`, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch payout details');
-    }
-
-    return response.json();
+    return apiClient.get<PayoutResponse>(`/vendor/payouts/${payoutId}`);
   },
 
   /**
@@ -232,16 +182,7 @@ export const vendorPaymentService = {
     processed_at?: string;
     updated_at: string;
   }> {
-    const response = await fetch(`/api/v1/vendor/payouts/${payoutId}/status`, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch payout status');
-    }
-
-    return response.json();
+    return apiClient.get(`/vendor/payouts/${payoutId}/status`);
   },
 
   /**
@@ -256,16 +197,7 @@ export const vendorPaymentService = {
     processing_time: string;
     fee: number;
   }>> {
-    const response = await fetch('/api/v1/vendor/wallet/payment-methods', {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch payment methods');
-    }
-
-    return response.json();
+    return apiClient.get('/vendor/wallet/payment-methods');
   },
 
   /**
@@ -278,16 +210,6 @@ export const vendorPaymentService = {
     processing_time: string;
     estimated_completion: string;
   }> {
-    const response = await fetch('/api/v1/vendor/wallet/payout-estimate', {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({ amount, payment_method: paymentMethod }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to estimate payout');
-    }
-
-    return response.json();
+    return apiClient.post('/vendor/wallet/payout-estimate', JSON.stringify({ amount, payment_method: paymentMethod }));
   },
 };

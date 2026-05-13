@@ -6,6 +6,10 @@
  * - Payment verification
  */
 
+import { apiClient, getAuthToken } from './apiClient';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL ?? '/api/v1';
+
 export interface PaymentTransaction {
   id: number;
   order_id: number;
@@ -52,11 +56,6 @@ export interface RefundTransaction {
   updated_at: string;
 }
 
-const getHeaders = () => ({
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${localStorage.getItem('token')}`,
-});
-
 /**
  * Poll for payment status with exponential backoff
  * Useful after initiating payment via Snippe to check completion
@@ -71,16 +70,7 @@ export const pollPaymentStatus = async (
 
   while (attempts < maxAttempts) {
     try {
-      const response = await fetch(`/api/v1/orders/${orderId}/payment-status`, {
-        method: 'GET',
-        headers: getHeaders(),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch payment status');
-      }
-
-      const data: PaymentStatusResponse = await response.json();
+      const data = await apiClient.get<PaymentStatusResponse>(`/orders/${orderId}/payment-status`);
 
       // If status is no longer pending, return it
       if (data.status !== 'pending' && data.status !== 'initiated') {
@@ -128,34 +118,16 @@ export const paymentService = {
     }
 
     const queryString = params.toString();
-    const url = `/api/v1/payments${queryString ? '?' + queryString : ''}`;
+    const path = `/payments${queryString ? '?' + queryString : ''}`;
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch payment history');
-    }
-
-    return response.json();
+    return apiClient.get<{ data: PaymentTransaction[]; total: number; meta: any }>(path);
   },
 
   /**
    * Get payment details for a specific transaction
    */
   async getPaymentDetails(paymentId: number): Promise<PaymentTransaction> {
-    const response = await fetch(`/api/v1/payments/${paymentId}`, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch payment details');
-    }
-
-    return response.json();
+    return apiClient.get<PaymentTransaction>(`/payments/${paymentId}`);
   },
 
   /**
@@ -163,25 +135,20 @@ export const paymentService = {
    * Used after payment initiation to verify completion
    */
   async checkPaymentStatus(orderId: number): Promise<PaymentStatusResponse> {
-    const response = await fetch(`/api/v1/orders/${orderId}/payment-status`, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to check payment status');
-    }
-
-    return response.json();
+    return apiClient.get<PaymentStatusResponse>(`/orders/${orderId}/payment-status`);
   },
 
   /**
    * Download payment receipt/invoice
    */
   async downloadReceipt(paymentId: number, format: 'pdf' | 'csv' = 'pdf'): Promise<Blob> {
-    const response = await fetch(`/api/v1/payments/${paymentId}/receipt?format=${format}`, {
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/payments/${paymentId}/receipt?format=${format}`, {
       method: 'GET',
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/octet-stream',
+      },
     });
 
     if (!response.ok) {
@@ -195,16 +162,7 @@ export const paymentService = {
    * Calculate refund for an order
    */
   async calculateRefund(orderId: number): Promise<RefundBreakdown> {
-    const response = await fetch(`/api/v1/orders/${orderId}/refunds/calculate`, {
-      method: 'POST',
-      headers: getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to calculate refund');
-    }
-
-    return response.json();
+    return apiClient.post<RefundBreakdown>(`/orders/${orderId}/refunds/calculate`, undefined);
   },
 
   /**
@@ -215,18 +173,7 @@ export const paymentService = {
     refund_type: 'full' | 'partial';
     notes?: string;
   }): Promise<RefundTransaction> {
-    const response = await fetch(`/api/v1/orders/${orderId}/refunds`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to request refund');
-    }
-
-    return response.json();
+    return apiClient.post<RefundTransaction>(`/orders/${orderId}/refunds`, JSON.stringify(data));
   },
 
   /**
@@ -250,33 +197,15 @@ export const paymentService = {
     }
 
     const queryString = params.toString();
-    const url = `/api/v1/refunds${queryString ? '?' + queryString : ''}`;
+    const path = `/refunds${queryString ? '?' + queryString : ''}`;
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch refund history');
-    }
-
-    return response.json();
+    return apiClient.get<{ data: RefundTransaction[]; total: number }>(path);
   },
 
   /**
    * Get refund details
    */
   async getRefundDetails(refundId: number): Promise<RefundTransaction> {
-    const response = await fetch(`/api/v1/refunds/${refundId}`, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch refund details');
-    }
-
-    return response.json();
+    return apiClient.get<RefundTransaction>(`/refunds/${refundId}`);
   },
 };
