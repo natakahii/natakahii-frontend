@@ -4,12 +4,14 @@ import { Button } from '../../components/ui/button';
 import {
   BarChart3,
   Bell,
+  CreditCard,
   LayoutDashboard,
   LogOut,
   Package,
   Settings,
   Store,
   Truck,
+  Wallet,
 } from 'lucide-react';
 import { useAuth } from '../../providers/AuthProvider';
 
@@ -22,6 +24,8 @@ export function VendorLayout() {
     { name: 'Products', path: '/vendor/dashboard/products', icon: Package },
     { name: 'Analytics', path: '/vendor/dashboard/analytics', icon: BarChart3 },
     { name: 'Dropoffs', path: '/vendor/dashboard/dropoffs', icon: Truck },
+    { name: 'Wallet', path: '/vendor/dashboard/wallet', icon: Wallet },
+    { name: 'Payouts', path: '/vendor/dashboard/payouts', icon: CreditCard },
     { name: 'Settings', path: '/vendor/dashboard/settings', icon: Settings },
   ];
 
@@ -115,8 +119,7 @@ export function VendorLayout() {
             { name: 'Home', path: '/vendor/dashboard', icon: LayoutDashboard },
             { name: 'Products', path: '/vendor/dashboard/products', icon: Package },
             { name: 'Analytics', path: '/vendor/dashboard/analytics', icon: BarChart3 },
-            { name: 'Dropoffs', path: '/vendor/dashboard/dropoffs', icon: Truck },
-            { name: 'Settings', path: '/vendor/dashboard/settings', icon: Settings },
+            { name: 'Wallet', path: '/vendor/dashboard/wallet', icon: Wallet },
           ].map((item) => (
             <NavLink
               key={item.name}

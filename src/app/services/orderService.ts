@@ -70,4 +70,30 @@ export const orderService = {
 
     return result;
   },
+
+  async getRefundEligibleOrders(): Promise<Array<{
+    id: number;
+    order_number: string;
+    status: string;
+    total_amount: number;
+    payment_status: string;
+    items: Array<{
+      id: number;
+      product_id: number;
+      quantity: number;
+      unit_price: number;
+      subtotal: number;
+      product?: { id: number; name: string; image_url?: string };
+    }>;
+    created_at: string;
+  }>> {
+    const response = await fetch('/api/v1/orders/refund-eligible', {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch eligible orders');
+    const data = await response.json();
+    return data.data || data;
+  },
 };

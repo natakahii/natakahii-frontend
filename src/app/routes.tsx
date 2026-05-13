@@ -14,6 +14,10 @@ import { Checkout } from "./pages/Checkout";
 import { Tracking } from "./pages/Tracking";
 import { Profile } from "./pages/Profile";
 
+// Payment Flow
+import { PaymentHistory } from "./pages/PaymentHistory";
+import { Refunds } from "./pages/Refunds";
+
 // Vendor Flow
 import { VendorApply } from "./pages/vendor/VendorApply";
 import { VendorLayout } from "./pages/vendor/VendorLayout";
@@ -23,6 +27,8 @@ import { VendorProductForm } from "./pages/vendor/VendorProductForm";
 import { VendorAnalytics } from "./pages/vendor/VendorAnalytics";
 import { VendorDropoffs } from "./pages/vendor/VendorDropoffs";
 import { VendorSettings } from "./pages/vendor/VendorSettings";
+import { VendorWalletPage } from "./pages/vendor/VendorWallet";
+import { VendorPayouts } from "./pages/vendor/VendorPayouts";
 
 // Error/404 Page
 import { NotFound } from "./pages/NotFound";
@@ -50,6 +56,8 @@ export const router = createBrowserRouter([
           { path: "checkout", element: <RequireAuth><Checkout /></RequireAuth> },
           { path: "tracking", element: <RequireAuth><Tracking /></RequireAuth> },
           { path: "profile", element: <RequireAuth><Profile /></RequireAuth> },
+          { path: "payments", element: <RequireAuth><PaymentHistory /></RequireAuth> },
+          { path: "refunds", element: <RequireAuth><Refunds /></RequireAuth> },
 
           {
             path: "vendor/apply",
@@ -101,6 +109,8 @@ export const router = createBrowserRouter([
           { path: "analytics", Component: VendorAnalytics },
           { path: "dropoffs", Component: VendorDropoffs },
           { path: "settings", Component: VendorSettings },
+          { path: "wallet", Component: VendorWalletPage },
+          { path: "payouts", Component: VendorPayouts },
           { path: "*", Component: VendorDashboardHome },
         ],
       },
