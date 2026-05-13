@@ -9,7 +9,7 @@ import { Switch } from '../components/ui/switch';
 import {
   ShieldCheck, Truck, CreditCard, CheckCircle, ChevronRight, ChevronLeft,
   MapPin, Package, Info, Loader2, Plus, Navigation, MapPinned, ChevronDown,
-  Phone, User, Home, ArrowLeft, Box, Download, QrCode
+  Phone, User, Home, Box, Download, QrCode
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
@@ -17,9 +17,10 @@ import { formatCurrency } from '../utils/currency';
 import { useCart } from '../providers/CartProvider';
 import { orderService } from '../services/orderService';
 import { pollPaymentStatus, paymentService } from '../services/paymentService';
+
 import {
-  Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter,
-} from '../components/ui/drawer';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from '../components/ui/dialog';
 import {
   locationService, openGoogleMapsPicker, type PickupStation,
 } from '../services/locationService';
@@ -595,10 +596,8 @@ export function Checkout() {
     const statusIndex = timelineSteps.findIndex(s => s.id === orderStatus);
 
     return (
-      <div className="bg-[var(--color-bg-page)] min-h-[calc(100vh-72px)] py-8 lg:py-12 pb-20 sm:pb-8 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[var(--color-primary)]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[var(--color-accent)]/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4 pointer-events-none" />
-        <div className="container mx-auto px-4 relative z-10 max-w-6xl">
+      <div className="bg-black/50 fixed inset-0 z-40 flex items-start justify-center overflow-y-auto py-6 sm:py-10 backdrop-blur-sm">
+        <div className="w-full max-w-6xl px-4 relative z-10 pb-10">
           {/* PROGRESS BAR */}
           <div className="flex items-center justify-center mb-10">
             <div className="flex items-center gap-2 sm:gap-4 w-full max-w-md px-2">
@@ -821,13 +820,9 @@ export function Checkout() {
   }
 
   return (
-    <div className="bg-[var(--color-bg-page)] min-h-[calc(100vh-72px)] py-8 lg:py-12 pb-24 sm:pb-8 relative overflow-hidden">
+    <div className="bg-black/50 fixed inset-0 z-40 flex items-start justify-center overflow-y-auto py-6 sm:py-10 backdrop-blur-sm">
 
-      {/* Decorative background shapes */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[var(--color-primary)]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[var(--color-accent)]/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4 pointer-events-none" />
-
-      <div className="container mx-auto px-4 relative z-10 max-w-6xl">
+      <div className="w-full max-w-6xl px-4 relative z-10 pb-10">
 
         {/* PROGRESS BAR */}
         <div className="flex items-center justify-center mb-10">
@@ -1330,44 +1325,47 @@ export function Checkout() {
 
             </AnimatePresence>
 
-            {/* ─── Address Drawer ─── */}
-            <Drawer open={addressDrawerOpen} onOpenChange={setAddressDrawerOpen}>
-              <DrawerContent className="bg-white max-h-[92vh]">
-                <DrawerHeader className="border-b border-[var(--color-border)] pb-4 relative">
-                  <button
-                    onClick={() => setAddressDrawerOpen(false)}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[var(--color-bg-page)] flex items-center justify-center hover:bg-[var(--color-bg-card)] transition-colors"
-                  >
-                    <ArrowLeft className="w-4 h-4 text-[var(--color-text-heading)]" />
-                  </button>
-                  <DrawerTitle className="text-center text-[18px] text-[var(--color-text-heading)]">
+            {/* ─── Address Modal ─── */}
+            <Dialog open={addressDrawerOpen} onOpenChange={setAddressDrawerOpen}>
+              <DialogContent className="bg-white sm:max-w-[520px] p-0 gap-0 overflow-hidden rounded-[20px]">
+                <DialogHeader className="border-b border-[var(--color-border)] pb-4 pt-6 px-6 relative">
+                  <DialogTitle className="text-center text-[18px] text-[var(--color-text-heading)]">
                     {locView !== 'none' ? 'Where To Ship Your Product' : 'Shipping Address'}
-                  </DrawerTitle>
-                  <DrawerDescription className="text-center text-[13px] text-[var(--color-text-muted)]">
+                  </DialogTitle>
+                  <DialogDescription className="text-center text-[13px] text-[var(--color-text-muted)]">
                     {locView !== 'none' ? 'Select your location below' : 'Enter your delivery details'}
-                  </DrawerDescription>
-                </DrawerHeader>
+                  </DialogDescription>
+                </DialogHeader>
 
-                <div className="overflow-y-auto p-4 space-y-5">
+                <div className="overflow-y-auto p-6 space-y-5 max-h-[65vh]">
                   {/* Location Selector View */}
                   {locView !== 'none' && (
                     <div className="space-y-3">
                       {locView === 'region' && (
                         <>
                           <p className="text-[13px] font-bold text-[var(--color-text-heading)] mb-2">1. Select Region</p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="space-y-2">
                             {regions.map((r) => (
                               <button
                                 key={r}
                                 onClick={() => { setSelectedRegion(r); setLocView('district'); }}
                                 className={cn(
-                                  'p-3 rounded-[12px] border-2 text-[13px] font-semibold transition-all text-left',
+                                  'w-full flex items-center gap-3 p-3 rounded-[12px] border-2 text-left transition-all',
                                   selectedRegion === r
-                                    ? 'border-[var(--color-primary)] bg-[var(--color-primary-bg)] text-[var(--color-primary)]'
-                                    : 'border-[var(--color-border)] bg-white text-[var(--color-text-heading)] hover:border-[var(--color-primary)]'
+                                    ? 'border-[var(--color-primary)] bg-[var(--color-primary-bg)]'
+                                    : 'border-[var(--color-border)] bg-white hover:border-[var(--color-primary)]'
                                 )}
                               >
-                                {r}
+                                <div className={cn(
+                                  'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0',
+                                  selectedRegion === r ? 'border-[var(--color-primary)]' : 'border-[var(--color-text-muted)]'
+                                )}>
+                                  {selectedRegion === r && <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]" />}
+                                </div>
+                                <span className={cn(
+                                  'text-[14px] font-semibold',
+                                  selectedRegion === r ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-heading)]'
+                                )}>{r}</span>
                               </button>
                             ))}
                           </div>
@@ -1380,19 +1378,28 @@ export function Checkout() {
                             <span className="text-[13px] text-[var(--color-text-muted)]">Region: {selectedRegion}</span>
                           </div>
                           <p className="text-[13px] font-bold text-[var(--color-text-heading)] mb-2">2. Select District</p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="space-y-2">
                             {districts.map((d) => (
                               <button
                                 key={d}
                                 onClick={() => { setSelectedDistrict(d); setLocView('ward'); }}
                                 className={cn(
-                                  'p-3 rounded-[12px] border-2 text-[13px] font-semibold transition-all text-left',
+                                  'w-full flex items-center gap-3 p-3 rounded-[12px] border-2 text-left transition-all',
                                   selectedDistrict === d
-                                    ? 'border-[var(--color-primary)] bg-[var(--color-primary-bg)] text-[var(--color-primary)]'
-                                    : 'border-[var(--color-border)] bg-white text-[var(--color-text-heading)] hover:border-[var(--color-primary)]'
+                                    ? 'border-[var(--color-primary)] bg-[var(--color-primary-bg)]'
+                                    : 'border-[var(--color-border)] bg-white hover:border-[var(--color-primary)]'
                                 )}
                               >
-                                {d}
+                                <div className={cn(
+                                  'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0',
+                                  selectedDistrict === d ? 'border-[var(--color-primary)]' : 'border-[var(--color-text-muted)]'
+                                )}>
+                                  {selectedDistrict === d && <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]" />}
+                                </div>
+                                <span className={cn(
+                                  'text-[14px] font-semibold',
+                                  selectedDistrict === d ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-heading)]'
+                                )}>{d}</span>
                               </button>
                             ))}
                           </div>
@@ -1405,19 +1412,28 @@ export function Checkout() {
                             <span className="text-[13px] text-[var(--color-text-muted)]">{selectedRegion} › {selectedDistrict}</span>
                           </div>
                           <p className="text-[13px] font-bold text-[var(--color-text-heading)] mb-2">3. Select Ward</p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="space-y-2">
                             {wards.map((w) => (
                               <button
                                 key={w}
                                 onClick={() => { setSelectedWard(w); setLocView('none'); }}
                                 className={cn(
-                                  'p-3 rounded-[12px] border-2 text-[13px] font-semibold transition-all text-left',
+                                  'w-full flex items-center gap-3 p-3 rounded-[12px] border-2 text-left transition-all',
                                   selectedWard === w
-                                    ? 'border-[var(--color-primary)] bg-[var(--color-primary-bg)] text-[var(--color-primary)]'
-                                    : 'border-[var(--color-border)] bg-white text-[var(--color-text-heading)] hover:border-[var(--color-primary)]'
+                                    ? 'border-[var(--color-primary)] bg-[var(--color-primary-bg)]'
+                                    : 'border-[var(--color-border)] bg-white hover:border-[var(--color-primary)]'
                                 )}
                               >
-                                {w}
+                                <div className={cn(
+                                  'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0',
+                                  selectedWard === w ? 'border-[var(--color-primary)]' : 'border-[var(--color-text-muted)]'
+                                )}>
+                                  {selectedWard === w && <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-primary)]" />}
+                                </div>
+                                <span className={cn(
+                                  'text-[14px] font-semibold',
+                                  selectedWard === w ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-heading)]'
+                                )}>{w}</span>
                               </button>
                             ))}
                           </div>
@@ -1564,7 +1580,7 @@ export function Checkout() {
 
                 {/* Footer */}
                 {locView === 'none' && (
-                  <DrawerFooter className="border-t border-[var(--color-border)] p-4">
+                  <div className="border-t border-[var(--color-border)] p-6">
                     <Button
                       variant="primary"
                       size="xl"
@@ -1573,30 +1589,24 @@ export function Checkout() {
                     >
                       Save Address
                     </Button>
-                  </DrawerFooter>
+                  </div>
                 )}
-              </DrawerContent>
-            </Drawer>
+              </DialogContent>
+            </Dialog>
 
-            {/* ─── Payment Method Drawer ─── */}
-            <Drawer open={paymentDrawerOpen} onOpenChange={setPaymentDrawerOpen}>
-              <DrawerContent className="bg-white max-h-[92vh]">
-                <DrawerHeader className="border-b border-[var(--color-border)] pb-4 relative">
-                  <button
-                    onClick={() => setPaymentDrawerOpen(false)}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[var(--color-bg-page)] flex items-center justify-center hover:bg-[var(--color-bg-card)] transition-colors"
-                  >
-                    <ArrowLeft className="w-4 h-4 text-[var(--color-text-heading)]" />
-                  </button>
-                  <DrawerTitle className="text-center text-[18px] text-[var(--color-text-heading)]">
+            {/* ─── Payment Method Modal ─── */}
+            <Dialog open={paymentDrawerOpen} onOpenChange={setPaymentDrawerOpen}>
+              <DialogContent className="bg-white sm:max-w-[480px] p-0 gap-0 overflow-hidden rounded-[20px]">
+                <DialogHeader className="border-b border-[var(--color-border)] pb-4 pt-6 px-6 relative">
+                  <DialogTitle className="text-center text-[18px] text-[var(--color-text-heading)]">
                     {paymentDrawerCategory === 'mobile' ? 'Mobile Payment' : paymentDrawerCategory === 'card' ? 'Card / Bank Payment' : 'Select Payment Method'}
-                  </DrawerTitle>
-                  <DrawerDescription className="text-center text-[13px] text-[var(--color-text-muted)]">
+                  </DialogTitle>
+                  <DialogDescription className="text-center text-[13px] text-[var(--color-text-muted)]">
                     Select your preferred provider
-                  </DrawerDescription>
-                </DrawerHeader>
+                  </DialogDescription>
+                </DialogHeader>
 
-                <div className="overflow-y-auto p-4 space-y-3">
+                <div className="overflow-y-auto p-6 space-y-3 max-h-[60vh]">
                   {paymentDrawerCategory === 'mobile' && (
                     <>
                       {mobileProviders.map((provider) => (
@@ -1677,8 +1687,8 @@ export function Checkout() {
                     </>
                   )}
                 </div>
-              </DrawerContent>
-            </Drawer>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* SIDEBAR: ORDER SUMMARY */}
