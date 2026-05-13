@@ -11,7 +11,6 @@ import {
   MapPin, Package, Info, Loader2, Plus, Navigation, MapPinned, ChevronDown,
   Phone, User, Home, Box, Download, QrCode
 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { formatCurrency } from '../utils/currency';
 import { useCart } from '../providers/CartProvider';
@@ -1690,75 +1689,6 @@ export function Checkout() {
               </DialogContent>
             </Dialog>
           </div>
-
-          {/* SIDEBAR: ORDER SUMMARY */}
-          <div className="w-full lg:w-1/3">
-            <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-[var(--shadow-level-2)] border border-[var(--color-border)]/50 sticky top-[100px]">
-              <h2 className="text-[20px] font-bold text-[var(--color-text-heading)] mb-6 tracking-tight flex items-center gap-2">
-                Order Summary
-              </h2>
-
-              <div className="flex flex-col gap-4 mb-6 pb-6 border-b border-[var(--color-border)]">
-                {items.length === 0 ? (
-                  <div className="text-[13px] text-[var(--color-text-muted)]">Your cart is empty.</div>
-                ) : (
-                  items.map((item) => (
-                    <div key={item.id} className="flex gap-3 items-center">
-                      <div className="w-12 h-12 rounded-[8px] bg-[var(--color-bg-card)] overflow-hidden border border-[var(--color-border)]/50 shrink-0">
-                        <ImageWithFallback src={item.product?.images?.[0]?.image_path || ''} alt={item.product?.name || 'Item'} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-bold text-[var(--color-text-heading)] truncate">{item.product?.name || 'Product'}</div>
-                        <div className="text-[12px] text-[var(--color-text-muted)]">Qty: {item.quantity}</div>
-                      </div>
-                      <div className="text-[13px] font-bold text-[var(--color-text-heading)]">{formatCurrency((item.product?.price || 0) * item.quantity)}</div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className="space-y-4 mb-6 pt-2">
-                <div className="flex justify-between text-[15px] font-medium text-[var(--color-text-muted)]">
-                  <span>Subtotal</span>
-                  <span className="text-[var(--color-text-heading)]">{formatCurrency(subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-[15px] font-medium text-[var(--color-text-muted)]">
-                  <span>Platform Fee</span>
-                  <span className="text-[var(--color-text-heading)]">{formatCurrency(platformFee)}</span>
-                </div>
-                <div className="flex justify-between text-[15px] font-medium text-[var(--color-text-muted)]">
-                  <span>Shipping</span>
-                  <span className="text-[var(--color-text-heading)]">{shippingCost > 0 ? formatCurrency(shippingCost) : 'Free'}</span>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center text-[20px] font-bold text-[var(--color-text-heading)] mb-8 pt-6 border-t border-[var(--color-border)]">
-                <span>Total</span>
-                <span className="text-[var(--color-accent)] text-[28px] tracking-tight">{formatCurrency(total)}</span>
-              </div>
-
-              {/* Escrow badge */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="bg-[var(--color-primary-darker)] rounded-[16px] p-4 flex items-center justify-between cursor-help group shadow-[var(--shadow-level-1)]">
-                      <div className="flex items-center gap-3">
-                        <ShieldCheck className="w-6 h-6 text-[var(--color-accent)]" />
-                        <span className="text-[13px] font-bold text-white tracking-wide uppercase">Escrow Protected</span>
-                      </div>
-                      <Info className="w-4 h-4 text-white/50 group-hover:text-white transition-colors" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs text-[13px] p-3 leading-relaxed">
-                    <p className="font-bold mb-1">Your money is safe.</p>
-                    We hold your payment securely until you receive the order and confirm it matches the description. Only then do we release funds to the vendor.
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-            </div>
-          </div>
-
         </div>
       </div>
 
