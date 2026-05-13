@@ -70,7 +70,8 @@ export async function addToCart(
  * Get the current cart
  */
 export async function getCart(): Promise<Cart> {
-  return apiClient.get<Cart>('/cart');
+  const response = await apiClient.get<{ cart: Cart }>('/cart');
+  return response.cart;
 }
 
 /**
