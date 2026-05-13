@@ -208,4 +208,34 @@ export const paymentService = {
   async getRefundDetails(refundId: number): Promise<RefundTransaction> {
     return apiClient.get<RefundTransaction>(`/refunds/${refundId}`);
   },
+
+  // ── Payment Sessions (Snippe Hosted Checkout) ──
+
+  async createSession(orderId: number, options?: {
+    allowed_methods?: string[];
+    allow_custom_amount?: boolean;
+    min_amount?: number;
+    max_amount?: number;
+    expires_in?: number;
+    description?: string;
+    redirect_url?: string;
+    display?: Record<string, any>;
+    metadata?: Record<string, any>;
+    profile_id?: string;
+  }): Promise<{ success: boolean; session: { id: number; reference: string; checkout_url: string; payment_link_url?: string; short_code?: string; amount: number; currency: string; status: string; expires_at: string } }> {
+    return apiClient.post('/payment-sessions', JSON.stringify({ order_id: orderId, ...options }));
+  },
+
+  async getSession(reference: string): Promise<{ success: boolean; session: any }> {
+    return apiClient.get(`/payment-sessions/${reference}`);
+  },
+
+  async cancelSession(reference: string): Promise<{ success: boolean; message?: string }> {
+    return apiClient.post(`/payment-sessions/${reference}/cancel`, undefined);
+  },
+
+  async syncSession(reference: string): Promise<{ success: boolean; session: any }> {
+    return apiClient.post(`/payment-sessions/${reference}/sync`, undefined);
+  },
+
 };

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
+import { QRCodeSVG } from 'qrcode.react';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import { Button } from '../components/ui/button';
@@ -8,14 +9,14 @@ import { Switch } from '../components/ui/switch';
 import {
   ShieldCheck, Truck, CreditCard, CheckCircle, ChevronRight, ChevronLeft,
   MapPin, Package, Info, Loader2, Plus, Navigation, MapPinned, ChevronDown,
-  Phone, User, Home, ArrowLeft, Box, Download
+  Phone, User, Home, ArrowLeft, Box, Download, QrCode
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { formatCurrency } from '../utils/currency';
 import { useCart } from '../providers/CartProvider';
 import { orderService } from '../services/orderService';
-import { pollPaymentStatus } from '../services/paymentService';
+import { pollPaymentStatus, paymentService } from '../services/paymentService';
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter,
 } from '../components/ui/drawer';
@@ -30,7 +31,6 @@ import mpesaLogo from '../../assets/mpesa.png';
 import airtelMoneyLogo from '../../assets/airtelmoney.png';
 import halopesaLogo from '../../assets/halopesa.png';
 import mixxbyyasLogo from '../../assets/mixxbyyas.png';
-import azampesaLogo from '../../assets/azampesa.png';
 import selcomLogo from '../../assets/selcom.png';
 import crdbLogo from '../../assets/crdb-bank.jpeg';
 import nmbLogo from '../../assets/nmb-bank.jpeg';
@@ -39,7 +39,6 @@ import nbcLogo from '../../assets/nbc-bank.jpeg';
 const mobileProviders = [
   { id: 'mpesa', name: 'M-Pesa', logo: mpesaLogo, color: '#4CAF50' },
   { id: 'airtel_money', name: 'Airtel Money', logo: airtelMoneyLogo, color: '#E40000' },
-  { id: 'tigo_pesa', name: 'Tigo Pesa', logo: azampesaLogo, color: '#005BBB' },
   { id: 'halopesa', name: 'HaloPesa', logo: halopesaLogo, color: '#FF6B00' },
   { id: 'mixx_by_yas', name: 'Mixx by Yas', logo: mixxbyyasLogo, color: '#E91E63' },
 ];
@@ -53,6 +52,8 @@ const cardProviders = [
   { id: 'selcom', name: 'Selcom', logo: selcomLogo, color: '#00A859' },
   { id: 'other_card', name: 'Other Card / Bank', color: '#9CA3AF', textColor: '#fff' },
 ];
+
+const hostedCheckoutProvider = { id: 'hosted_checkout', name: 'Snippe Hosted Checkout', color: '#6366F1', textColor: '#fff' };
 
 const shippingProviders = [
   { id: 'fargo', name: 'Fargo Courier', level: 'Express', days: '1-2 Days', price: 450 },
@@ -95,9 +96,62 @@ export function Checkout() {
   const [mpesaPhone, setMpesaPhone] = useState('');
 
   // Payment execution sub-flow (within step 2)
-  const [paymentFlowStep, setPaymentFlowStep] = useState<'select' | 'request' | 'confirm' | 'processing' | 'awaiting'>('select');
+  const [paymentFlowStep, setPaymentFlowStep] = useState<'select' | 'request' | 'confirm' | 'processing' | 'awaiting' | 'redirecting' | 'hosted_redirect' | 'qr'>('select');
   const [paymentPhoneError, setPaymentPhoneError] = useState('');
   const [paymentStatusMessage, setPaymentStatusMessage] = useState('');
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [searchParams] = useSearchParams();
+
+  /* ── detect returning user after card payment or hosted checkout redirect ── */
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    const pendingOrderId = localStorage.getItem('natakahii_pending_order_id');
+    const sessionRef = localStorage.getItem('natakahii_session_reference');
+
+    if (paymentStatus === 'cancelled') {
+      localStorage.removeItem('natakahii_pending_order_id');
+      localStorage.removeItem('natakahii_session_reference');
+      setError('Payment was cancelled. You can retry below.');
+      setPaymentFlowStep('confirm');
+      // Clean URL
+      navigate('/checkout', { replace: true });
+      return;
+    }
+
+    if (pendingOrderId && step === 2) {
+      localStorage.removeItem('natakahii_pending_order_id');
+      setLoading(true);
+      setPaymentFlowStep('processing');
+      const checkStatus = async () => {
+        try {
+          // If returning from hosted checkout, sync session first
+          if (sessionRef) {
+            localStorage.removeItem('natakahii_session_reference');
+            try {
+              await paymentService.syncSession(sessionRef);
+            } catch (syncErr) {
+              // Continue to poll even if sync fails
+            }
+          }
+          const statusResult = await pollPaymentStatus(parseInt(pendingOrderId), 10, 2000);
+          if (statusResult.status === 'successful') {
+            triggerConfetti();
+            setStep(3);
+          } else {
+            setError(`Payment ${statusResult.status}${statusResult.error_message ? ': ' + statusResult.error_message : ''}. You can retry below.`);
+            setPaymentFlowStep('confirm');
+          }
+        } catch (err: any) {
+          setError(err.message || 'Could not verify payment status. Please check your order history.');
+          setPaymentFlowStep('confirm');
+        } finally {
+          setLoading(false);
+        }
+      };
+      checkStatus();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, searchParams]);
 
   /* ── provider-specific phone validation ── */
   function validateProviderPhone(providerId: string, phone: string): { valid: boolean; message: string } {
@@ -113,7 +167,6 @@ export function Checkout() {
     const providerPrefixes: Record<string, string[]> = {
       mpesa: ['744', '754', '764', '743', '753', '713'],
       airtel_money: ['683', '684', '685', '686', '687', '688', '689', '783', '784', '785', '786', '787', '788', '789', '693', '694'],
-      tigo_pesa: ['716', '717', '718', '719', '710', '711', '712', '713', '650', '651', '652', '653', '654', '655', '656', '657', '658', '659'],
       halopesa: ['620', '621', '622', '623', '624', '625', '626', '627', '628', '629', '640', '641', '642', '643', '644', '645', '646', '647', '648', '649'],
       mixx_by_yas: ['650', '651', '652', '653', '654', '655', '656', '657', '658', '659', '710', '711', '712', '713', '714', '715', '716', '717', '718', '719'],
     };
@@ -122,7 +175,7 @@ export function Checkout() {
     const match = allowed.some((p) => prefix.startsWith(p));
     if (!match) {
       const providerNames: Record<string, string> = {
-        mpesa: 'M-Pesa', airtel_money: 'Airtel Money', tigo_pesa: 'Tigo Pesa',
+        mpesa: 'M-Pesa', airtel_money: 'Airtel Money',
         halopesa: 'HaloPesa', mixx_by_yas: 'Mixx by Yas',
       };
       return { valid: false, message: `This number does not appear to be a valid ${providerNames[providerId] || 'provider'} number.` };
@@ -135,7 +188,8 @@ export function Checkout() {
   const shippingCost = shippingProviders.find(p => p.id === shippingMethod)?.price || 0;
   const total = subtotal + platformFee + shippingCost;
 
-  const isMobileMoney = ['mpesa', 'airtel_money', 'tigo_pesa', 'halopesa', 'mixx_by_yas'].includes(paymentMethod);
+  const isMobileMoney = ['mpesa', 'airtel_money', 'halopesa', 'mixx_by_yas'].includes(paymentMethod);
+  const isHostedCheckout = paymentMethod === 'hosted_checkout';
 
   /* ── load regions when drawer opens ── */
   useEffect(() => {
@@ -214,7 +268,7 @@ export function Checkout() {
         setPaymentFlowStep('request');
       }
     } else {
-      // Card / COD — skip to order creation
+      // Card / Hosted Checkout — skip to order creation
       handlePlaceOrder();
     }
   };
@@ -298,8 +352,83 @@ export function Checkout() {
           setError(pollErr.message || 'Payment status check timed out. Please check your phone and try again.');
           setPaymentFlowStep('confirm');
         }
+      } else if (paymentMethod === 'card' || paymentMethod === 'other_card') {
+        // Card payment — redirect to Snippe payment page
+        const paymentUrl = result.payment?.payment_url;
+        if (paymentUrl) {
+          // Save pending order ID so we can check status when user returns
+          localStorage.setItem('natakahii_pending_order_id', result.order?.id?.toString() || '');
+          setPaymentFlowStep('redirecting');
+          setLoading(false);
+          window.location.href = paymentUrl;
+        } else {
+          setError('Card payment URL not received from provider. Please try again.');
+          setPaymentFlowStep('confirm');
+          setLoading(false);
+        }
+      } else if (paymentMethod === 'dynamic_qr' || paymentMethod === 'qr') {
+        // QR payment — show QR code and poll
+        const qrCode = result.payment?.payment_qr_code;
+        if (qrCode) {
+          setQrCodeUrl(qrCode);
+          setPaymentFlowStep('qr');
+          setLoading(false);
+          // Poll for status
+          try {
+            const orderId = result.order?.id;
+            if (orderId) {
+              const statusResult = await pollPaymentStatus(orderId, 60, 3000);
+              if (statusResult.status === 'successful') {
+                triggerConfetti();
+                setStep(3);
+              } else {
+                setError(`Payment ${statusResult.status}${statusResult.error_message ? ': ' + statusResult.error_message : ''}. You can retry below.`);
+                setPaymentFlowStep('confirm');
+              }
+            }
+          } catch (pollErr: any) {
+            setError(pollErr.message || 'Payment status check timed out. Please scan the QR code again.');
+            setPaymentFlowStep('confirm');
+          }
+        } else {
+          setError('QR code not received from provider. Please try again.');
+          setPaymentFlowStep('confirm');
+          setLoading(false);
+        }
+      } else if (isHostedCheckout) {
+        // Hosted checkout — create session and redirect
+        const orderId = result.order?.id;
+        if (!orderId) {
+          setError('Order ID not available. Please try again.');
+          setPaymentFlowStep('confirm');
+          setLoading(false);
+          return;
+        }
+        try {
+          const sessionResult = await paymentService.createSession(orderId, {
+            allowed_methods: ['mobile_money', 'qr', 'card'],
+            description: 'Order ' + result.order?.order_number,
+            redirect_url: `${window.location.origin}/checkout?payment=success&order=${orderId}`,
+          });
+          if (sessionResult.success && sessionResult.session.checkout_url) {
+            localStorage.setItem('natakahii_pending_order_id', orderId.toString());
+            localStorage.setItem('natakahii_session_reference', sessionResult.session.reference);
+            setPaymentFlowStep('hosted_redirect');
+            setLoading(false);
+            window.location.href = sessionResult.session.checkout_url;
+          } else {
+            setError('Failed to create checkout session. Please try again.');
+            setPaymentFlowStep('confirm');
+            setLoading(false);
+          }
+        } catch (sessionErr: any) {
+          const backendError = sessionErr?.response?.data?.error || sessionErr?.message;
+          setError(backendError || 'Failed to create checkout session. Please try again.');
+          setPaymentFlowStep('confirm');
+          setLoading(false);
+        }
       } else {
-        // Card / bank — immediate result
+        // Other — treat as immediate
         triggerConfetti();
         setStep(3);
       }
@@ -325,22 +454,88 @@ export function Checkout() {
       });
 
       setOrderResult(result);
-      setPaymentFlowStep('awaiting');
-      setPaymentStatusMessage('A new payment prompt has been sent to your phone. Please enter your PIN on your mobile device.');
-      setLoading(false);
 
-      try {
-        const statusResult = await pollPaymentStatus(orderResult.order.id, 60, 3000);
-        if (statusResult.status === 'successful') {
-          triggerConfetti();
-          setStep(3);
-        } else {
-          setError(`Payment ${statusResult.status}${statusResult.error_message ? ': ' + statusResult.error_message : ''}. You can retry below.`);
+      if (isMobileMoney) {
+        setPaymentFlowStep('awaiting');
+        setPaymentStatusMessage('A new payment prompt has been sent to your phone. Please enter your PIN on your mobile device.');
+        setLoading(false);
+
+        try {
+          const statusResult = await pollPaymentStatus(orderResult.order.id, 60, 3000);
+          if (statusResult.status === 'successful') {
+            triggerConfetti();
+            setStep(3);
+          } else {
+            setError(`Payment ${statusResult.status}${statusResult.error_message ? ': ' + statusResult.error_message : ''}. You can retry below.`);
+            setPaymentFlowStep('confirm');
+          }
+        } catch (pollErr: any) {
+          setError(pollErr.message || 'Payment status check timed out. Please check your phone and try again.');
           setPaymentFlowStep('confirm');
         }
-      } catch (pollErr: any) {
-        setError(pollErr.message || 'Payment status check timed out. Please check your phone and try again.');
-        setPaymentFlowStep('confirm');
+      } else if (paymentMethod === 'card' || paymentMethod === 'other_card') {
+        const paymentUrl = result.payment?.payment_url;
+        if (paymentUrl) {
+          localStorage.setItem('natakahii_pending_order_id', result.order?.id?.toString() || '');
+          setPaymentFlowStep('redirecting');
+          setLoading(false);
+          window.location.href = paymentUrl;
+        } else {
+          setError('Card payment URL not received from provider. Please try again.');
+          setPaymentFlowStep('confirm');
+          setLoading(false);
+        }
+      } else if (paymentMethod === 'dynamic_qr' || paymentMethod === 'qr') {
+        const qrCode = result.payment?.payment_qr_code;
+        if (qrCode) {
+          setQrCodeUrl(qrCode);
+          setPaymentFlowStep('qr');
+          setLoading(false);
+          try {
+            const statusResult = await pollPaymentStatus(orderResult.order.id, 60, 3000);
+            if (statusResult.status === 'successful') {
+              triggerConfetti();
+              setStep(3);
+            } else {
+              setError(`Payment ${statusResult.status}${statusResult.error_message ? ': ' + statusResult.error_message : ''}. You can retry below.`);
+              setPaymentFlowStep('confirm');
+            }
+          } catch (pollErr: any) {
+            setError(pollErr.message || 'Payment status check timed out. Please scan the QR code again.');
+            setPaymentFlowStep('confirm');
+          }
+        } else {
+          setError('QR code not received from provider. Please try again.');
+          setPaymentFlowStep('confirm');
+          setLoading(false);
+        }
+      } else if (isHostedCheckout) {
+        try {
+          const sessionResult = await paymentService.createSession(orderResult.order.id, {
+            allowed_methods: ['mobile_money', 'qr', 'card'],
+            description: 'Order ' + orderResult.order?.order_number,
+            redirect_url: `${window.location.origin}/checkout?payment=success&order=${orderResult.order.id}`,
+          });
+          if (sessionResult.success && sessionResult.session.checkout_url) {
+            localStorage.setItem('natakahii_pending_order_id', orderResult.order.id.toString());
+            localStorage.setItem('natakahii_session_reference', sessionResult.session.reference);
+            setPaymentFlowStep('hosted_redirect');
+            setLoading(false);
+            window.location.href = sessionResult.session.checkout_url;
+          } else {
+            setError('Failed to create checkout session. Please try again.');
+            setPaymentFlowStep('confirm');
+            setLoading(false);
+          }
+        } catch (sessionErr: any) {
+          const backendError = sessionErr?.response?.data?.error || sessionErr?.message;
+          setError(backendError || 'Failed to create checkout session. Please try again.');
+          setPaymentFlowStep('confirm');
+          setLoading(false);
+        }
+      } else {
+        triggerConfetti();
+        setStep(3);
       }
     } catch (err: any) {
       const backendError = err?.response?.data?.error || err?.response?.data?.message;
@@ -795,10 +990,10 @@ export function Checkout() {
                     </div>
                     <div>
                       <h2 className="text-[20px] font-bold text-[var(--color-text-heading)] tracking-tight">
-                        {paymentFlowStep === 'select' ? 'Payment Method' : paymentFlowStep === 'request' ? 'Request Payment' : paymentFlowStep === 'confirm' ? 'Confirm Payment' : paymentFlowStep === 'awaiting' ? 'Waiting for Confirmation' : 'Processing Payment'}
+                        {paymentFlowStep === 'select' ? 'Payment Method' : paymentFlowStep === 'request' ? 'Request Payment' : paymentFlowStep === 'confirm' ? 'Confirm Payment' : paymentFlowStep === 'awaiting' ? 'Waiting for Confirmation' : paymentFlowStep === 'redirecting' ? 'Redirecting to Payment' : paymentFlowStep === 'hosted_redirect' ? 'Redirecting to Checkout' : paymentFlowStep === 'qr' ? 'Scan QR Code' : 'Processing Payment'}
                       </h2>
                       <p className="text-[14px] text-[var(--color-text-muted)]">
-                        {paymentFlowStep === 'select' ? 'All transactions are secure and encrypted.' : paymentFlowStep === 'request' ? 'Enter your mobile number to continue.' : paymentFlowStep === 'confirm' ? 'Click Complete Payment to receive a push on your phone.' : paymentFlowStep === 'awaiting' ? 'Please enter your PIN on your mobile device.' : 'Please wait while we process your payment.'}
+                        {paymentFlowStep === 'select' ? 'All transactions are secure and encrypted.' : paymentFlowStep === 'request' ? 'Enter your mobile number to continue.' : paymentFlowStep === 'confirm' ? 'Click Complete Payment to receive a push on your phone.' : paymentFlowStep === 'awaiting' ? 'Please enter your PIN on your mobile device.' : paymentFlowStep === 'redirecting' ? 'Redirecting you to the secure payment page.' : paymentFlowStep === 'hosted_redirect' ? 'Redirecting you to Snippe secure checkout page.' : paymentFlowStep === 'qr' ? 'Scan the QR code with your mobile banking app to pay.' : 'Please wait while we process your payment.'}
                       </p>
                     </div>
                   </div>
@@ -808,7 +1003,7 @@ export function Checkout() {
                     <>
                       {/* Selected Method Summary */}
                       {paymentMethod && (() => {
-                        const all = [...mobileProviders, ...cardProviders];
+                        const all = [...mobileProviders, ...cardProviders, hostedCheckoutProvider];
                         const selected = all.find(p => p.id === paymentMethod);
                         if (!selected) return null;
                         return (
@@ -825,7 +1020,7 @@ export function Checkout() {
                             <div className="flex-1">
                               <p className="text-[14px] font-bold text-[var(--color-text-heading)]">{selected.name}</p>
                               <p className="text-[12px] text-[var(--color-text-muted)]">
-                                {mobileProviders.some(p => p.id === paymentMethod) ? 'Mobile Payment' : 'Card / Bank Payment'}
+                                {mobileProviders.some(p => p.id === paymentMethod) ? 'Mobile Payment' : paymentMethod === 'hosted_checkout' ? 'Hosted Checkout' : 'Card / Bank Payment'}
                               </p>
                             </div>
                             <CheckCircle className="w-5 h-5 text-[var(--color-primary)]" />
@@ -834,7 +1029,7 @@ export function Checkout() {
                       })()}
 
                       {/* Payment Categories */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <button
                           onClick={() => { setPaymentDrawerCategory('mobile'); setPaymentDrawerOpen(true); }}
                           className="flex flex-col items-center gap-3 p-6 rounded-[16px] border-2 border-[var(--color-border)] bg-white hover:border-[var(--color-primary)] hover:shadow-sm transition-all text-left"
@@ -844,7 +1039,7 @@ export function Checkout() {
                           </div>
                           <div className="text-center">
                             <p className="text-[15px] font-bold text-[var(--color-text-heading)]">Mobile Payment</p>
-                            <p className="text-[12px] text-[var(--color-text-muted)] mt-0.5">M-Pesa, Airtel, Tigo, HaloPesa</p>
+                            <p className="text-[12px] text-[var(--color-text-muted)] mt-0.5">M-Pesa, Airtel Money, Mixx by Yas, HaloPesa</p>
                           </div>
                         </button>
                         <button
@@ -855,8 +1050,23 @@ export function Checkout() {
                             <CreditCard className="w-7 h-7 text-[var(--color-accent)]" />
                           </div>
                           <div className="text-center">
-                            <p className="text-[15px] font-bold text-[var(--color-text-heading)]">Card / Bank Payment</p>
+                            <p className="text-[15px] font-bold text-[var(--color-text-heading)]">Card / Bank</p>
                             <p className="text-[12px] text-[var(--color-text-muted)] mt-0.5">Visa, Mastercard, CRDB, NMB</p>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setPaymentMethod('hosted_checkout');
+                            setPaymentDrawerOpen(false);
+                          }}
+                          className="flex flex-col items-center gap-3 p-6 rounded-[16px] border-2 border-[var(--color-border)] bg-white hover:border-[var(--color-primary)] hover:shadow-sm transition-all text-left"
+                        >
+                          <div className="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center">
+                            <ShieldCheck className="w-7 h-7 text-indigo-500" />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-[15px] font-bold text-[var(--color-text-heading)]">Hosted Checkout</p>
+                            <p className="text-[12px] text-[var(--color-text-muted)] mt-0.5">Pay on Snippe secure page</p>
                           </div>
                         </button>
                       </div>
@@ -1028,6 +1238,75 @@ export function Checkout() {
                       <div className="flex items-center gap-2 text-[13px] text-[var(--color-text-muted)]">
                         <Loader2 className="w-4 h-4 animate-spin" />
                         <span>Waiting for confirmation...</span>
+                      </div>
+
+                      {error && (
+                        <div className="w-full max-w-sm">
+                          <div className="text-red-500 text-[14px] font-medium bg-red-50 rounded-[8px] p-3">{error}</div>
+                          <Button
+                            onClick={handleRetryPayment}
+                            disabled={loading}
+                            variant="primary"
+                            size="l"
+                            className="w-full mt-3 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]"
+                          >
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Retry Payment'}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── REDIRECTING: Card payment redirect ── */}
+                  {paymentFlowStep === 'redirecting' && (
+                    <div className="py-12 flex flex-col items-center text-center space-y-4">
+                      <Loader2 className="w-12 h-12 text-[var(--color-primary)] animate-spin" />
+                      <p className="text-[16px] font-bold text-[var(--color-text-heading)]">Redirecting to secure payment...</p>
+                      <p className="text-[13px] text-[var(--color-text-muted)] max-w-sm">
+                        You are being redirected to our payment partner to complete your card payment securely.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* ── HOSTED REDIRECT: Snippe checkout redirect ── */}
+                  {paymentFlowStep === 'hosted_redirect' && (
+                    <div className="py-12 flex flex-col items-center text-center space-y-4">
+                      <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
+                      <p className="text-[16px] font-bold text-[var(--color-text-heading)]">Redirecting to Snippe checkout...</p>
+                      <p className="text-[13px] text-[var(--color-text-muted)] max-w-sm">
+                        You are being redirected to Snippe's secure hosted checkout page to complete your payment.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* ── QR: QR code payment ── */}
+                  {paymentFlowStep === 'qr' && (
+                    <div className="py-8 flex flex-col items-center text-center space-y-6">
+                      <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center">
+                        <QrCode className="w-10 h-10 text-[var(--color-primary)]" />
+                      </div>
+
+                      <div className="space-y-2 max-w-sm">
+                        <p className="text-[18px] font-bold text-[var(--color-text-heading)]">Scan to Pay</p>
+                        <p className="text-[14px] text-[var(--color-text-body)] leading-relaxed">
+                          Open your mobile banking app and scan the QR code below to complete the payment.
+                        </p>
+                      </div>
+
+                      {qrCodeUrl && (
+                        <div className="bg-white border border-[var(--color-border)] rounded-[16px] p-4">
+                          <QRCodeSVG
+                            value={qrCodeUrl}
+                            size={192}
+                            level="M"
+                            includeMargin={true}
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 text-[13px] text-[var(--color-text-muted)]">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Waiting for payment confirmation...</span>
                       </div>
 
                       {error && (
@@ -1310,7 +1589,7 @@ export function Checkout() {
                     <ArrowLeft className="w-4 h-4 text-[var(--color-text-heading)]" />
                   </button>
                   <DrawerTitle className="text-center text-[18px] text-[var(--color-text-heading)]">
-                    {paymentDrawerCategory === 'mobile' ? 'Mobile Payment' : 'Card / Bank Payment'}
+                    {paymentDrawerCategory === 'mobile' ? 'Mobile Payment' : paymentDrawerCategory === 'card' ? 'Card / Bank Payment' : 'Select Payment Method'}
                   </DrawerTitle>
                   <DrawerDescription className="text-center text-[13px] text-[var(--color-text-muted)]">
                     Select your preferred provider
@@ -1530,9 +1809,14 @@ export function Checkout() {
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>COMPLETE PAYMENT <ChevronRight className="w-5 h-5 ml-1" /></>}
             </Button>
           )}
-          {(paymentFlowStep === 'processing' || paymentFlowStep === 'awaiting') && (
+          {(paymentFlowStep === 'processing' || paymentFlowStep === 'awaiting' || paymentFlowStep === 'redirecting' || paymentFlowStep === 'hosted_redirect') && (
             <Button variant="primary" size="xl" className="flex-1 bg-[var(--color-text-muted)]" disabled>
-              <Loader2 className="w-5 h-5 animate-spin mr-2" /> {paymentFlowStep === 'processing' ? 'Processing...' : 'Waiting...'}
+              <Loader2 className="w-5 h-5 animate-spin mr-2" /> {paymentFlowStep === 'processing' ? 'Processing...' : (paymentFlowStep === 'redirecting' || paymentFlowStep === 'hosted_redirect') ? 'Redirecting...' : 'Waiting...'}
+            </Button>
+          )}
+          {paymentFlowStep === 'qr' && (
+            <Button variant="primary" size="xl" className="flex-1 bg-[var(--color-text-muted)]" disabled>
+              <Loader2 className="w-5 h-5 animate-spin mr-2" /> Waiting for scan...
             </Button>
           )}
         </div>

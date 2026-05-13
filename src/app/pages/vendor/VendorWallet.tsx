@@ -131,7 +131,7 @@ export function VendorWalletPage() {
       return;
     }
 
-    if (['mpesa', 'airtel_money', 'tigo_pesa'].includes(paymentMethod) && !phoneNumber) {
+    if (['mpesa', 'airtel_money', 'mixx_by_yas', 'halopesa'].includes(paymentMethod) && !phoneNumber) {
       toast({ type: 'error', title: 'Please enter a phone number' });
       return;
     }
@@ -140,7 +140,7 @@ export function VendorWalletPage() {
     try {
       await vendorPaymentService.requestPayout({
         amount: Number(payoutAmount),
-        payment_method: paymentMethod as 'mpesa' | 'airtel_money' | 'bank_transfer',
+        payment_method: paymentMethod as 'mpesa' | 'airtel_money' | 'mixx_by_yas' | 'halopesa' | 'bank_transfer',
         phone_number: phoneNumber || undefined,
         account_number: accountNumber || undefined,
         bank_name: bankName || undefined,
@@ -332,14 +332,15 @@ export function VendorWalletPage() {
                   <SelectContent>
                     <SelectItem value="mpesa">M-Pesa</SelectItem>
                     <SelectItem value="airtel_money">Airtel Money</SelectItem>
-                    <SelectItem value="tigo_pesa">Tigo Pesa</SelectItem>
+                    <SelectItem value="mixx_by_yas">Mixx by Yas</SelectItem>
+                    <SelectItem value="halopesa">HaloPesa</SelectItem>
                     <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Payment Details - Mobile Money */}
-              {['mpesa', 'airtel_money', 'tigo_pesa'].includes(paymentMethod) && (
+              {['mpesa', 'airtel_money', 'mixx_by_yas', 'halopesa'].includes(paymentMethod) && (
                 <div>
                   <label className="block text-sm font-medium text-slate-900 mb-2">
                     Phone Number

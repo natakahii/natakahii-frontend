@@ -123,7 +123,7 @@ export const vendorPaymentService = {
    */
   async requestPayout(data: {
     amount: number;
-    payment_method: 'mpesa' | 'airtel_money' | 'bank_transfer';
+    payment_method: 'mpesa' | 'airtel_money' | 'mixx_by_yas' | 'halopesa' | 'bank_transfer';
     phone_number?: string;
     account_number?: string;
     bank_name?: string;
