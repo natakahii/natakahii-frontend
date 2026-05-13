@@ -304,7 +304,8 @@ export function Checkout() {
         setStep(3);
       }
     } catch (err: any) {
-      setError(err.message || 'Order failed. Please try again.');
+      const backendError = err?.response?.data?.error || err?.response?.data?.message;
+      setError(backendError || err.message || 'Order failed. Please try again.');
       setPaymentFlowStep('confirm');
       setLoading(false);
     }
@@ -342,7 +343,8 @@ export function Checkout() {
         setPaymentFlowStep('confirm');
       }
     } catch (err: any) {
-      setError(err.message || 'Payment retry failed. Please try again.');
+      const backendError = err?.response?.data?.error || err?.response?.data?.message;
+      setError(backendError || err.message || 'Payment retry failed. Please try again.');
       setPaymentFlowStep('confirm');
       setLoading(false);
     }
