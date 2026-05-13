@@ -24,13 +24,11 @@ export const orderService = {
     delivery_address: any;
     phone_number: string;
     payment_method: string;
-    pin?: string;
   }) {
     return apiClient.post<any>('/orders', JSON.stringify(data));
   },
 
-  async confirmPayment(orderId: number, data: {
-    pin: string;
+  async retryPayment(orderId: number, data: {
     phone_number: string;
     payment_method: string;
   }) {

@@ -15,6 +15,7 @@ import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { formatCurrency } from '../utils/currency';
 import { useCart } from '../providers/CartProvider';
 import { orderService } from '../services/orderService';
+import { pollPaymentStatus } from '../services/paymentService';
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter,
 } from '../components/ui/drawer';
@@ -92,13 +93,11 @@ export function Checkout() {
 
   // Payment form state
   const [mpesaPhone, setMpesaPhone] = useState('');
-  const [pin, setPin] = useState('');
-  const [showPinModal, setShowPinModal] = useState(false);
 
   // Payment execution sub-flow (within step 2)
-  const [paymentFlowStep, setPaymentFlowStep] = useState<'select' | 'request' | 'confirm' | 'processing'>('select');
+  const [paymentFlowStep, setPaymentFlowStep] = useState<'select' | 'request' | 'confirm' | 'processing' | 'awaiting'>('select');
   const [paymentPhoneError, setPaymentPhoneError] = useState('');
-  const [_providerResponse, setProviderResponse] = useState<'idle' | 'success' | 'incorrect_pin' | 'insufficient_balance' | 'cancelled' | 'timeout'>('idle');
+  const [paymentStatusMessage, setPaymentStatusMessage] = useState('');
 
   /* ── provider-specific phone validation ── */
   function validateProviderPhone(providerId: string, phone: string): { valid: boolean; message: string } {
@@ -191,7 +190,6 @@ export function Checkout() {
   const handleBack = () => {
     if (step === 2 && paymentFlowStep !== 'select') {
       setPaymentFlowStep('select');
-      setProviderResponse('idle');
       setPaymentPhoneError('');
       return;
     }
@@ -250,6 +248,7 @@ export function Checkout() {
 
     setError('');
     setLoading(true);
+    setPaymentFlowStep('processing');
 
     try {
       const cartItems = items.map(item => ({
@@ -267,71 +266,89 @@ export function Checkout() {
 
       const phoneNumber = isMobileMoney ? (mpesaPhone || mobileNumber) : mobileNumber;
 
-      const payload: any = {
+      const result = await orderService.createOrder({
         items: cartItems,
         delivery_address: deliveryAddress,
-        phone_number: phoneNumber,
-        payment_method: paymentMethod,
-      };
-
-      if (isMobileMoney && pin) {
-        payload.pin = pin;
-      }
-
-      const result = await orderService.createOrder(payload);
-
-      if (result.requires_pin) {
-        setShowPinModal(true);
-        setLoading(false);
-        return;
-      }
-
-      setOrderResult(result);
-      triggerConfetti();
-      setStep(3);
-    } catch (err: any) {
-      if (err.message?.includes('PIN is required')) {
-        setShowPinModal(true);
-      } else {
-        setError(err.message || 'Order failed. Please try again.');
-        setPaymentFlowStep('confirm');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleConfirmPin = async () => {
-    if (!pin || pin.length < 4) {
-      setError('Please enter a valid PIN');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      const phoneNumber = mpesaPhone || mobileNumber;
-      const result = await orderService.confirmPayment(orderResult?.order?.id || 0, {
-        pin,
         phone_number: phoneNumber,
         payment_method: paymentMethod,
       });
 
       setOrderResult(result);
-      setShowPinModal(false);
-      triggerConfetti();
-      setStep(3);
+
+      if (isMobileMoney) {
+        // STK/USSD push sent — now wait for customer to confirm on their phone
+        setPaymentFlowStep('awaiting');
+        setPaymentStatusMessage('A payment prompt has been sent to your phone. Please enter your PIN on your mobile device.');
+        setLoading(false);
+
+        // Start polling for payment status
+        try {
+          const orderId = result.order?.id;
+          if (orderId) {
+            const statusResult = await pollPaymentStatus(orderId, 60, 3000);
+            if (statusResult.status === 'successful') {
+              triggerConfetti();
+              setStep(3);
+            } else {
+              setError(`Payment ${statusResult.status}${statusResult.error_message ? ': ' + statusResult.error_message : ''}. You can retry below.`);
+              setPaymentFlowStep('confirm');
+            }
+          }
+        } catch (pollErr: any) {
+          setError(pollErr.message || 'Payment status check timed out. Please check your phone and try again.');
+          setPaymentFlowStep('confirm');
+        }
+      } else {
+        // Card / bank — immediate result
+        triggerConfetti();
+        setStep(3);
+      }
     } catch (err: any) {
-      setError(err.message || 'Payment confirmation failed');
-    } finally {
+      setError(err.message || 'Order failed. Please try again.');
+      setPaymentFlowStep('confirm');
+      setLoading(false);
+    }
+  };
+
+  const handleRetryPayment = async () => {
+    if (!orderResult?.order?.id) return;
+    setError('');
+    setLoading(true);
+    setPaymentFlowStep('processing');
+
+    try {
+      const phoneNumber = mpesaPhone || mobileNumber;
+      const result = await orderService.retryPayment(orderResult.order.id, {
+        phone_number: phoneNumber,
+        payment_method: paymentMethod,
+      });
+
+      setOrderResult(result);
+      setPaymentFlowStep('awaiting');
+      setPaymentStatusMessage('A new payment prompt has been sent to your phone. Please enter your PIN on your mobile device.');
+      setLoading(false);
+
+      try {
+        const statusResult = await pollPaymentStatus(orderResult.order.id, 60, 3000);
+        if (statusResult.status === 'successful') {
+          triggerConfetti();
+          setStep(3);
+        } else {
+          setError(`Payment ${statusResult.status}${statusResult.error_message ? ': ' + statusResult.error_message : ''}. You can retry below.`);
+          setPaymentFlowStep('confirm');
+        }
+      } catch (pollErr: any) {
+        setError(pollErr.message || 'Payment status check timed out. Please check your phone and try again.');
+        setPaymentFlowStep('confirm');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Payment retry failed. Please try again.');
+      setPaymentFlowStep('confirm');
       setLoading(false);
     }
   };
 
   const handleCompletePayment = async () => {
-    setProviderResponse('idle');
-    setPaymentFlowStep('processing');
     await handlePlaceOrder();
   };
 
@@ -776,10 +793,10 @@ export function Checkout() {
                     </div>
                     <div>
                       <h2 className="text-[20px] font-bold text-[var(--color-text-heading)] tracking-tight">
-                        {paymentFlowStep === 'select' ? 'Payment Method' : paymentFlowStep === 'request' ? 'Request Payment' : paymentFlowStep === 'confirm' ? 'Confirm Payment' : 'Processing Payment'}
+                        {paymentFlowStep === 'select' ? 'Payment Method' : paymentFlowStep === 'request' ? 'Request Payment' : paymentFlowStep === 'confirm' ? 'Confirm Payment' : paymentFlowStep === 'awaiting' ? 'Waiting for Confirmation' : 'Processing Payment'}
                       </h2>
                       <p className="text-[14px] text-[var(--color-text-muted)]">
-                        {paymentFlowStep === 'select' ? 'All transactions are secure and encrypted.' : paymentFlowStep === 'request' ? 'Enter your mobile number to continue.' : paymentFlowStep === 'confirm' ? 'Follow the instructions on your phone.' : 'Please wait while we process your payment.'}
+                        {paymentFlowStep === 'select' ? 'All transactions are secure and encrypted.' : paymentFlowStep === 'request' ? 'Enter your mobile number to continue.' : paymentFlowStep === 'confirm' ? 'Click Complete Payment to receive a push on your phone.' : paymentFlowStep === 'awaiting' ? 'Please enter your PIN on your mobile device.' : 'Please wait while we process your payment.'}
                       </p>
                     </div>
                   </div>
@@ -936,7 +953,7 @@ export function Checkout() {
                           <Phone className="w-8 h-8 text-[var(--color-primary)]" />
                         </div>
                         <p className="text-[14px] text-[var(--color-text-heading)] leading-relaxed">
-                          Click the <span className="font-bold">Complete Payment</span> button below to receive a payment confirmation prompt on your phone. Follow the instructions on your mobile device and enter your PIN to authorize the transaction. Thank you.
+                          Click <span className="font-bold">Complete Payment</span> and a payment request will be sent directly to your phone. You will receive a USSD push on your mobile device — just enter your PIN there to confirm. No PIN needed on this website.
                         </p>
                         <div className="bg-white rounded-[12px] p-3 border border-blue-100 inline-flex items-center gap-2">
                           <Phone className="w-4 h-4 text-[var(--color-primary)]" />
@@ -958,7 +975,7 @@ export function Checkout() {
                           size="xl"
                           className="px-12 shadow-[var(--shadow-level-2)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]"
                         >
-                          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'COMPLETE PAYMENT'}
+                          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>COMPLETE PAYMENT <ChevronRight className="w-5 h-5 ml-2" /></>}
                         </Button>
                       </div>
                     </>
@@ -968,59 +985,69 @@ export function Checkout() {
                   {paymentFlowStep === 'processing' && (
                     <div className="py-12 flex flex-col items-center text-center space-y-4">
                       <Loader2 className="w-12 h-12 text-[var(--color-primary)] animate-spin" />
-                      <p className="text-[16px] font-bold text-[var(--color-text-heading)]">Processing your payment...</p>
+                      <p className="text-[16px] font-bold text-[var(--color-text-heading)]">Initiating payment...</p>
                       <p className="text-[13px] text-[var(--color-text-muted)] max-w-sm">
-                        Please wait while we send a payment request to your {(() => { const p = mobileProviders.find(m => m.id === paymentMethod); return p ? p.name : 'provider'; })()}.
+                        Sending a payment request to your {(() => { const p = mobileProviders.find(m => m.id === paymentMethod); return p ? p.name : 'provider'; })()}. Please wait...
                       </p>
+                    </div>
+                  )}
+
+                  {/* ── AWAITING: Waiting for phone confirmation ── */}
+                  {paymentFlowStep === 'awaiting' && (
+                    <div className="py-8 flex flex-col items-center text-center space-y-6">
+                      <div className="relative">
+                        <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center">
+                          <Phone className="w-10 h-10 text-[var(--color-primary)]" />
+                        </div>
+                        <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[var(--color-primary)] flex items-center justify-center">
+                          <Loader2 className="w-4 h-4 text-white animate-spin" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 max-w-sm">
+                        <p className="text-[18px] font-bold text-[var(--color-text-heading)]">Check Your Phone</p>
+                        <p className="text-[14px] text-[var(--color-text-body)] leading-relaxed">
+                          {paymentStatusMessage || 'A payment prompt has been sent to your phone. Please enter your PIN on your mobile device to complete the payment.'}
+                        </p>
+                      </div>
+
+                      <div className="bg-blue-50 border border-blue-100 rounded-[16px] p-4 w-full max-w-sm">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-blue-100 shrink-0">
+                            <Phone className="w-5 h-5 text-[var(--color-primary)]" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-[12px] text-[var(--color-text-muted)]">Payment sent to</p>
+                            <p className="text-[14px] font-bold text-[var(--color-text-heading)]">{mpesaPhone || mobileNumber}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-[13px] text-[var(--color-text-muted)]">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Waiting for confirmation...</span>
+                      </div>
+
+                      {error && (
+                        <div className="w-full max-w-sm">
+                          <div className="text-red-500 text-[14px] font-medium bg-red-50 rounded-[8px] p-3">{error}</div>
+                          <Button
+                            onClick={handleRetryPayment}
+                            disabled={loading}
+                            variant="primary"
+                            size="l"
+                            className="w-full mt-3 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]"
+                          >
+                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Retry Payment'}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </motion.div>
               )}
 
             </AnimatePresence>
-
-            {/* PIN Confirmation Modal */}
-            {showPinModal && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-              >
-                <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="bg-white rounded-[24px] p-6 sm:p-8 max-w-md w-full shadow-[var(--shadow-level-3)]"
-                >
-                  <h3 className="text-[20px] font-bold text-[var(--color-text-heading)] mb-2">Confirm Payment</h3>
-                  <p className="text-[14px] text-[var(--color-text-muted)] mb-6">
-                    Please enter your mobile money PIN to authorize the payment of {formatCurrency(total)}.
-                  </p>
-
-                  <div className="space-y-4">
-                    <Input
-                      type="password"
-                      inputMode="numeric"
-                      maxLength={6}
-                      value={pin}
-                      onChange={e => setPin(e.target.value)}
-                      placeholder="Enter PIN"
-                      className="font-mono text-[18px] text-center tracking-[0.3em]"
-                      autoFocus
-                    />
-                    {error && <div className="text-red-500 text-[14px] font-medium">{error}</div>}
-                  </div>
-
-                  <div className="flex gap-3 mt-6">
-                    <Button onClick={() => setShowPinModal(false)} variant="secondary" className="flex-1 bg-[var(--color-bg-page)]">
-                      Cancel
-                    </Button>
-                    <Button onClick={handleConfirmPin} disabled={loading || pin.length < 4} variant="primary" className="flex-1 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]">
-                      {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirm'}
-                    </Button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
 
             {/* ─── Address Drawer ─── */}
             <Drawer open={addressDrawerOpen} onOpenChange={setAddressDrawerOpen}>
@@ -1297,7 +1324,6 @@ export function Checkout() {
                           onClick={() => {
                             setPaymentMethod(provider.id);
                             setMpesaPhone('');
-                            setPin('');
                             setPaymentDrawerOpen(false);
                           }}
                           className={cn(
@@ -1332,7 +1358,6 @@ export function Checkout() {
                           onClick={() => {
                             setPaymentMethod(provider.id);
                             setMpesaPhone('');
-                            setPin('');
                             setPaymentDrawerOpen(false);
                           }}
                           className={cn(
@@ -1503,9 +1528,9 @@ export function Checkout() {
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>COMPLETE PAYMENT <ChevronRight className="w-5 h-5 ml-1" /></>}
             </Button>
           )}
-          {paymentFlowStep === 'processing' && (
+          {(paymentFlowStep === 'processing' || paymentFlowStep === 'awaiting') && (
             <Button variant="primary" size="xl" className="flex-1 bg-[var(--color-text-muted)]" disabled>
-              <Loader2 className="w-5 h-5 animate-spin mr-2" /> Processing...
+              <Loader2 className="w-5 h-5 animate-spin mr-2" /> {paymentFlowStep === 'processing' ? 'Processing...' : 'Waiting...'}
             </Button>
           )}
         </div>
