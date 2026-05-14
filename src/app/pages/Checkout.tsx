@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -63,6 +63,7 @@ export function Checkout() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [orderResult, setOrderResult] = useState<any>(null);
+  const pollingAborted = useRef(false);
   const navigate = useNavigate();
   const { items, totalAmount } = useCart();
 
@@ -129,7 +130,9 @@ export function Checkout() {
               // Continue to poll even if sync fails
             }
           }
+          pollingAborted.current = false;
           const statusResult = await pollPaymentStatus(parseInt(pendingOrderId), 10, 2000);
+          if (pollingAborted.current) return;
           if (statusResult.status === 'successful') {
             triggerConfetti();
             setStep(3);
@@ -332,10 +335,12 @@ export function Checkout() {
         setLoading(false);
 
         // Start polling for payment status
+        pollingAborted.current = false;
         try {
           const orderId = result.order?.id;
           if (orderId) {
             const statusResult = await pollPaymentStatus(orderId, 60, 3000);
+            if (pollingAborted.current) return;
             if (statusResult.status === 'successful') {
               triggerConfetti();
               setStep(3);
@@ -345,6 +350,7 @@ export function Checkout() {
             }
           }
         } catch (pollErr: any) {
+          if (pollingAborted.current) return;
           setError(pollErr.message || 'Payment status check timed out. Please check your phone and try again.');
           setPaymentFlowStep('confirm');
         }
@@ -369,11 +375,12 @@ export function Checkout() {
           setQrCodeUrl(qrCode);
           setPaymentFlowStep('qr');
           setLoading(false);
-          // Poll for status
           try {
+            pollingAborted.current = false;
             const orderId = result.order?.id;
             if (orderId) {
               const statusResult = await pollPaymentStatus(orderId, 60, 3000);
+              if (pollingAborted.current) return;
               if (statusResult.status === 'successful') {
                 triggerConfetti();
                 setStep(3);
@@ -383,6 +390,7 @@ export function Checkout() {
               }
             }
           } catch (pollErr: any) {
+            if (pollingAborted.current) return;
             setError(pollErr.message || 'Payment status check timed out. Please scan the QR code again.');
             setPaymentFlowStep('confirm');
           }
@@ -425,7 +433,9 @@ export function Checkout() {
         setLoading(false);
 
         try {
+          pollingAborted.current = false;
           const statusResult = await pollPaymentStatus(orderResult.order.id, 60, 3000);
+          if (pollingAborted.current) return;
           if (statusResult.status === 'successful') {
             triggerConfetti();
             setStep(3);
@@ -434,6 +444,7 @@ export function Checkout() {
             setPaymentFlowStep('confirm');
           }
         } catch (pollErr: any) {
+          if (pollingAborted.current) return;
           setError(pollErr.message || 'Payment status check timed out. Please check your phone and try again.');
           setPaymentFlowStep('confirm');
         }
@@ -456,7 +467,9 @@ export function Checkout() {
           setPaymentFlowStep('qr');
           setLoading(false);
           try {
+            pollingAborted.current = false;
             const statusResult = await pollPaymentStatus(orderResult.order.id, 60, 3000);
+            if (pollingAborted.current) return;
             if (statusResult.status === 'successful') {
               triggerConfetti();
               setStep(3);
@@ -465,6 +478,7 @@ export function Checkout() {
               setPaymentFlowStep('confirm');
             }
           } catch (pollErr: any) {
+            if (pollingAborted.current) return;
             setError(pollErr.message || 'Payment status check timed out. Please scan the QR code again.');
             setPaymentFlowStep('confirm');
           }
@@ -1174,6 +1188,19 @@ export function Checkout() {
                         <Loader2 className="w-4 h-4 animate-spin" />
                         <span>Waiting for confirmation...</span>
                       </div>
+
+                      <Button
+                        onClick={() => {
+                          pollingAborted.current = true;
+                          setError('Payment was not confirmed. If you received an error on your phone (e.g. insufficient funds), you can retry below.');
+                          setPaymentFlowStep('confirm');
+                        }}
+                        variant="ghost"
+                        size="l"
+                        className="text-[var(--color-text-muted)]"
+                      >
+                        Cancel / Didn't receive prompt?
+                      </Button>
 
                       {error && (
                         <div className="w-full max-w-sm">

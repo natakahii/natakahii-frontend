@@ -463,7 +463,7 @@ export function Explore() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
               {Array.from({ length: 8 }).map((_, index) => (
                 <Card key={index} className="h-full flex flex-col">
                   <Skeleton className="aspect-[4/5] rounded-t-[16px]" />
@@ -485,7 +485,7 @@ export function Explore() {
             />
           ) : (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
                 {products.map((product) => {
                   const discountPercent = getProductDiscountPercent(product);
                   const rating = product.reviews_avg_rating ? product.reviews_avg_rating.toFixed(1) : null;

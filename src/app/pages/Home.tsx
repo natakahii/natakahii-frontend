@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import { LogoSlider } from '../components/LogoSlider';
 import mpesaLogo from '../../assets/mpesa.png';
@@ -66,7 +66,7 @@ export function Home() {
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
 
   useEffect(() => {
     let isMounted = true;
@@ -227,7 +227,7 @@ export function Home() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {Array.from({ length: 12 }).map((_, index) => (
                 <Card key={index} className="h-full flex flex-col">
                   <Skeleton className="aspect-square rounded-t-[16px]" />
@@ -240,7 +240,7 @@ export function Home() {
               ))}
             </div>
           ) : featuredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {featuredProducts.map((product) => {
                 const discountPercent = getProductDiscountPercent(product);
                 const rating = product.reviews_avg_rating ? product.reviews_avg_rating.toFixed(1) : null;
@@ -372,7 +372,7 @@ export function Home() {
               Open Feed <Play className="w-4 h-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {videos.length === 0 ? (
               // Skeleton loading state
               Array.from({ length: 12 }).map((_, index) => (
