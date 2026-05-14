@@ -31,29 +31,25 @@ import mpesaLogo from '../../assets/mpesa.png';
 import airtelMoneyLogo from '../../assets/airtelmoney.png';
 import halopesaLogo from '../../assets/halopesa.png';
 import mixxbyyasLogo from '../../assets/mixxbyyas.png';
-import selcomLogo from '../../assets/selcom.png';
-import crdbLogo from '../../assets/crdb-bank.jpeg';
-import nmbLogo from '../../assets/nmb-bank.jpeg';
-import nbcLogo from '../../assets/nbc-bank.jpeg';
 
-const mobileProviders = [
+interface PaymentProvider {
+  id: string;
+  name: string;
+  color: string;
+  logo?: string;
+  textColor?: string;
+}
+
+const mobileProviders: PaymentProvider[] = [
   { id: 'mpesa', name: 'M-Pesa', logo: mpesaLogo, color: '#4CAF50' },
   { id: 'airtel_money', name: 'Airtel Money', logo: airtelMoneyLogo, color: '#E40000' },
   { id: 'halopesa', name: 'HaloPesa', logo: halopesaLogo, color: '#FF6B00' },
   { id: 'mixx_by_yas', name: 'Mixx by Yas', logo: mixxbyyasLogo, color: '#E91E63' },
 ];
 
-const cardProviders = [
-  { id: 'visa', name: 'Visa', color: '#1A1F71', textColor: '#fff' },
-  { id: 'mastercard', name: 'Mastercard', color: '#EB001B', textColor: '#fff' },
-  { id: 'crdb', name: 'CRDB Bank', logo: crdbLogo, color: '#005BAA' },
-  { id: 'nmb', name: 'NMB Bank', logo: nmbLogo, color: '#007A33' },
-  { id: 'nbc', name: 'NBC Bank', logo: nbcLogo, color: '#D40000' },
-  { id: 'selcom', name: 'Selcom', logo: selcomLogo, color: '#00A859' },
-  { id: 'other_card', name: 'Other Card / Bank', color: '#9CA3AF', textColor: '#fff' },
+const cardProviders: PaymentProvider[] = [
+  { id: 'card', name: 'Credit / Debit Card', color: '#1A1F71', textColor: '#fff' },
 ];
-
-const hostedCheckoutProvider = { id: 'hosted_checkout', name: 'Snippe Hosted Checkout', color: '#6366F1', textColor: '#fff' };
 
 const shippingProviders = [
   { id: 'fargo', name: 'Fargo Courier', level: 'Express', days: '1-2 Days', price: 450 },
@@ -165,7 +161,7 @@ export function Checkout() {
     // Strip leading 0 for prefix matching
     const prefix = normalized.startsWith('0') ? normalized.slice(1, 4) : normalized.slice(0, 3);
     const providerPrefixes: Record<string, string[]> = {
-      mpesa: ['744', '754', '764', '743', '753', '713'],
+      mpesa: ['741','742','743','744','745','746','747','748','749','751','752','753','754','755','756','757','758','759','761','762','763','764','765','766','767','768','769','771','772','773','774','775','776','777','778','779','781','782','783','784','785','786','787','788','789','795', '713'],
       airtel_money: ['683', '684', '685', '686', '687', '688', '689', '783', '784', '785', '786', '787', '788', '789', '693', '694'],
       halopesa: ['620', '621', '622', '623', '624', '625', '626', '627', '628', '629', '640', '641', '642', '643', '644', '645', '646', '647', '648', '649'],
       mixx_by_yas: ['650', '651', '652', '653', '654', '655', '656', '657', '658', '659', '710', '711', '712', '713', '714', '715', '716', '717', '718', '719'],
@@ -189,8 +185,7 @@ export function Checkout() {
   const total = subtotal + platformFee + shippingCost;
 
   const isMobileMoney = ['mpesa', 'airtel_money', 'halopesa', 'mixx_by_yas'].includes(paymentMethod);
-  const isCardPayment = ['card', 'visa', 'mastercard', 'crdb', 'nmb', 'nbc', 'selcom', 'other_card'].includes(paymentMethod);
-  const isHostedCheckout = paymentMethod === 'hosted_checkout';
+  const isCardPayment = paymentMethod === 'card';
 
   /* ── load regions when drawer opens ── */
   useEffect(() => {
@@ -396,38 +391,6 @@ export function Checkout() {
           setPaymentFlowStep('confirm');
           setLoading(false);
         }
-      } else if (isHostedCheckout) {
-        // Hosted checkout — create session and redirect
-        const orderId = result.order?.id;
-        if (!orderId) {
-          setError('Order ID not available. Please try again.');
-          setPaymentFlowStep('confirm');
-          setLoading(false);
-          return;
-        }
-        try {
-          const sessionResult = await paymentService.createSession(orderId, {
-            allowed_methods: ['mobile_money', 'qr', 'card'],
-            description: 'Order ' + result.order?.order_number,
-            redirect_url: `${window.location.origin}/checkout?payment=success&order=${orderId}`,
-          });
-          if (sessionResult.success && sessionResult.session.checkout_url) {
-            localStorage.setItem('natakahii_pending_order_id', orderId.toString());
-            localStorage.setItem('natakahii_session_reference', sessionResult.session.reference);
-            setPaymentFlowStep('hosted_redirect');
-            setLoading(false);
-            window.location.href = sessionResult.session.checkout_url;
-          } else {
-            setError('Failed to create checkout session. Please try again.');
-            setPaymentFlowStep('confirm');
-            setLoading(false);
-          }
-        } catch (sessionErr: any) {
-          const backendError = sessionErr?.response?.data?.error || sessionErr?.message;
-          setError(backendError || 'Failed to create checkout session. Please try again.');
-          setPaymentFlowStep('confirm');
-          setLoading(false);
-        }
       } else {
         // Other — treat as immediate
         triggerConfetti();
@@ -507,30 +470,6 @@ export function Checkout() {
           }
         } else {
           setError('QR code not received from provider. Please try again.');
-          setPaymentFlowStep('confirm');
-          setLoading(false);
-        }
-      } else if (isHostedCheckout) {
-        try {
-          const sessionResult = await paymentService.createSession(orderResult.order.id, {
-            allowed_methods: ['mobile_money', 'qr', 'card'],
-            description: 'Order ' + orderResult.order?.order_number,
-            redirect_url: `${window.location.origin}/checkout?payment=success&order=${orderResult.order.id}`,
-          });
-          if (sessionResult.success && sessionResult.session.checkout_url) {
-            localStorage.setItem('natakahii_pending_order_id', orderResult.order.id.toString());
-            localStorage.setItem('natakahii_session_reference', sessionResult.session.reference);
-            setPaymentFlowStep('hosted_redirect');
-            setLoading(false);
-            window.location.href = sessionResult.session.checkout_url;
-          } else {
-            setError('Failed to create checkout session. Please try again.');
-            setPaymentFlowStep('confirm');
-            setLoading(false);
-          }
-        } catch (sessionErr: any) {
-          const backendError = sessionErr?.response?.data?.error || sessionErr?.message;
-          setError(backendError || 'Failed to create checkout session. Please try again.');
           setPaymentFlowStep('confirm');
           setLoading(false);
         }
@@ -1001,10 +940,10 @@ export function Checkout() {
                     </div>
                     <div>
                       <h2 className="text-[20px] font-bold text-[var(--color-text-heading)] tracking-tight">
-                        {paymentFlowStep === 'select' ? 'Payment Method' : paymentFlowStep === 'request' ? 'Request Payment' : paymentFlowStep === 'confirm' ? 'Confirm Payment' : paymentFlowStep === 'awaiting' ? 'Waiting for Confirmation' : paymentFlowStep === 'redirecting' ? 'Redirecting to Payment' : paymentFlowStep === 'hosted_redirect' ? 'Redirecting to Checkout' : paymentFlowStep === 'qr' ? 'Scan QR Code' : 'Processing Payment'}
+                        {paymentFlowStep === 'select' ? 'Payment Method' : paymentFlowStep === 'request' ? 'Request Payment' : paymentFlowStep === 'confirm' ? 'Confirm Payment' : paymentFlowStep === 'awaiting' ? 'Waiting for Confirmation' : paymentFlowStep === 'redirecting' ? 'Redirecting to Payment' : paymentFlowStep === 'qr' ? 'Scan QR Code' : 'Processing Payment'}
                       </h2>
                       <p className="text-[14px] text-[var(--color-text-muted)]">
-                        {paymentFlowStep === 'select' ? 'All transactions are secure and encrypted.' : paymentFlowStep === 'request' ? 'Enter your mobile number to continue.' : paymentFlowStep === 'confirm' ? 'Click Complete Payment to receive a push on your phone.' : paymentFlowStep === 'awaiting' ? 'Please enter your PIN on your mobile device.' : paymentFlowStep === 'redirecting' ? 'Redirecting you to the secure payment page.' : paymentFlowStep === 'hosted_redirect' ? 'Redirecting you to Snippe secure checkout page.' : paymentFlowStep === 'qr' ? 'Scan the QR code with your mobile banking app to pay.' : 'Please wait while we process your payment.'}
+                        {paymentFlowStep === 'select' ? 'All transactions are secure and encrypted.' : paymentFlowStep === 'request' ? 'Enter your mobile number to continue.' : paymentFlowStep === 'confirm' ? 'Click Complete Payment to receive a push on your phone.' : paymentFlowStep === 'awaiting' ? 'Please enter your PIN on your mobile device.' : paymentFlowStep === 'redirecting' ? 'Redirecting you to the secure payment page.' : paymentFlowStep === 'qr' ? 'Scan the QR code with your mobile banking app to pay.' : 'Please wait while we process your payment.'}
                       </p>
                     </div>
                   </div>
@@ -1014,7 +953,7 @@ export function Checkout() {
                     <>
                       {/* Selected Method Summary */}
                       {paymentMethod && (() => {
-                        const all = [...mobileProviders, ...cardProviders, hostedCheckoutProvider];
+                        const all = [...mobileProviders, ...cardProviders];
                         const selected = all.find(p => p.id === paymentMethod);
                         if (!selected) return null;
                         return (
@@ -1031,7 +970,7 @@ export function Checkout() {
                             <div className="flex-1">
                               <p className="text-[14px] font-bold text-[var(--color-text-heading)]">{selected.name}</p>
                               <p className="text-[12px] text-[var(--color-text-muted)]">
-                                {mobileProviders.some(p => p.id === paymentMethod) ? 'Mobile Payment' : paymentMethod === 'hosted_checkout' ? 'Hosted Checkout' : 'Card / Bank Payment'}
+                                {mobileProviders.some(p => p.id === paymentMethod) ? 'Mobile Payment' : 'Credit / Debit Card'}
                               </p>
                             </div>
                             <CheckCircle className="w-5 h-5 text-[var(--color-primary)]" />
@@ -1054,7 +993,7 @@ export function Checkout() {
                           </div>
                         </button>
                         <button
-                          onClick={() => { setPaymentDrawerCategory('card'); setPaymentDrawerOpen(true); }}
+                          onClick={() => { setPaymentMethod('card'); setPaymentDrawerOpen(false); }}
                           className="flex flex-col items-center gap-3 p-6 rounded-[16px] border-2 border-[var(--color-border)] bg-white hover:border-[var(--color-primary)] hover:shadow-sm transition-all text-left"
                         >
                           <div className="w-14 h-14 rounded-full bg-[var(--color-accent-bg)] flex items-center justify-center">
@@ -1062,22 +1001,7 @@ export function Checkout() {
                           </div>
                           <div className="text-center">
                             <p className="text-[15px] font-bold text-[var(--color-text-heading)]">Card / Bank</p>
-                            <p className="text-[12px] text-[var(--color-text-muted)] mt-0.5">Visa, Mastercard, CRDB, NMB</p>
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setPaymentMethod('hosted_checkout');
-                            setPaymentDrawerOpen(false);
-                          }}
-                          className="flex flex-col items-center gap-3 p-6 rounded-[16px] border-2 border-[var(--color-border)] bg-white hover:border-[var(--color-primary)] hover:shadow-sm transition-all text-left"
-                        >
-                          <div className="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center">
-                            <ShieldCheck className="w-7 h-7 text-indigo-500" />
-                          </div>
-                          <div className="text-center">
-                            <p className="text-[15px] font-bold text-[var(--color-text-heading)]">Hosted Checkout</p>
-                            <p className="text-[12px] text-[var(--color-text-muted)] mt-0.5">Pay on Snippe secure page</p>
+                            <p className="text-[12px] text-[var(--color-text-muted)] mt-0.5">Secure card payment</p>
                           </div>
                         </button>
                       </div>
