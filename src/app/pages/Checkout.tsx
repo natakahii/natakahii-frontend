@@ -189,6 +189,7 @@ export function Checkout() {
   const total = subtotal + platformFee + shippingCost;
 
   const isMobileMoney = ['mpesa', 'airtel_money', 'halopesa', 'mixx_by_yas'].includes(paymentMethod);
+  const isCardPayment = ['card', 'visa', 'mastercard', 'crdb', 'nmb', 'nbc', 'selcom', 'other_card'].includes(paymentMethod);
   const isHostedCheckout = paymentMethod === 'hosted_checkout';
 
   /* ── load regions when drawer opens ── */
@@ -352,7 +353,7 @@ export function Checkout() {
           setError(pollErr.message || 'Payment status check timed out. Please check your phone and try again.');
           setPaymentFlowStep('confirm');
         }
-      } else if (paymentMethod === 'card' || paymentMethod === 'other_card') {
+      } else if (isCardPayment) {
         // Card payment — redirect to Snippe payment page
         const paymentUrl = result.payment?.payment_url;
         if (paymentUrl) {
@@ -473,7 +474,7 @@ export function Checkout() {
           setError(pollErr.message || 'Payment status check timed out. Please check your phone and try again.');
           setPaymentFlowStep('confirm');
         }
-      } else if (paymentMethod === 'card' || paymentMethod === 'other_card') {
+      } else if (isCardPayment) {
         const paymentUrl = result.payment?.payment_url;
         if (paymentUrl) {
           localStorage.setItem('natakahii_pending_order_id', result.order?.id?.toString() || '');
