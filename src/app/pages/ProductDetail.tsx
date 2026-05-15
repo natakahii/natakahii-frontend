@@ -17,6 +17,8 @@ import {
   CatalogProduct,
   CatalogProductVariant,
   fetchProduct,
+  fetchProducts,
+  getProductDiscountPercent,
   getProductPrice,
   getProductPrimaryImage,
   toggleWishlist,
@@ -65,6 +67,8 @@ export function ProductDetail() {
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
   const [sharesCount, setSharesCount] = useState(0);
   const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState<CatalogProduct[]>([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   const heartControls = useAnimationControls();
@@ -110,6 +114,31 @@ export function ProductDetail() {
         }
 
         setSelectedOptions(initialSelections);
+
+        // Fetch related products from same category (same vendor first, then other vendors)
+        if (response.product.category?.id) {
+          setRelatedLoading(true);
+          fetchProducts({
+            category: String(response.product.category.id),
+            per_page: 18,
+            status: 'active',
+          })
+            .then((resp) => {
+              const currentId = response.product.id;
+              const vendorId = response.product.vendor?.id;
+              const sameVendor = resp.products.filter((p) => p.vendor?.id === vendorId && p.id !== currentId);
+              const otherVendors = resp.products.filter((p) => p.vendor?.id !== vendorId && p.id !== currentId);
+              setRelatedProducts([...sameVendor, ...otherVendors]);
+            })
+            .catch(() => {
+              setRelatedProducts([]);
+            })
+            .finally(() => {
+              setRelatedLoading(false);
+            });
+        } else {
+          setRelatedProducts([]);
+        }
       })
       .catch((loadError: any) => {
         if (!isMounted) {
@@ -409,7 +438,7 @@ export function ProductDetail() {
         <span className="text-[var(--color-text-heading)] line-clamp-1 max-w-[200px] truncate">{product.name}</span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 mb-16">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 mb-12">
         <div className="flex flex-col gap-4">
           <div className="relative aspect-square md:aspect-[4/3] lg:aspect-square bg-[var(--color-bg-card)] rounded-[24px] overflow-hidden group cursor-zoom-in shadow-[var(--shadow-level-1)]">
             <ImageWithFallback src={activeImage} alt={product.name} className="w-full h-full object-cover group-hover:scale-125 transition-transform duration-500 ease-out" />
@@ -445,7 +474,7 @@ export function ProductDetail() {
               </Link>
             ) : null}
 
-            <h1 className="text-[28px] md:text-[36px] font-bold text-[var(--color-text-heading)] tracking-[-0.5px] leading-tight mb-4">
+            <h1 className="text-[26px] md:text-[32px] font-bold text-[var(--color-text-heading)] tracking-[-0.5px] leading-tight mb-4">
               {product.name}
             </h1>
             <div className="flex flex-wrap items-center gap-4 text-[14px] text-[var(--color-text-muted)] font-medium">
@@ -468,7 +497,7 @@ export function ProductDetail() {
 
           <div className="mb-8">
             <div className="flex items-end gap-3 mb-2">
-              <AnimatedPrice value={totalPrice} className="text-[36px] font-bold text-[var(--color-accent)] leading-none tracking-tight" />
+              <AnimatedPrice value={totalPrice} className="text-[32px] font-bold text-[var(--color-accent)] leading-none tracking-tight" />
               {compareAtPrice ? (
                 <span className="text-[18px] text-[var(--color-text-muted)] line-through font-semibold mb-1 decoration-red-500/50">{formatCurrency(compareAtPrice * qty)}</span>
               ) : null}
@@ -638,7 +667,7 @@ export function ProductDetail() {
           ))}
         </div>
 
-        <div className="py-8 grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="py-8 grid grid-cols-1 lg:grid-cols-3 gap-10">
           <div className="lg:col-span-2">
             {activeTab === 'Description' && (
               <div className="prose max-w-none text-[var(--color-text-body)] leading-relaxed">
@@ -748,6 +777,89 @@ export function ProductDetail() {
           </div>
         </div>
       </div>
+
+      {/* ── Related Products ── */}
+      {(relatedProducts.length > 0 || relatedLoading) && (
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="font-bold text-[20px] text-[var(--color-text-heading)] tracking-tight">More Like This</h2>
+              <p className="text-[13px] text-[var(--color-text-muted)] mt-1">
+                {product.vendor?.shop_name ? `From ${product.vendor.shop_name} & similar vendors` : 'From similar vendors'}
+              </p>
+            </div>
+            {product.category ? (
+              <Link
+                to={`/explore?category=${product.category.id}`}
+                className="text-[14px] font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)] flex items-center gap-1"
+              >
+                View All <ChevronRight className="w-4 h-4" />
+              </Link>
+            ) : null}
+          </div>
+
+          {relatedLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Card key={index} className="h-full flex flex-col">
+                  <Skeleton className="aspect-[4/5] rounded-t-[16px]" />
+                  <div className="p-4 space-y-3">
+                    <Skeleton className="w-2/3 h-3" />
+                    <Skeleton className="w-full h-4" />
+                    <Skeleton className="w-1/2 h-5" />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
+              {relatedProducts.map((relatedProduct) => {
+                const discountPercent = getProductDiscountPercent(relatedProduct);
+                const rating = relatedProduct.reviews_avg_rating ? relatedProduct.reviews_avg_rating.toFixed(1) : null;
+                const price = getProductPrice(relatedProduct);
+                return (
+                  <Link to={getProductPath(relatedProduct)} key={relatedProduct.id}>
+                    <Card className="group cursor-pointer hover:shadow-[var(--shadow-level-2)] transition-shadow h-full flex flex-col">
+                      <div className="relative aspect-[4/5] overflow-hidden bg-[var(--color-bg-card)]">
+                        <ImageWithFallback
+                          src={getProductPrimaryImage(relatedProduct)}
+                          alt={relatedProduct.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        {discountPercent ? (
+                          <Badge variant="hot-deal" className="absolute top-2 left-2 text-[11px] px-2 py-0.5">
+                            -{discountPercent}%
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <div className="p-3 flex flex-col flex-1">
+                        <p className="text-[13px] font-bold text-[var(--color-text-heading)] line-clamp-2 mb-1 leading-snug">
+                          {relatedProduct.name}
+                        </p>
+                        {rating ? (
+                          <div className="flex items-center gap-1 mb-1">
+                            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                            <span className="text-[12px] font-bold text-[var(--color-text-heading)]">{rating}</span>
+                          </div>
+                        ) : null}
+                        <div className="mt-auto flex items-center gap-2">
+                          <span className="text-[14px] font-bold text-[var(--color-accent)]">{formatCurrency(price)}</span>
+                          {relatedProduct.discount_price != null && relatedProduct.discount_price < relatedProduct.price ? (
+                            <span className="text-[11px] text-[var(--color-text-muted)] line-through">{formatCurrency(relatedProduct.price)}</span>
+                          ) : null}
+                        </div>
+                        {relatedProduct.vendor ? (
+                          <p className="text-[11px] text-[var(--color-text-muted)] mt-1 truncate">{relatedProduct.vendor.shop_name}</p>
+                        ) : null}
+                      </div>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
