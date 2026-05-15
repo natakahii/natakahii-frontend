@@ -29,7 +29,7 @@ export function BottomNav() {
               to={tab.path}
               className={cn(
                 "flex flex-col items-center justify-center w-full h-full gap-1 relative",
-                isActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-muted)] hover:text-[var(--color-text-body)]"
+                isActive ? "text-[var(--color-primary)]" : "text-[var(--color-text-heading)] hover:text-[var(--color-primary)]"
               )}
             >
               {isActive && (
