@@ -55,6 +55,7 @@ export interface VendorProductVariantPayload {
   price: number;
   discount_price?: number | null;
   stock: number;
+  image?: File | null;
   attributes: Array<{
     attribute_id: number;
     attribute_value_id: number;
@@ -177,7 +178,20 @@ function buildVendorProductFormData(payload: VendorProductPayload, methodOverrid
   }
 
   if (payload.variants) {
-    formData.append('variants', JSON.stringify(payload.variants));
+    const variantsForJson = payload.variants.map((variant) => ({
+      sku: variant.sku,
+      price: variant.price,
+      discount_price: variant.discount_price ?? null,
+      stock: variant.stock,
+      attributes: variant.attributes,
+    }));
+    formData.append('variants', JSON.stringify(variantsForJson));
+
+    payload.variants.forEach((variant, index) => {
+      if (variant.image instanceof File) {
+        formData.append(`variant_images[${index}]`, variant.image);
+      }
+    });
   }
 
   payload.images?.forEach((image) => {

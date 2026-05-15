@@ -79,6 +79,7 @@ export interface CatalogProductVariant {
   discount_price?: number | null;
   stock?: number | null;
   status?: string | null;
+  image?: string | null;
   attribute_values: CatalogVariantAttributeValue[];
 }
 

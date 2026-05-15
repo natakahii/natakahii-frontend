@@ -165,9 +165,19 @@ export function ProductDetail() {
       return [];
     }
 
-    return product.images.length > 0
+    const baseImages = product.images.length > 0
       ? product.images.map((image) => image.image_path)
       : [getProductPrimaryImage(product)];
+
+    // Append variant images that aren't already in the base gallery
+    const variantImages = (product.variants || [])
+      .map((v) => v.image)
+      .filter((img): img is string => {
+        if (!img) return false;
+        return !baseImages.includes(img);
+      });
+
+    return [...baseImages, ...variantImages];
   }, [product]);
 
   const optionGroups = useMemo(() => {
@@ -212,6 +222,13 @@ export function ProductDetail() {
       return optionGroups.every((group) => !selectedOptions[group.key] || selections[group.key] === selectedOptions[group.key]);
     }) || null;
   }, [optionGroups, product, selectedOptions]);
+
+  // When a variant with its own image is selected, switch the gallery to it
+  useEffect(() => {
+    if (selectedVariant?.image) {
+      setActiveImage(selectedVariant.image);
+    }
+  }, [selectedVariant?.image]);
 
   const currentUnitPrice = useMemo(() => {
     if (!product) {

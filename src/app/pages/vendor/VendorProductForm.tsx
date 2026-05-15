@@ -73,6 +73,9 @@ type VariantRowState = {
   discountPrice: string;
   stock: string;
   attributeSelections: Record<string, string>;
+  imageFile: File | null;
+  imagePreview: string | null;
+  existingImage: string | null;
 };
 
 function flattenCategories(categories: CatalogCategory[], depth = 0): Array<{ id: string; name: string }> {
@@ -126,6 +129,9 @@ function buildVariantRowsFromProduct(productResponse: VendorProductDetailRespons
 
       return selection;
     }, {}),
+    imageFile: null,
+    imagePreview: variant.image || null,
+    existingImage: variant.image || null,
   }));
 }
 
@@ -308,6 +314,9 @@ export function VendorProductForm() {
         discountPrice: '',
         stock: stock || '0',
         attributeSelections,
+        imageFile: null,
+        imagePreview: null,
+        existingImage: null,
       },
     ]);
     clearFieldError('variants');
@@ -526,6 +535,7 @@ export function VendorProductForm() {
             price: Number(row.price),
             discount_price: row.discountPrice ? Number(row.discountPrice) : null,
             stock: Number(row.stock),
+            image: row.imageFile,
             attributes: normalizedAttributes,
           };
         })
@@ -1064,6 +1074,57 @@ export function VendorProductForm() {
                                     onChange={(event) => updateVariantRow(row.id, { stock: event.target.value })}
                                     placeholder="0"
                                   />
+                                </div>
+                              </div>
+
+                              {/* Variant Image */}
+                              <div className="space-y-1.5">
+                                <Label>Variant Image</Label>
+                                <div className="flex items-center gap-3">
+                                  {row.imagePreview ? (
+                                    <div className="relative w-16 h-16 rounded-[8px] overflow-hidden border border-[var(--color-border)] shrink-0">
+                                      <img
+                                        src={row.imagePreview}
+                                        alt="Variant preview"
+                                        className="w-full h-full object-cover"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => updateVariantRow(row.id, { imageFile: null, imagePreview: null, existingImage: null })}
+                                        className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white rounded-bl-[8px] flex items-center justify-center text-[10px]"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <label className="flex items-center justify-center w-16 h-16 rounded-[8px] border-2 border-dashed border-[var(--color-border)] cursor-pointer hover:border-[var(--color-primary)] transition-colors shrink-0">
+                                      <ImagePlus className="w-5 h-5 text-[var(--color-text-muted)]" />
+                                      <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        className="hidden"
+                                        onChange={(event) => {
+                                          const file = event.target.files?.[0];
+                                          if (file && isSupportedProductImage(file) && file.size <= MAX_PRODUCT_IMAGE_SIZE_BYTES) {
+                                            updateVariantRow(row.id, {
+                                              imageFile: file,
+                                              imagePreview: URL.createObjectURL(file),
+                                            });
+                                          } else if (file) {
+                                            toast({
+                                              type: 'warning',
+                                              title: 'Invalid image',
+                                              message: 'Please use a JPG, PNG, or WebP image under 5 MB.',
+                                            });
+                                          }
+                                          event.target.value = '';
+                                        }}
+                                      />
+                                    </label>
+                                  )}
+                                  <p className="text-[12px] text-[var(--color-text-muted)]">
+                                    {row.imagePreview ? 'Click the × to remove and upload a different image.' : 'Upload a photo that represents this specific variant (e.g. red color, large size). Optional.'}
+                                  </p>
                                 </div>
                               </div>
                             </div>
