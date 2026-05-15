@@ -223,12 +223,19 @@ export function ProductDetail() {
     }) || null;
   }, [optionGroups, product, selectedOptions]);
 
-  // When a variant with its own image is selected, switch the gallery to it
+  // When a variant with its own image is selected, switch the gallery to it.
+  // If the selected variant has no image, fall back to the primary product image.
   useEffect(() => {
+    if (!product) {
+      return;
+    }
+
     if (selectedVariant?.image) {
       setActiveImage(selectedVariant.image);
+    } else if (selectedVariant) {
+      setActiveImage(getProductPrimaryImage(product));
     }
-  }, [selectedVariant?.image]);
+  }, [selectedVariant, product]);
 
   const currentUnitPrice = useMemo(() => {
     if (!product) {
