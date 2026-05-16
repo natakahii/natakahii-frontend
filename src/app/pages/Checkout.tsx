@@ -56,6 +56,19 @@ const shippingProviders = [
   { id: 'sendy', name: 'Sendy', level: 'Same Day', days: 'Today', price: 800 }
 ];
 
+function formatPaymentFailureError(statusResult: { status: string; error_message?: string }): string {
+  const baseMessages: Record<string, string> = {
+    failed: 'Payment failed',
+    expired: 'Payment expired',
+    cancelled: 'Payment was cancelled',
+  };
+
+  const base = baseMessages[statusResult.status] || `Payment ${statusResult.status}`;
+  const detail = statusResult.error_message ? `: ${statusResult.error_message}` : '';
+
+  return `${base}${detail}. You can retry below.`;
+}
+
 export function Checkout() {
   const [step, setStep] = useState(1);
   const [shippingMethod] = useState(shippingProviders[0].id);
@@ -66,6 +79,13 @@ export function Checkout() {
   const pollingAborted = useRef(false);
   const navigate = useNavigate();
   const { items, totalAmount } = useCart();
+
+  // Abort any active polling when the component unmounts
+  useEffect(() => {
+    return () => {
+      pollingAborted.current = true;
+    };
+  }, []);
 
   /* ── Step 1: Address & Order Summary ── */
   const [addressDrawerOpen, setAddressDrawerOpen] = useState(false);
@@ -137,7 +157,7 @@ export function Checkout() {
             triggerConfetti();
             setStep(3);
           } else {
-            setError(`Payment ${statusResult.status}${statusResult.error_message ? ': ' + statusResult.error_message : ''}. You can retry below.`);
+            setError(formatPaymentFailureError(statusResult));
             setPaymentFlowStep('confirm');
           }
         } catch (err: any) {
@@ -345,7 +365,7 @@ export function Checkout() {
               triggerConfetti();
               setStep(3);
             } else {
-              setError(`Payment ${statusResult.status}${statusResult.error_message ? ': ' + statusResult.error_message : ''}. You can retry below.`);
+              setError(formatPaymentFailureError(statusResult));
               setPaymentFlowStep('confirm');
             }
           }
@@ -385,7 +405,7 @@ export function Checkout() {
                 triggerConfetti();
                 setStep(3);
               } else {
-                setError(`Payment ${statusResult.status}${statusResult.error_message ? ': ' + statusResult.error_message : ''}. You can retry below.`);
+                setError(formatPaymentFailureError(statusResult));
                 setPaymentFlowStep('confirm');
               }
             }
@@ -440,7 +460,7 @@ export function Checkout() {
             triggerConfetti();
             setStep(3);
           } else {
-            setError(`Payment ${statusResult.status}${statusResult.error_message ? ': ' + statusResult.error_message : ''}. You can retry below.`);
+            setError(formatPaymentFailureError(statusResult));
             setPaymentFlowStep('confirm');
           }
         } catch (pollErr: any) {
@@ -474,7 +494,7 @@ export function Checkout() {
               triggerConfetti();
               setStep(3);
             } else {
-              setError(`Payment ${statusResult.status}${statusResult.error_message ? ': ' + statusResult.error_message : ''}. You can retry below.`);
+              setError(formatPaymentFailureError(statusResult));
               setPaymentFlowStep('confirm');
             }
           } catch (pollErr: any) {
@@ -1186,36 +1206,12 @@ export function Checkout() {
 
                       <div className="flex items-center gap-2 text-[13px] text-[var(--color-text-muted)]">
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Waiting for confirmation...</span>
+                        <span>Waiting for confirmation from your mobile provider...</span>
                       </div>
 
-                      <Button
-                        onClick={() => {
-                          pollingAborted.current = true;
-                          setError('Payment was not confirmed. If you received an error on your phone (e.g. insufficient funds), you can retry below.');
-                          setPaymentFlowStep('confirm');
-                        }}
-                        variant="ghost"
-                        size="l"
-                        className="text-[var(--color-text-muted)]"
-                      >
-                        Cancel / Didn't receive prompt?
-                      </Button>
-
-                      {error && (
-                        <div className="w-full max-w-sm">
-                          <div className="text-red-500 text-[14px] font-medium bg-red-50 rounded-[8px] p-3">{error}</div>
-                          <Button
-                            onClick={handleRetryPayment}
-                            disabled={loading}
-                            variant="primary"
-                            size="l"
-                            className="w-full mt-3 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]"
-                          >
-                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Retry Payment'}
-                          </Button>
-                        </div>
-                      )}
+                      <p className="text-[12px] text-[var(--color-text-muted)] max-w-sm">
+                        Please do not close this page. The status will update automatically once your payment is processed.
+                      </p>
                     </div>
                   )}
 

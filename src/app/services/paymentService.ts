@@ -27,7 +27,7 @@ export interface PaymentTransaction {
 }
 
 export interface PaymentStatusResponse {
-  status: 'initiated' | 'pending' | 'successful' | 'failed' | 'expired';
+  status: 'initiated' | 'pending' | 'successful' | 'failed' | 'expired' | 'cancelled';
   payment_reference?: string;
   error_message?: string;
   timestamp: string;
