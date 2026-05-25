@@ -12,7 +12,7 @@ import mainLogo from '../../assets/Nataka Hii_1.png';
 
 export function Login() {
   const [method, setMethod] = useState<'email' | 'phone'>('email');
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -67,15 +67,10 @@ export function Login() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (method !== 'email') {
-      toast({ type: 'warning', title: 'Phone login not supported yet', message: 'Please login with your email address.' });
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const response = await login(email, password);
+      const response = await login(identifier, password);
       toast({ type: 'success', title: 'Login successful', message: 'Welcome back to Nataka Hii.' });
       navigateForUser(response.user);
     } catch (error: any) {
@@ -246,9 +241,9 @@ export function Login() {
               </label>
               <Input
                 type={method === 'email' ? 'email' : 'tel'}
-                value={method === 'email' ? email : undefined}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder={method === 'email' ? 'you@example.com' : '+254 7XX XXX XXX'}
+                value={identifier}
+                onChange={(event) => setIdentifier(event.target.value)}
+                placeholder={method === 'email' ? 'you@example.com' : '+255 7XX XXX XXX'}
                 required
                 className="focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)]"
               />

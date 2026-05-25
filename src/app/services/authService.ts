@@ -52,6 +52,10 @@ export interface RegisterPayload {
 export interface RegisterInitiationResponse {
   message: string;
   email: string;
+  delivery_channels?: {
+    email: boolean;
+    sms: boolean;
+  };
 }
 
 export interface VerifyRegistrationPayload {
@@ -67,6 +71,14 @@ export interface ResetPasswordPayload {
 }
 
 export type OtpType = 'registration' | 'password_reset' | 'email_verification';
+
+export interface OtpDispatchResponse {
+  message: string;
+  delivery_channels?: {
+    email: boolean;
+    sms: boolean;
+  };
+}
 
 export function getUserRoleNames(user: AuthUser | null | undefined): string[] {
   if (!user || !Array.isArray(user.roles)) {
@@ -90,8 +102,8 @@ export function resolveUserDefaultRoute(user: AuthUser | null | undefined): stri
   return '/customer';
 }
 
-export async function login(email: string, password: string): Promise<AuthResponse> {
-  const response = await apiClient.post<AuthResponse>('/auth/login', JSON.stringify({ email, password }));
+export async function login(identifier: string, password: string): Promise<AuthResponse> {
+  const response = await apiClient.post<AuthResponse>('/auth/login', JSON.stringify({ identifier, password }));
   setAuthToken(response.token);
   return response;
 }
@@ -120,12 +132,12 @@ export async function verifyRegistration(payload: VerifyRegistrationPayload): Pr
   return response;
 }
 
-export async function resendOtp(email: string, type: OtpType): Promise<{ message: string }> {
-  return apiClient.post<{ message: string }>('/auth/resend-otp', JSON.stringify({ email, type }));
+export async function resendOtp(email: string, type: OtpType): Promise<OtpDispatchResponse> {
+  return apiClient.post<OtpDispatchResponse>('/auth/resend-otp', JSON.stringify({ email, type }));
 }
 
-export async function forgotPassword(email: string): Promise<{ message: string }> {
-  return apiClient.post<{ message: string }>('/auth/forgot-password', JSON.stringify({ email }));
+export async function forgotPassword(email: string): Promise<OtpDispatchResponse> {
+  return apiClient.post<OtpDispatchResponse>('/auth/forgot-password', JSON.stringify({ email }));
 }
 
 export async function resetPassword(payload: ResetPasswordPayload): Promise<{ message: string }> {

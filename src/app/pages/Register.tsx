@@ -19,6 +19,7 @@ export function Register() {
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [otp, setOtp] = useState('');
+  const [deliveryChannels, setDeliveryChannels] = useState<{ email: boolean; sms: boolean }>({ email: true, sms: false });
   const [countdown, setCountdown] = useState(30);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,6 +95,7 @@ export function Register() {
         password,
       });
 
+      setDeliveryChannels(response.delivery_channels ?? { email: true, sms: Boolean(phone.trim()) });
       toast({ type: 'success', title: 'Verification code sent', message: response.message });
       setStep(2);
       setCountdown(30);
@@ -129,6 +131,7 @@ export function Register() {
 
     try {
       const response = await resendOtp(email, 'registration');
+      setDeliveryChannels((currentChannels) => response.delivery_channels ?? currentChannels);
       toast({ type: 'success', title: 'Code resent', message: response.message });
       setCountdown(30);
     } catch (error: any) {
@@ -157,6 +160,12 @@ export function Register() {
       setIsGoogleLoading(false);
     }
   };
+
+  const verificationDestination = deliveryChannels.email && deliveryChannels.sms
+    ? <>We've sent the same 6-digit code to <span className="font-bold text-[var(--color-text-heading)]">{email}</span> and by SMS to <span className="font-bold text-[var(--color-text-heading)]">{phone}</span>.</>
+    : deliveryChannels.sms
+      ? <>We've sent a 6-digit code by SMS to <span className="font-bold text-[var(--color-text-heading)]">{phone}</span>.</>
+      : <>We've sent a 6-digit code to <span className="font-bold text-[var(--color-text-heading)]">{email}</span>.</>;
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col items-center justify-center p-4 lg:overflow-hidden">
@@ -262,7 +271,7 @@ export function Register() {
                       </div>
                       <Input
                         type="tel"
-                        placeholder="+254 7XX XXX XXX"
+                        placeholder="+255 7XX XXX XXX"
                         value={phone}
                         onChange={(event) => setPhone(event.target.value)}
                         className="pl-11 focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)]"
@@ -338,7 +347,7 @@ export function Register() {
                   </div>
                   <h2 className="text-[22px] sm:text-[24px] md:text-[28px] font-bold text-[var(--color-text-heading)] mb-2 tracking-tight">Verify it's you</h2>
                   <p className="text-[14px] sm:text-[15px] text-[var(--color-text-muted)] max-w-sm mx-auto leading-relaxed">
-                    We've sent a 6-digit code to <span className="font-bold text-[var(--color-text-heading)]">{email}</span>. Enter it below to verify your email.
+                    {verificationDestination} Enter it below to verify your account.
                   </p>
                 </div>
 

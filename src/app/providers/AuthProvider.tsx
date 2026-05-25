@@ -2,6 +2,7 @@ import { createContext, ReactNode, useContext, useEffect, useMemo, useState } fr
 import {
   AuthResponse,
   AuthUser,
+  OtpDispatchResponse,
   OtpType,
   RegisterInitiationResponse,
   RegisterPayload,
@@ -32,8 +33,8 @@ interface AuthContextValue {
   loginWithGoogle: () => Promise<AuthResponse>;
   register: (payload: RegisterPayload) => Promise<RegisterInitiationResponse>;
   verifyRegistration: (payload: VerifyRegistrationPayload) => Promise<AuthResponse>;
-  resendOtp: (email: string, type: OtpType) => Promise<{ message: string }>;
-  forgotPassword: (email: string) => Promise<{ message: string }>;
+  resendOtp: (email: string, type: OtpType) => Promise<OtpDispatchResponse>;
+  forgotPassword: (email: string) => Promise<OtpDispatchResponse>;
   resetPassword: (payload: ResetPasswordPayload) => Promise<{ message: string }>;
   logout: () => Promise<void>;
   refreshCurrentUser: () => Promise<AuthUser | null>;
