@@ -96,7 +96,7 @@ export function Register() {
       });
 
       setDeliveryChannels(response.delivery_channels ?? { email: true, sms: Boolean(phone.trim()) });
-      toast({ type: 'success', title: 'Verification code sent', message: response.message });
+      toast({ type: 'success', title: 'Verification passkey sent', message: response.message });
       setStep(2);
       setCountdown(30);
     } catch (error: any) {
@@ -108,7 +108,7 @@ export function Register() {
 
   const handleVerifyRegistration = async () => {
     if (otp.length !== 6) {
-      toast({ type: 'error', title: 'Enter the full code', message: 'The verification code must be 6 digits.' });
+      toast({ type: 'error', title: 'Enter the full passkey', message: 'The verification passkey must be 6 characters.' });
       return;
     }
 
@@ -120,7 +120,7 @@ export function Register() {
       toast({ type: 'success', title: 'Account created', message: 'Welcome to Nataka Hii.' });
       setStep(3);
     } catch (error: any) {
-      toast({ type: 'error', title: 'Verification failed', message: error?.message || 'Please check the code and try again.' });
+      toast({ type: 'error', title: 'Verification failed', message: error?.message || 'Please check the passkey and try again.' });
     } finally {
       setIsVerifying(false);
     }
@@ -135,7 +135,7 @@ export function Register() {
       toast({ type: 'success', title: 'Code resent', message: response.message });
       setCountdown(30);
     } catch (error: any) {
-      toast({ type: 'error', title: 'Unable to resend code', message: error?.message || 'Please try again in a moment.' });
+      toast({ type: 'error', title: 'Unable to resend passkey', message: error?.message || 'Please try again in a moment.' });
     } finally {
       setIsResending(false);
     }
@@ -162,10 +162,10 @@ export function Register() {
   };
 
   const verificationDestination = deliveryChannels.email && deliveryChannels.sms
-    ? <>We've sent the same 6-digit code to <span className="font-bold text-[var(--color-text-heading)]">{email}</span> and by SMS to <span className="font-bold text-[var(--color-text-heading)]">{phone}</span>.</>
+    ? <>We've sent the same 6-character passkey to <span className="font-bold text-[var(--color-text-heading)]">{email}</span> and by SMS to <span className="font-bold text-[var(--color-text-heading)]">{phone}</span>.</>
     : deliveryChannels.sms
-      ? <>We've sent a 6-digit code by SMS to <span className="font-bold text-[var(--color-text-heading)]">{phone}</span>.</>
-      : <>We've sent a 6-digit code to <span className="font-bold text-[var(--color-text-heading)]">{email}</span>.</>;
+      ? <>We've sent a 6-character passkey by SMS to <span className="font-bold text-[var(--color-text-heading)]">{phone}</span>.</>
+      : <>We've sent a 6-character passkey to <span className="font-bold text-[var(--color-text-heading)]">{email}</span>.</>;
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-page)] flex flex-col items-center justify-center p-4 lg:overflow-hidden">
@@ -355,7 +355,8 @@ export function Register() {
                   <InputOTP
                     maxLength={6}
                     value={otp}
-                    onChange={(value) => setOtp(value)}
+                    onChange={(value) => setOtp(value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6))}
+                    inputMode="text"
                     containerClassName="justify-center"
                   >
                     <InputOTPGroup className="gap-2 sm:gap-3">

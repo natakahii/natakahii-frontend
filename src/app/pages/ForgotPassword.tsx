@@ -38,11 +38,11 @@ export function ForgotPassword() {
 
     try {
       const response = await forgotPassword(email);
-      toast({ type: 'success', title: 'Reset code sent', message: response.message });
+      toast({ type: 'success', title: 'Reset passkey sent', message: response.message });
       setStep(2);
       setCountdown(30);
     } catch (error: any) {
-      toast({ type: 'error', title: 'Unable to send reset code', message: error?.message || 'Please try again.' });
+      toast({ type: 'error', title: 'Unable to send reset passkey', message: error?.message || 'Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -69,7 +69,7 @@ export function ForgotPassword() {
       toast({ type: 'success', title: 'Password updated', message: response.message });
       navigate('/login', { replace: true });
     } catch (error: any) {
-      toast({ type: 'error', title: 'Unable to reset password', message: error?.message || 'Please check the code and try again.' });
+      toast({ type: 'error', title: 'Unable to reset password', message: error?.message || 'Please check the passkey and try again.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -83,7 +83,7 @@ export function ForgotPassword() {
       toast({ type: 'success', title: 'Code resent', message: response.message });
       setCountdown(30);
     } catch (error: any) {
-      toast({ type: 'error', title: 'Unable to resend code', message: error?.message || 'Please try again in a moment.' });
+      toast({ type: 'error', title: 'Unable to resend passkey', message: error?.message || 'Please try again in a moment.' });
     } finally {
       setIsResending(false);
     }
@@ -108,8 +108,8 @@ export function ForgotPassword() {
           </h1>
           <p className="mt-2 text-[15px] text-[var(--color-text-muted)]">
             {step === 1
-              ? 'We will send a one-time verification code to your email address.'
-              : `Enter the 6-digit code sent to ${email} and create a new password.`}
+              ? 'We will send a one-time verification passkey to your email address.'
+              : `Enter the 6-character passkey sent to ${email} and create a new password.`}
           </p>
         </div>
 
@@ -133,24 +133,24 @@ export function ForgotPassword() {
             </div>
 
             <Button type="submit" size="l" className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-darker)] text-white" isLoading={isSubmitting}>
-              Send Reset Code
+              Send Reset Passkey
             </Button>
           </form>
         ) : (
           <form className="mt-8 space-y-5" onSubmit={handleResetPassword}>
             <div className="space-y-1.5">
-              <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Verification Code</label>
+              <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Verification Passkey</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                   <KeyRound className="w-5 h-5 text-[var(--color-text-muted)]" />
                 </div>
                 <Input
                   type="text"
-                  inputMode="numeric"
+                  inputMode="text"
                   maxLength={6}
                   value={otp}
-                  onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="123456"
+                  onChange={(event) => setOtp(event.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6))}
+                  placeholder="A7B3K9"
                   className="pl-11 tracking-[0.35em] focus:border-[var(--color-accent)] focus:ring-[var(--color-accent)]"
                   required
                 />
@@ -193,7 +193,7 @@ export function ForgotPassword() {
 
             <div className="flex items-center justify-between gap-4 rounded-[16px] bg-[var(--color-bg-card)] px-4 py-3">
               <span className="text-[13px] text-[var(--color-text-muted)]">
-                {countdown > 0 ? `Resend code in 00:${countdown.toString().padStart(2, '0')}` : 'Didn’t get the email?'}
+                {countdown > 0 ? `Resend passkey in 00:${countdown.toString().padStart(2, '0')}` : 'Didn’t get the email?'}
               </span>
               <Button
                 type="button"
