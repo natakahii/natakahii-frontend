@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { motion, useAnimationControls } from 'motion/react';
-import { Bookmark, ChevronRight, Clock, Heart, Minus, Plus, Share2, Sparkles, Star } from 'lucide-react';
+import { Bookmark, CheckCircle, ChevronRight, Clock, Heart, Minus, Plus, Share2, Sparkles, Star } from 'lucide-react';
 import { AnimatedPrice } from '../components/ui/animated-price';
 import { Badge, VendorTrustBadge, VendorVerificationBadge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
