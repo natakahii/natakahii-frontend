@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import { Button } from '../components/ui/button';
-import { Badge, VendorVerificationBadge } from '../components/ui/badge';
+import { Badge, VendorTrustBadge } from '../components/ui/badge';
 import { ChevronLeft, Package, MapPin, MessageSquare, AlertCircle, CheckCircle, Truck, Store, Map } from 'lucide-react';
 
 const trackingSteps = [
@@ -63,7 +63,7 @@ export function Tracking() {
                   <div className="font-bold text-[14px] text-[var(--color-text-heading)] leading-tight mb-1">Your Order</div>
                   <div className="text-[12px] text-[var(--color-text-muted)]">Details will appear here</div>
                   <div className="mt-2">
-                    <VendorVerificationBadge tone="compact" label="Verified Vendor" />
+                    <VendorTrustBadge tone="compact" label="Seller Checked" />
                   </div>
                 </div>
               </div>

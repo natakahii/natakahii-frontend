@@ -24,7 +24,7 @@ import {
   Zap,
   Video,
 } from 'lucide-react';
-import { Badge, VendorVerificationBadge } from '../components/ui/badge';
+import { Badge, VendorTrustBadge, VendorVerificationBadge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { EmptyState } from '../components/ui/empty-state';
@@ -44,6 +44,7 @@ import { fetchVideoFeed, VideoItem } from '../services/videoFeedService';
 import { formatCurrency } from '../utils/currency';
 import { getProductPath } from '../utils/products';
 import { getVendorStorefrontPath } from '../utils/storefront';
+import { getVendorVerificationTier } from '../utils/vendorVerification';
 
 const CATEGORY_ICON_MAP = [
   { pattern: /fashion|apparel|clothing|dress/, icon: Shirt },
@@ -245,6 +246,7 @@ export function Home() {
                 const rating = product.reviews_avg_rating ? product.reviews_avg_rating.toFixed(1) : null;
                 const image = getProductPrimaryImage(product);
                 const price = getProductPrice(product);
+                const vendorTier = getVendorVerificationTier(product.vendor);
 
                 return (
                   <Link to={getProductPath(product)} key={product.id}>
@@ -264,8 +266,11 @@ export function Home() {
                             <span className="truncate font-semibold text-[var(--color-text-body)]">
                               {product.vendor?.shop_name || 'Verified Vendor'}
                             </span>
-                            {product.vendor?.status === 'approved' && (
-                              <VendorVerificationBadge tone="compact" label="Verified" className="shrink-0" />
+                            {vendorTier === 'premium' && (
+                              <VendorVerificationBadge tone="compact" label="Premium" className="shrink-0" />
+                            )}
+                            {vendorTier === 'kyc' && (
+                              <VendorTrustBadge tone="compact" label="KYC" className="shrink-0" />
                             )}
                           </span>
                           {rating ? (
@@ -450,29 +455,44 @@ export function Home() {
             </div>
           ) : spotlightVendors.length > 0 ? (
             <div className="flex gap-4 overflow-x-auto pb-6 hide-scrollbar snap-x snap-mandatory -mx-4 px-4 lg:mx-0 lg:px-0">
-              {spotlightVendors.map((vendor) => (
-                <Card key={vendor.id} className="snap-start shrink-0 w-[260px] p-5 flex flex-col items-center text-center gap-3">
-                  <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[var(--color-border)] relative">
-                    <ImageWithFallback src={vendor.logo || '/natakahii-logo.png'} alt={vendor.shop_name} className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">{vendor.shop_name}</h3>
-                    {vendor.status === 'approved' && (
-                      <div className="mt-2 flex justify-center">
-                        <VendorVerificationBadge tone="default" label="Verified Store" />
-                      </div>
-                    )}
-                    <div className="text-[13px] text-[var(--color-text-muted)] flex items-center justify-center gap-3 mt-1">
-                      <span>{vendor.featuredProductCount} featured items</span>
-                      <span className="w-1 h-1 rounded-full bg-[var(--color-border)]" />
-                      <span>{vendor.status === 'approved' ? 'Approved vendor' : 'Active store'}</span>
+              {spotlightVendors.map((vendor) => {
+                const vendorTier = getVendorVerificationTier(vendor);
+
+                return (
+                  <Card key={vendor.id} className="snap-start shrink-0 w-[260px] p-5 flex flex-col items-center text-center gap-3">
+                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[var(--color-border)] relative">
+                      <ImageWithFallback src={vendor.logo || '/natakahii-logo.png'} alt={vendor.shop_name} className="w-full h-full object-cover" />
                     </div>
-                  </div>
-                  <Link to={getVendorStorefrontPath(vendor)} className="w-full">
-                    <Button variant="secondary" size="s" className="w-full mt-2 rounded-full font-bold">Shop This Vendor</Button>
-                  </Link>
-                </Card>
-              ))}
+                    <div>
+                      <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">{vendor.shop_name}</h3>
+                      {vendorTier === 'premium' && (
+                        <div className="mt-2 flex justify-center">
+                          <VendorVerificationBadge tone="default" label="Premium Verified" />
+                        </div>
+                      )}
+                      {vendorTier === 'kyc' && (
+                        <div className="mt-2 flex justify-center">
+                          <VendorTrustBadge tone="default" label="KYC Checked" />
+                        </div>
+                      )}
+                      <div className="text-[13px] text-[var(--color-text-muted)] flex items-center justify-center gap-3 mt-1">
+                        <span>{vendor.featuredProductCount} featured items</span>
+                        <span className="w-1 h-1 rounded-full bg-[var(--color-border)]" />
+                        <span>
+                          {vendorTier === 'premium'
+                            ? 'Premium seller'
+                            : vendorTier === 'kyc'
+                              ? 'KYC checked seller'
+                              : 'Active store'}
+                        </span>
+                      </div>
+                    </div>
+                    <Link to={getVendorStorefrontPath(vendor)} className="w-full">
+                      <Button variant="secondary" size="s" className="w-full mt-2 rounded-full font-bold">Shop This Vendor</Button>
+                    </Link>
+                  </Card>
+                );
+              })}
             </div>
           ) : (
             <EmptyState

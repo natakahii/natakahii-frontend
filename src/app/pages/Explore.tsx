@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Heart, Search, ShoppingCart, SlidersHorizontal, Star, X, MapPin } from 'lucide-react';
-import { Badge, VendorVerificationBadge } from '../components/ui/badge';
+import { Badge, VendorTrustBadge, VendorVerificationBadge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { EmptyState } from '../components/ui/empty-state';
@@ -18,6 +18,7 @@ import {
 } from '../services/productService';
 import { formatCurrency } from '../utils/currency';
 import { getProductPath } from '../utils/products';
+import { getVendorVerificationTier } from '../utils/vendorVerification';
 import { useCart } from '../providers/CartProvider';
 import { useToast } from '../components/ui/toast';
 
@@ -490,6 +491,7 @@ export function Explore() {
                   const discountPercent = getProductDiscountPercent(product);
                   const rating = product.reviews_avg_rating ? product.reviews_avg_rating.toFixed(1) : null;
                   const price = getProductPrice(product);
+                  const vendorTier = getVendorVerificationTier(product.vendor);
 
                   return (
                     <Link to={getProductPath(product)} key={product.id}>
@@ -509,8 +511,11 @@ export function Explore() {
                               <span className="truncate font-semibold text-[var(--color-text-body)]">
                                 {product.vendor?.shop_name || 'Verified Vendor'}
                               </span>
-                              {product.vendor?.status === 'approved' && (
-                                <VendorVerificationBadge tone="compact" label="Verified" className="shrink-0" />
+                              {vendorTier === 'premium' && (
+                                <VendorVerificationBadge tone="compact" label="Premium" className="shrink-0" />
+                              )}
+                              {vendorTier === 'kyc' && (
+                                <VendorTrustBadge tone="compact" label="KYC" className="shrink-0" />
                               )}
                             </span>
                             {rating ? (

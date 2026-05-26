@@ -9,6 +9,7 @@ import {
   LogOut,
   Package,
   Settings,
+  ShieldCheck,
   Store,
   Truck,
   Wallet,
@@ -24,6 +25,7 @@ export function VendorLayout() {
     { name: 'Products', path: '/vendor/dashboard/products', icon: Package },
     { name: 'Analytics', path: '/vendor/dashboard/analytics', icon: BarChart3 },
     { name: 'Dropoffs', path: '/vendor/dashboard/dropoffs', icon: Truck },
+    { name: 'Plan', path: '/vendor/dashboard/subscription', icon: ShieldCheck },
     { name: 'Wallet', path: '/vendor/dashboard/wallet', icon: Wallet },
     { name: 'Payouts', path: '/vendor/dashboard/payouts', icon: CreditCard },
     { name: 'Settings', path: '/vendor/dashboard/settings', icon: Settings },
@@ -36,6 +38,11 @@ export function VendorLayout() {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() || '')
     .join('');
+  const workspaceLabel = user?.vendor?.has_premium_verification
+    ? 'Premium verified store'
+    : user?.vendor?.has_kyc_verification
+      ? 'KYC verified store'
+      : 'Vendor workspace';
 
   const handleLogout = async () => {
     await logout();
@@ -61,7 +68,7 @@ export function VendorLayout() {
             <h3 className="font-semibold text-white truncate">{displayName}</h3>
             <p className="text-xs text-[var(--color-text-muted)] truncate flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-[var(--color-success)] inline-block"></span>
-              Vendor workspace
+              {workspaceLabel}
             </p>
           </div>
         </div>

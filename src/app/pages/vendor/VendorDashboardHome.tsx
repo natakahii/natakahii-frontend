@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AlertTriangle, DollarSign, Package, ShoppingBag, Store, Truck } from 'lucide-react';
-import { Badge } from '../../components/ui/badge';
+import { AlertTriangle, ArrowUpRight, DollarSign, Package, ShoppingBag, Store, Truck } from 'lucide-react';
+import { Badge, VendorTrustBadge, VendorVerificationBadge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { EmptyState } from '../../components/ui/empty-state';
 import { Skeleton } from '../../components/ui/skeleton';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { useAuth } from '../../providers/AuthProvider';
+import { AuthSubscriptionPlan } from '../../services/authService';
 import { fetchVendorOverview, VendorOverviewResponse } from '../../services/analyticsService';
 import { formatCompactCurrency, formatCurrency } from '../../utils/currency';
 import { getVendorStorefrontPath } from '../../utils/storefront';
+import { getVendorVerificationDescriptor, isPremiumVerifiedVendor } from '../../utils/vendorVerification';
 
 function formatDateLabel(value?: string) {
   if (!value) {
@@ -42,6 +44,20 @@ function getOrderStatusClasses(status: string) {
   }
 
   return 'border-[var(--color-warning)] text-[var(--color-warning)] bg-[var(--color-warning-bg)]';
+}
+
+function formatPlanPrice(plan?: AuthSubscriptionPlan | null) {
+  if (!plan) {
+    return 'No plan assigned';
+  }
+
+  if (plan.is_free) {
+    return 'Free plan';
+  }
+
+  const billingLabel = plan.billing_cycle === 'yearly' ? 'year' : 'month';
+
+  return `${formatCurrency(Number(plan.price ?? 0))} / ${billingLabel}`;
 }
 
 export function VendorDashboardHome() {
@@ -87,6 +103,12 @@ export function VendorDashboardHome() {
   const vendorStatus = user?.vendor?.status ? String(user.vendor.status).replace(/_/g, ' ') : null;
   const storefrontPath = getVendorStorefrontPath(user?.vendor);
   const hasStorefront = Boolean(user?.vendor?.shop_slug || user?.vendor?.id);
+  const currentPlan = user?.vendor?.subscription_plan ?? null;
+  const verification = useMemo(() => getVendorVerificationDescriptor(user?.vendor), [user?.vendor]);
+  const productLimit = user?.vendor?.product_limit ?? currentPlan?.product_limit ?? null;
+  const totalProducts = analytics?.total_products ?? 0;
+  const hasReachedProductLimit = Boolean(productLimit && totalProducts >= productLimit);
+  const canUpgradePlan = Boolean(user?.vendor?.can_upgrade_subscription);
 
   return (
     <div className="space-y-6">
@@ -127,6 +149,14 @@ export function VendorDashboardHome() {
           </Button>
           <Button
             type="button"
+            variant="outline"
+            className="text-[var(--color-primary)] border-[var(--color-primary)]"
+            onClick={() => navigate('/vendor/dashboard/subscription')}
+          >
+            {canUpgradePlan ? 'Upgrade Plan' : 'Manage Plan'}
+          </Button>
+          <Button
+            type="button"
             className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white"
             onClick={() => navigate('/vendor/dashboard/products/add')}
           >
@@ -148,6 +178,71 @@ export function VendorDashboardHome() {
           </CardContent>
         </Card>
       )}
+
+      <Card className="border-[var(--color-border)] shadow-[var(--shadow-level-1)] overflow-hidden">
+        <CardContent className="p-6 lg:p-7 grid grid-cols-1 xl:grid-cols-[1.25fr_0.95fr] gap-6 items-start">
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              {isPremiumVerifiedVendor(user?.vendor) ? (
+                <VendorVerificationBadge tone="hero" label="Premium Verified" />
+              ) : (
+                <VendorTrustBadge tone="hero" label="KYC Checked" />
+              )}
+              {hasReachedProductLimit && (
+                <Badge className="bg-[var(--color-warning-bg)] text-[var(--color-warning)] hover:bg-[var(--color-warning-bg)]">
+                  Plan limit reached
+                </Badge>
+              )}
+            </div>
+
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--color-primary)]">Verification & Benefits</p>
+              <h2 className="text-2xl font-bold text-[var(--color-text-heading)] mt-2">{verification.headline}</h2>
+              <p className="text-sm text-[var(--color-text-muted)] mt-2 max-w-2xl">{verification.detail}</p>
+            </div>
+
+            {canUpgradePlan && (
+              <div className="rounded-[22px] border border-[var(--color-primary)]/15 bg-[linear-gradient(135deg,rgba(20,36,144,0.04),rgba(255,105,49,0.05))] p-4">
+                <p className="text-sm font-semibold text-[var(--color-text-heading)]">
+                  Free-plan sellers keep KYC approval, while paid plans unlock the premium storefront badge shoppers see across Nataka Hii.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-[26px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5 lg:p-6 space-y-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">Current Plan</p>
+              <p className="text-2xl font-bold text-[var(--color-text-heading)] mt-2">{currentPlan?.name || 'No plan assigned'}</p>
+              <p className="text-sm text-[var(--color-text-muted)] mt-1">{formatPlanPrice(currentPlan)}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-[18px] border border-[var(--color-border)] bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Badge</p>
+                <p className="text-lg font-bold text-[var(--color-text-heading)] mt-2">
+                  {isPremiumVerifiedVendor(user?.vendor) ? 'Premium' : 'KYC'}
+                </p>
+              </div>
+              <div className="rounded-[18px] border border-[var(--color-border)] bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Catalog</p>
+                <p className="text-lg font-bold text-[var(--color-text-heading)] mt-2">
+                  {productLimit ? `${totalProducts}/${productLimit}` : 'Unlimited'}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white"
+              onClick={() => navigate('/vendor/dashboard/subscription')}
+            >
+              {canUpgradePlan ? 'Upgrade Seller Plan' : 'Open Plan Settings'}
+              <ArrowUpRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {[

@@ -28,12 +28,33 @@ export interface CatalogCategory {
 export interface CatalogVendor {
   id: number;
   user_id?: number;
+  subscription_plan_id?: number | null;
   shop_name: string;
   shop_slug?: string;
   description?: string | null;
   logo?: string | null;
   commission_rate?: number | null;
   status?: string | null;
+  subscription_plan?: {
+    id: number;
+    name: string;
+    slug: string;
+    description?: string | null;
+    price: number | string;
+    billing_cycle: 'monthly' | 'yearly' | string;
+    features?: string[] | null;
+    feature_access?: Record<string, boolean | number | string> | null;
+    is_active: boolean;
+    is_free: boolean;
+    product_limit?: number | null;
+    sort_order?: number | null;
+  } | null;
+  verification_level?: 'unverified' | 'kyc_verified' | 'subscription_verified' | string | null;
+  verification_label?: string | null;
+  has_kyc_verification?: boolean;
+  has_premium_verification?: boolean;
+  can_upgrade_subscription?: boolean;
+  product_limit?: number | null;
   products_count?: number;
   followers_count?: number;
   // Location fields from VendorApplication
@@ -188,12 +209,35 @@ export function normalizeVendor(vendor: any): CatalogVendor | undefined {
   return {
     id: toNumber(vendor.id),
     user_id: vendor.user_id == null ? undefined : toNumber(vendor.user_id),
+    subscription_plan_id: vendor.subscription_plan_id == null ? null : toNumber(vendor.subscription_plan_id),
     shop_name: vendor.shop_name || 'Vendor',
     shop_slug: vendor.shop_slug || undefined,
     description: vendor.description || null,
     logo: vendor.logo || null,
     commission_rate: vendor.commission_rate == null ? null : toNumber(vendor.commission_rate),
     status: vendor.status || null,
+    subscription_plan: vendor.subscription_plan
+      ? {
+          id: toNumber(vendor.subscription_plan.id),
+          name: vendor.subscription_plan.name || 'Plan',
+          slug: vendor.subscription_plan.slug || '',
+          description: vendor.subscription_plan.description || null,
+          price: vendor.subscription_plan.price ?? 0,
+          billing_cycle: vendor.subscription_plan.billing_cycle || 'monthly',
+          features: Array.isArray(vendor.subscription_plan.features) ? vendor.subscription_plan.features : [],
+          feature_access: vendor.subscription_plan.feature_access || null,
+          is_active: Boolean(vendor.subscription_plan.is_active),
+          is_free: Boolean(vendor.subscription_plan.is_free),
+          product_limit: vendor.subscription_plan.product_limit == null ? null : toNumber(vendor.subscription_plan.product_limit),
+          sort_order: vendor.subscription_plan.sort_order == null ? null : toNumber(vendor.subscription_plan.sort_order),
+        }
+      : null,
+    verification_level: vendor.verification_level || null,
+    verification_label: vendor.verification_label || null,
+    has_kyc_verification: Boolean(vendor.has_kyc_verification),
+    has_premium_verification: Boolean(vendor.has_premium_verification),
+    can_upgrade_subscription: Boolean(vendor.can_upgrade_subscription),
+    product_limit: vendor.product_limit == null ? null : toNumber(vendor.product_limit),
     products_count: vendor.products_count == null ? undefined : toNumber(vendor.products_count),
     followers_count: vendor.followers_count == null ? undefined : toNumber(vendor.followers_count),
     // Location fields

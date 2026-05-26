@@ -27,6 +27,7 @@ import { VendorProductForm } from "./pages/vendor/VendorProductForm";
 import { VendorAnalytics } from "./pages/vendor/VendorAnalytics";
 import { VendorDropoffs } from "./pages/vendor/VendorDropoffs";
 import { VendorSettings } from "./pages/vendor/VendorSettings";
+import { VendorSubscriptionManagement } from "./pages/vendor/VendorSubscriptionManagement";
 import { VendorWalletPage } from "./pages/vendor/VendorWallet";
 import { VendorPayouts } from "./pages/vendor/VendorPayouts";
 
@@ -108,6 +109,7 @@ export const router = createBrowserRouter([
           { path: "products/:productId/edit", Component: VendorProductForm },
           { path: "analytics", Component: VendorAnalytics },
           { path: "dropoffs", Component: VendorDropoffs },
+          { path: "subscription", Component: VendorSubscriptionManagement },
           { path: "settings", Component: VendorSettings },
           { path: "wallet", Component: VendorWalletPage },
           { path: "payouts", Component: VendorPayouts },

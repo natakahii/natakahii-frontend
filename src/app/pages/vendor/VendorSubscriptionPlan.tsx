@@ -8,6 +8,10 @@ interface VendorSubscriptionPlanProps {
   onSelectPlan: (plan: string) => void;
   isLoading?: boolean;
   error?: string | null;
+  title?: string;
+  description?: string;
+  selectedLabel?: string;
+  unselectedLabel?: string;
 }
 
 function getPlanIcon(plan: VendorSubscriptionPlanRecord) {
@@ -59,14 +63,16 @@ export function VendorSubscriptionPlan({
   onSelectPlan,
   isLoading = false,
   error = null,
+  title = 'Choose a subscription plan',
+  description = 'Plans are managed by the Nataka Hii team. Pick the option that fits your store today, and we will review it together with your vendor application.',
+  selectedLabel = 'Selected',
+  unselectedLabel = 'Select plan',
 }: VendorSubscriptionPlanProps) {
   return (
     <div className="space-y-4">
       <div className="rounded-[24px] bg-white border border-[var(--color-border)] p-6 shadow-sm">
-        <h3 className="text-xl font-bold text-[var(--color-text-heading)] mb-2">Choose a subscription plan</h3>
-        <p className="text-sm text-[var(--color-text-muted)]">
-          Plans are managed by the Nataka Hii team. Pick the option that fits your store today, and we will review it together with your vendor application.
-        </p>
+        <h3 className="text-xl font-bold text-[var(--color-text-heading)] mb-2">{title}</h3>
+        <p className="text-sm text-[var(--color-text-muted)]">{description}</p>
       </div>
 
       {isLoading && (
@@ -147,7 +153,7 @@ export function VendorSubscriptionPlan({
                       isSelected ? 'bg-[var(--color-accent)] text-white' : 'bg-[var(--color-border)] text-[var(--color-text-muted)]'
                     }`}
                   >
-                    {isSelected ? 'Selected' : 'Select plan'}
+                    {isSelected ? selectedLabel : unselectedLabel}
                   </span>
                   <span className="text-xs text-[var(--color-text-muted)]">
                     {plan.product_limit ? `${plan.product_limit} products` : 'Unlimited catalog'}

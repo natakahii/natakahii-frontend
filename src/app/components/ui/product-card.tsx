@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion, useAnimationControls } from "motion/react";
 import { Heart, ShoppingCart, Star, MapPin } from "lucide-react";
-import { VendorVerificationBadge } from "./badge";
+import { VendorTrustBadge, VendorVerificationBadge } from "./badge";
 import { Button } from "./button";
 import { Card } from "./card";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
@@ -12,6 +12,7 @@ import { useAuth } from "../../providers/AuthProvider";
 import { useToast } from "../../components/ui/toast";
 import { likeProduct, unlikeProduct } from "../../services/videoFeedService";
 import { CatalogProduct, getProductPrimaryImage } from "../../services/productService";
+import { getVendorVerificationTier } from "../../utils/vendorVerification";
 
 interface ProductCardProps {
   product: CatalogProduct & { is_liked?: boolean };
@@ -34,6 +35,7 @@ export function ProductCard({ product, onAddToCart, onLikeToggle }: ProductCardP
         .filter(Boolean)
         .join(', ')
     : null;
+  const vendorVerificationTier = getVendorVerificationTier(product.vendor);
 
 
   const handleLike = async (e: React.MouseEvent) => {
@@ -109,12 +111,11 @@ export function ProductCard({ product, onAddToCart, onLikeToggle }: ProductCardP
                   <span className="truncate font-semibold text-[var(--color-text-body)]">
                     {product.vendor.shop_name}
                   </span>
-                  {product.vendor.status === 'approved' && (
-                    <VendorVerificationBadge
-                      tone="compact"
-                      label="Verified"
-                      className="shrink-0"
-                    />
+                  {vendorVerificationTier === 'premium' && (
+                    <VendorVerificationBadge tone="compact" label="Premium" className="shrink-0" />
+                  )}
+                  {vendorVerificationTier === 'kyc' && (
+                    <VendorTrustBadge tone="compact" label="KYC" className="shrink-0" />
                   )}
                 </div>
               )}

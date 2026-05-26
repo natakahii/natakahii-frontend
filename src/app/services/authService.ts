@@ -8,15 +8,38 @@ export interface AuthRole {
   description?: string | null;
 }
 
+export interface AuthSubscriptionPlan {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  price: string | number;
+  billing_cycle: 'monthly' | 'yearly' | string;
+  features?: string[] | null;
+  feature_access?: Record<string, boolean | number | string> | null;
+  is_active: boolean;
+  is_free: boolean;
+  product_limit?: number | null;
+  sort_order?: number | null;
+}
+
 export interface AuthVendor {
   id: number;
   user_id: number;
+  subscription_plan_id?: number | null;
   shop_name: string;
   shop_slug: string;
   description?: string | null;
   logo?: string | null;
   commission_rate?: string | number | null;
   status?: string | null;
+  subscription_plan?: AuthSubscriptionPlan | null;
+  verification_level?: 'unverified' | 'kyc_verified' | 'subscription_verified' | string | null;
+  verification_label?: string | null;
+  has_kyc_verification?: boolean;
+  has_premium_verification?: boolean;
+  can_upgrade_subscription?: boolean;
+  product_limit?: number | null;
   created_at?: string;
   updated_at?: string;
 }

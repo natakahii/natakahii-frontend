@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { ChevronRight, Heart, MapPin, Search, ShoppingBag, ShoppingCart, Star, Users } from 'lucide-react';
-import { Badge, VendorVerificationBadge } from '../components/ui/badge';
+import { Badge, VendorTrustBadge, VendorVerificationBadge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { EmptyState } from '../components/ui/empty-state';
@@ -11,6 +11,7 @@ import { CatalogCategory, CatalogProduct, CatalogVendor, getProductDiscountPerce
 import { fetchVendorStorefront } from '../services/storefrontService';
 import { formatCurrency } from '../utils/currency';
 import { getProductPath } from '../utils/products';
+import { getVendorVerificationTier } from '../utils/vendorVerification';
 import { useCart } from '../providers/CartProvider';
 import { useToast } from '../components/ui/toast';
 
@@ -140,6 +141,7 @@ export function ShopStorefront() {
   const storefrontLabel = vendor?.shop_slug ? `natakahii.com/shop/${vendor.shop_slug}` : null;
   const totalFollowers = vendor?.followers_count ?? 0;
   const totalProducts = vendor?.products_count ?? meta.total;
+  const vendorTier = getVendorVerificationTier(vendor);
   const hasFilters = Boolean(categoryParam || searchParam);
 
   const updateParams = (updates: Record<string, string | null | undefined>, resetPage = true) => {
@@ -248,9 +250,8 @@ export function ShopStorefront() {
               <h1 className="text-[22px] md:text-[28px] font-bold text-[var(--color-text-heading)] leading-tight">
                 {vendor.shop_name}
               </h1>
-              {vendor.status === 'approved' && (
-                <VendorVerificationBadge tone="hero" label="Verified Store" />
-              )}
+              {vendorTier === 'premium' && <VendorVerificationBadge tone="hero" label="Premium Verified" />}
+              {vendorTier === 'kyc' && <VendorTrustBadge tone="hero" label="KYC Checked" />}
               <p className="text-[13px] text-[var(--color-text-muted)]">
                 @{vendor.shop_slug || 'store'}
               </p>
