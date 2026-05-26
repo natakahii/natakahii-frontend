@@ -458,7 +458,7 @@ export function ProductDetail() {
             <Link to={vendorStorefrontPath} className="hover:text-[var(--color-primary)] flex items-center gap-2">
               <span>{product.vendor.shop_name}</span>
               {vendorTier === 'premium' && <VendorVerificationBadge tone="compact" label="Premium" />}
-              {vendorTier === 'kyc' && <VendorTrustBadge tone="compact" label="KYC" />}
+              {vendorTier === 'kyc' && <VendorTrustBadge tone="compact" label="Approved" />}
             </Link>
             <ChevronRight className="w-4 h-4" />
           </>
@@ -500,7 +500,7 @@ export function ProductDetail() {
                 </div>
                 <span>{product.vendor.shop_name}</span>
                 {vendorTier === 'premium' && <VendorVerificationBadge tone="compact" label="Premium" />}
-                {vendorTier === 'kyc' && <VendorTrustBadge tone="compact" label="KYC" />}
+                {vendorTier === 'kyc' && <VendorTrustBadge tone="compact" label="Approved" />}
               </Link>
             ) : null}
 
@@ -762,7 +762,7 @@ export function ProductDetail() {
                     <h3 className="font-bold text-[20px] text-[var(--color-text-heading)] flex flex-wrap items-center gap-2">
                       {product.vendor?.shop_name || 'Verified Vendor'}
                       {vendorTier === 'premium' && <VendorVerificationBadge tone="default" label="Premium Verified" />}
-                      {vendorTier === 'kyc' && <VendorTrustBadge tone="default" label="KYC Checked" />}
+                      {vendorTier === 'kyc' && <VendorTrustBadge tone="default" label="Approved Vendor" />}
                     </h3>
                     <p className="text-[14px] text-[var(--color-text-muted)] mt-1 capitalize">{product.vendor?.status || 'active'} seller</p>
                   </div>
@@ -789,13 +789,13 @@ export function ProductDetail() {
                   <h3 className="font-bold text-[18px] text-[var(--color-text-heading)] flex flex-wrap items-center gap-2">
                     <span>{product.vendor?.shop_name || 'Verified Vendor'}</span>
                     {vendorTier === 'premium' && <VendorVerificationBadge tone="compact" label="Premium" />}
-                    {vendorTier === 'kyc' && <VendorTrustBadge tone="compact" label="KYC" />}
+                    {vendorTier === 'kyc' && <VendorTrustBadge tone="compact" label="Approved" />}
                   </h3>
                   <div className="text-[13px] text-[var(--color-text-muted)] font-medium mt-1">
                     {vendorTier === 'premium'
                       ? 'Premium verified store'
                       : vendorTier === 'kyc'
-                        ? 'KYC checked store'
+                        ? 'Approved vendor'
                         : 'Active store'}{' '}
                     • {reviewsCount} product review{reviewsCount === 1 ? '' : 's'}
                   </div>

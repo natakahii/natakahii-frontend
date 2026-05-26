@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AlertTriangle, ArrowUpRight, DollarSign, Package, ShoppingBag, Store, Truck } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, DollarSign, Globe2, Package, ShoppingBag, Store, Truck } from 'lucide-react';
 import { Badge, VendorTrustBadge, VendorVerificationBadge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
@@ -109,6 +109,9 @@ export function VendorDashboardHome() {
   const totalProducts = analytics?.total_products ?? 0;
   const hasReachedProductLimit = Boolean(productLimit && totalProducts >= productLimit);
   const canUpgradePlan = Boolean(user?.vendor?.can_upgrade_subscription);
+  const vendorStatusTitle = vendorStatus
+    ? vendorStatus.replace(/\b\w/g, (character) => character.toUpperCase())
+    : 'Active';
 
   return (
     <div className="space-y-6">
@@ -128,12 +131,12 @@ export function VendorDashboardHome() {
             Track the real activity in your store, from listed products to order and fulfillment progress.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
           {hasStorefront && (
             <Button
               type="button"
               variant="outline"
-              className="text-[var(--color-primary)] border-[var(--color-primary)]"
+              className="w-full text-[var(--color-primary)] border-[var(--color-primary)] sm:w-auto"
               onClick={() => navigate(storefrontPath)}
             >
               View Storefront
@@ -142,22 +145,23 @@ export function VendorDashboardHome() {
           <Button
             type="button"
             variant="outline"
-            className="text-[var(--color-primary)] border-[var(--color-primary)]"
-            onClick={() => navigate('/vendor/dashboard/settings')}
+            className="w-full text-[var(--color-primary)] border-[var(--color-primary)] sm:w-auto"
+            onClick={() => navigate('/')}
           >
-            Store Settings
+            Open Marketplace
+            <Globe2 className="w-4 h-4 ml-2" />
           </Button>
           <Button
             type="button"
             variant="outline"
-            className="text-[var(--color-primary)] border-[var(--color-primary)]"
+            className="w-full text-[var(--color-primary)] border-[var(--color-primary)] sm:w-auto"
             onClick={() => navigate('/vendor/dashboard/subscription')}
           >
             {canUpgradePlan ? 'Upgrade Plan' : 'Manage Plan'}
           </Button>
           <Button
             type="button"
-            className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white"
+            className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white sm:w-auto"
             onClick={() => navigate('/vendor/dashboard/products/add')}
           >
             Add Product
@@ -180,67 +184,95 @@ export function VendorDashboardHome() {
       )}
 
       <Card className="border-[var(--color-border)] shadow-[var(--shadow-level-1)] overflow-hidden">
-        <CardContent className="p-6 lg:p-7 grid grid-cols-1 xl:grid-cols-[1.25fr_0.95fr] gap-6 items-start">
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
-              {isPremiumVerifiedVendor(user?.vendor) ? (
-                <VendorVerificationBadge tone="hero" label="Premium Verified" />
-              ) : (
-                <VendorTrustBadge tone="hero" label="KYC Checked" />
-              )}
-              {hasReachedProductLimit && (
-                <Badge className="bg-[var(--color-warning-bg)] text-[var(--color-warning)] hover:bg-[var(--color-warning-bg)]">
-                  Plan limit reached
-                </Badge>
-              )}
-            </div>
-
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--color-primary)]">Verification & Benefits</p>
-              <h2 className="text-2xl font-bold text-[var(--color-text-heading)] mt-2">{verification.headline}</h2>
-              <p className="text-sm text-[var(--color-text-muted)] mt-2 max-w-2xl">{verification.detail}</p>
-            </div>
-
-            {canUpgradePlan && (
-              <div className="rounded-[22px] border border-[var(--color-primary)]/15 bg-[linear-gradient(135deg,rgba(20,36,144,0.04),rgba(255,105,49,0.05))] p-4">
-                <p className="text-sm font-semibold text-[var(--color-text-heading)]">
-                  Free-plan sellers keep KYC approval, while paid plans unlock the premium storefront badge shoppers see across Nataka Hii.
-                </p>
+        <CardContent className="p-5 sm:p-6 lg:p-7 space-y-5">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-3">
+                {isPremiumVerifiedVendor(user?.vendor) ? (
+                  <VendorVerificationBadge tone="hero" label="Premium Verified" />
+                ) : (
+                  <VendorTrustBadge tone="hero" label="Approved Vendor" />
+                )}
+                {hasReachedProductLimit && (
+                  <Badge className="bg-[var(--color-warning-bg)] text-[var(--color-warning)] hover:bg-[var(--color-warning-bg)]">
+                    Plan limit reached
+                  </Badge>
+                )}
               </div>
-            )}
+
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--color-primary)]">Verification Level</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-[var(--color-text-heading)] mt-2">{verification.headline}</h2>
+                <p className="text-sm text-[var(--color-text-muted)] mt-2 max-w-2xl">{verification.detail}</p>
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-[var(--color-primary)]/15 bg-[linear-gradient(135deg,rgba(20,36,144,0.04),rgba(255,105,49,0.05))] p-4 sm:p-5 xl:max-w-[320px]">
+              <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--color-primary)]">Plan Momentum</p>
+              <p className="mt-3 text-base font-bold text-[var(--color-text-heading)]">
+                {canUpgradePlan
+                  ? 'Move to a paid plan when you want the premium badge and more catalog headroom.'
+                  : 'Your current plan is already supporting premium storefront trust across Nataka Hii.'}
+              </p>
+              <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+                {hasReachedProductLimit
+                  ? 'You have reached your current catalog allowance. Upgrading will make room for more products.'
+                  : 'Keep this view close to monitor store status, plan benefits, and selling capacity at a glance.'}
+              </p>
+              <Button
+                type="button"
+                className="mt-4 w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white"
+                onClick={() => navigate('/vendor/dashboard/subscription')}
+              >
+                {canUpgradePlan ? 'Upgrade Seller Plan' : 'Open Plan Settings'}
+                <ArrowUpRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
           </div>
 
-          <div className="rounded-[26px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5 lg:p-6 space-y-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">Current Plan</p>
-              <p className="text-2xl font-bold text-[var(--color-text-heading)] mt-2">{currentPlan?.name || 'No plan assigned'}</p>
-              <p className="text-sm text-[var(--color-text-muted)] mt-1">{formatPlanPrice(currentPlan)}</p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="rounded-[20px] border border-[var(--color-border)] bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Current Plan</p>
+              <p className="text-lg font-bold text-[var(--color-text-heading)] mt-2">{currentPlan?.name || 'No plan assigned'}</p>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">{formatPlanPrice(currentPlan)}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-[18px] border border-[var(--color-border)] bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Badge</p>
-                <p className="text-lg font-bold text-[var(--color-text-heading)] mt-2">
-                  {isPremiumVerifiedVendor(user?.vendor) ? 'Premium' : 'KYC'}
-                </p>
-              </div>
-              <div className="rounded-[18px] border border-[var(--color-border)] bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Catalog</p>
-                <p className="text-lg font-bold text-[var(--color-text-heading)] mt-2">
-                  {productLimit ? `${totalProducts}/${productLimit}` : 'Unlimited'}
-                </p>
-              </div>
+            <div className="rounded-[20px] border border-[var(--color-border)] bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Verification</p>
+              <p className="text-lg font-bold text-[var(--color-text-heading)] mt-2">
+                {isPremiumVerifiedVendor(user?.vendor) ? 'Premium Badge' : 'Approved Vendor'}
+              </p>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                {isPremiumVerifiedVendor(user?.vendor)
+                  ? 'Shown across marketplace surfaces.'
+                  : 'Marketplace-approved without a paid badge yet.'}
+              </p>
             </div>
 
-            <Button
-              type="button"
-              className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white"
-              onClick={() => navigate('/vendor/dashboard/subscription')}
-            >
-              {canUpgradePlan ? 'Upgrade Seller Plan' : 'Open Plan Settings'}
-              <ArrowUpRight className="w-4 h-4 ml-2" />
-            </Button>
+            <div className="rounded-[20px] border border-[var(--color-border)] bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Catalog</p>
+              <p className="text-lg font-bold text-[var(--color-text-heading)] mt-2">
+                {productLimit ? `${totalProducts}/${productLimit}` : 'Unlimited'}
+              </p>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                {productLimit ? 'Products currently listed versus your allowance.' : 'Your current plan does not cap the catalog.'}
+              </p>
+            </div>
+
+            <div className="rounded-[20px] border border-[var(--color-border)] bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Store Status</p>
+              <p className="text-lg font-bold text-[var(--color-text-heading)] mt-2">{vendorStatusTitle}</p>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">Current seller account state on the marketplace.</p>
+            </div>
           </div>
+
+          {canUpgradePlan && (
+            <div className="rounded-[20px] border border-[var(--color-primary)]/15 bg-[linear-gradient(135deg,rgba(20,36,144,0.04),rgba(255,105,49,0.05))] p-4">
+              <p className="text-sm font-semibold text-[var(--color-text-heading)]">
+                Free-plan sellers keep approved-vendor status, while paid plans unlock the premium storefront badge shoppers see across Nataka Hii.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

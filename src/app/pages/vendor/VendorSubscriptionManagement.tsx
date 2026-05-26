@@ -146,7 +146,7 @@ export function VendorSubscriptionManagement() {
           <Button
             type="button"
             variant="outline"
-            className="text-[var(--color-primary)] border-[var(--color-primary)]"
+            className="w-full text-[var(--color-primary)] border-[var(--color-primary)] sm:w-auto"
             onClick={() => navigate('/vendor/dashboard')}
           >
             Back to Dashboard
@@ -178,11 +178,11 @@ export function VendorSubscriptionManagement() {
               {isPremiumVerifiedVendor(vendor) ? (
                 <VendorVerificationBadge tone="hero" label="Premium Verified" />
               ) : (
-                <VendorTrustBadge tone="hero" label="KYC Checked" />
+                <VendorTrustBadge tone="hero" label="Approved Vendor" />
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               <div className="rounded-[22px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">Current Plan</p>
                 {isLoading ? (
@@ -220,7 +220,7 @@ export function VendorSubscriptionManagement() {
                 ) : (
                   <>
                     <p className="text-2xl font-bold text-[var(--color-text-heading)] mt-3">
-                      {isPremiumVerifiedVendor(vendor) ? 'Unlocked' : 'Locked'}
+                      {isPremiumVerifiedVendor(vendor) ? 'Unlocked' : 'Available'}
                     </p>
                     <p className="text-sm text-[var(--color-text-muted)] mt-2">
                       {isPremiumVerifiedVendor(vendor)
@@ -241,7 +241,7 @@ export function VendorSubscriptionManagement() {
                   <div>
                     <h3 className="font-bold text-[var(--color-text-heading)]">Upgrade for premium visibility</h3>
                     <p className="text-sm text-[var(--color-text-muted)] mt-1">
-                      Free-plan sellers keep KYC approval, while paid plans unlock the premium storefront badge and higher selling limits.
+                      Free-plan sellers keep approved-vendor status, while paid plans unlock the premium storefront badge and higher selling limits.
                     </p>
                   </div>
                 </div>
@@ -319,7 +319,7 @@ export function VendorSubscriptionManagement() {
         isLoading={isLoading}
         error={error}
         title="Choose the plan behind your storefront"
-        description="Free plans keep your store KYC-approved. Paid plans unlock the premium verification badge and can raise your catalog ceiling."
+        description="Free plans keep your store in approved-vendor status. Paid plans unlock the premium verification badge and can raise your catalog ceiling."
         selectedLabel="Current choice"
         unselectedLabel="Choose plan"
       />

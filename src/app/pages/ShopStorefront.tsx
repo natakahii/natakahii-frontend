@@ -251,7 +251,7 @@ export function ShopStorefront() {
                 {vendor.shop_name}
               </h1>
               {vendorTier === 'premium' && <VendorVerificationBadge tone="hero" label="Premium Verified" />}
-              {vendorTier === 'kyc' && <VendorTrustBadge tone="hero" label="KYC Checked" />}
+              {vendorTier === 'kyc' && <VendorTrustBadge tone="hero" label="Approved Vendor" />}
               <p className="text-[13px] text-[var(--color-text-muted)]">
                 @{vendor.shop_slug || 'store'}
               </p>

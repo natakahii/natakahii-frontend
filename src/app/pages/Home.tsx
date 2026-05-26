@@ -270,7 +270,7 @@ export function Home() {
                               <VendorVerificationBadge tone="compact" label="Premium" className="shrink-0" />
                             )}
                             {vendorTier === 'kyc' && (
-                              <VendorTrustBadge tone="compact" label="KYC" className="shrink-0" />
+                              <VendorTrustBadge tone="compact" label="Approved" className="shrink-0" />
                             )}
                           </span>
                           {rating ? (
@@ -472,7 +472,7 @@ export function Home() {
                       )}
                       {vendorTier === 'kyc' && (
                         <div className="mt-2 flex justify-center">
-                          <VendorTrustBadge tone="default" label="KYC Checked" />
+                          <VendorTrustBadge tone="default" label="Approved Vendor" />
                         </div>
                       )}
                       <div className="text-[13px] text-[var(--color-text-muted)] flex items-center justify-center gap-3 mt-1">
@@ -482,7 +482,7 @@ export function Home() {
                           {vendorTier === 'premium'
                             ? 'Premium seller'
                             : vendorTier === 'kyc'
-                              ? 'KYC checked seller'
+                              ? 'Approved vendor'
                               : 'Active store'}
                         </span>
                       </div>

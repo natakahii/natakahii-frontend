@@ -115,7 +115,7 @@ export function ProductCard({ product, onAddToCart, onLikeToggle }: ProductCardP
                     <VendorVerificationBadge tone="compact" label="Premium" className="shrink-0" />
                   )}
                   {vendorVerificationTier === 'kyc' && (
-                    <VendorTrustBadge tone="compact" label="KYC" className="shrink-0" />
+                    <VendorTrustBadge tone="compact" label="Approved" className="shrink-0" />
                   )}
                 </div>
               )}

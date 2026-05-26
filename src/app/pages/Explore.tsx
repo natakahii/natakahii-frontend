@@ -515,7 +515,7 @@ export function Explore() {
                                 <VendorVerificationBadge tone="compact" label="Premium" className="shrink-0" />
                               )}
                               {vendorTier === 'kyc' && (
-                                <VendorTrustBadge tone="compact" label="KYC" className="shrink-0" />
+                                <VendorTrustBadge tone="compact" label="Approved" className="shrink-0" />
                               )}
                             </span>
                             {rating ? (

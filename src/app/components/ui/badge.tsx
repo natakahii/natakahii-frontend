@@ -97,7 +97,7 @@ export function VendorVerificationBadge({
 }
 
 export function VendorTrustBadge({
-  label = 'KYC Checked',
+  label = 'Approved Vendor',
   tone = 'default',
   className,
 }: VendorTrustBadgeProps) {

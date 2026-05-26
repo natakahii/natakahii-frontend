@@ -69,15 +69,15 @@ export function getVendorVerificationDescriptor(vendor: VendorVerificationLike):
     return {
       tier: 'premium',
       headline: 'Premium verified',
-      detail: `This seller is KYC-approved and on the ${planName} vendor plan.`,
+      detail: `This seller is an approved vendor on the ${planName} plan and carries the premium marketplace badge.`,
     };
   }
 
   if (isKycVerifiedVendor(vendor)) {
     return {
       tier: 'kyc',
-      headline: 'KYC checked',
-      detail: 'This seller passed marketplace identity review but is not on a premium vendor plan.',
+      headline: 'Approved vendor',
+      detail: 'This seller passed marketplace review and is approved to trade on Nataka Hii.',
     };
   }
 

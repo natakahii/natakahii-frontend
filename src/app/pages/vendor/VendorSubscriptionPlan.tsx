@@ -100,7 +100,7 @@ export function VendorSubscriptionPlan({
       )}
 
       {!isLoading && !error && plans.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {plans.map((plan) => {
             const isSelected = selectedPlan === plan.slug;
             const planFeatures = getPlanFeatures(plan);
@@ -110,7 +110,7 @@ export function VendorSubscriptionPlan({
                 key={plan.id}
                 type="button"
                 onClick={() => onSelectPlan(plan.slug)}
-                className={`group text-left rounded-[24px] border p-5 transition-all duration-200 focus:outline-none ${
+                className={`group text-left rounded-[24px] border p-4 sm:p-5 transition-all duration-200 focus:outline-none ${
                   isSelected
                     ? 'border-[var(--color-accent)] bg-[var(--color-accent-bg)] shadow-[var(--shadow-level-2)]'
                     : 'border-[var(--color-border)] bg-white hover:border-[var(--color-primary)] hover:bg-[var(--color-bg-page)]'
