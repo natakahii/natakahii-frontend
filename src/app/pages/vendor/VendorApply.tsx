@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
   ArrowRight,
@@ -6,12 +6,14 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  FileText,
   Mail,
   MapPin,
   Phone,
   RefreshCw,
   ShieldCheck,
   Store,
+  UploadCloud,
   User,
   XCircle,
 } from 'lucide-react';
@@ -31,7 +33,9 @@ import {
   submitVendorApplication,
   VendorApplicationPayload,
   VendorApplicationRecord,
+  VendorVerificationDocumentType,
   VendorSubscriptionPlanRecord,
+  vendorVerificationDocumentOptions,
 } from '../../services/vendorApplicationService';
 import { formatCurrency } from '../../utils/currency';
 
@@ -42,13 +46,13 @@ type FieldErrors = Partial<Record<keyof VendorApplicationPayload, string>>;
 const stepLabels: Record<ApplicationStep, string> = {
   1: 'Business Information',
   2: 'Location Details',
-  3: 'Plan & Review',
+  3: 'Verification & Review',
 };
 
 const requiredFieldsByStep: Record<ApplicationStep, Array<keyof VendorApplicationPayload>> = {
   1: ['business_name', 'full_name', 'business_email', 'phone'],
   2: ['region', 'ward', 'street', 'address'],
-  3: ['subscription_plan'],
+  3: ['subscription_plan', 'verification_document_type', 'verification_document'],
 };
 
 function buildInitialForm(user: AuthUser | null, application?: VendorApplicationRecord | null): VendorApplicationPayload {
@@ -64,11 +68,23 @@ function buildInitialForm(user: AuthUser | null, application?: VendorApplication
     address: application?.address || '',
     description: application?.description || '',
     subscription_plan: application?.subscription_plan?.slug || '',
+    verification_document_type: application?.verification_document_type || '',
+    verification_document: null,
   };
 }
 
 function hasStartedForm(form: VendorApplicationPayload) {
-  return Object.entries(form).some(([field, value]) => field !== 'subscription_plan' && value.trim().length > 0);
+  return Object.entries(form).some(([field, value]) => {
+    if (field === 'subscription_plan') {
+      return false;
+    }
+
+    if (field === 'verification_document') {
+      return value instanceof File;
+    }
+
+    return typeof value === 'string' && value.trim().length > 0;
+  });
 }
 
 function extractFieldErrors(error: any): FieldErrors {
@@ -91,7 +107,16 @@ function getStepErrors(form: VendorApplicationPayload, targetStep: ApplicationSt
   const nextErrors: FieldErrors = {};
 
   for (const field of requiredFieldsByStep[targetStep]) {
-    if (!form[field]?.trim()) {
+    if (field === 'verification_document') {
+      if (!form.verification_document) {
+        nextErrors.verification_document = 'Upload one verification document before continuing.';
+      }
+      continue;
+    }
+
+    const value = form[field];
+
+    if (typeof value !== 'string' || !value.trim()) {
       nextErrors[field] = 'This field is required.';
     }
   }
@@ -105,6 +130,10 @@ function getStepErrors(form: VendorApplicationPayload, targetStep: ApplicationSt
 
 function getDefaultPlanSlug(plans: VendorSubscriptionPlanRecord[]) {
   return plans.find((plan) => plan.is_free)?.slug || plans[0]?.slug || '';
+}
+
+function formatDocumentLabel(documentType?: VendorVerificationDocumentType | '' | null) {
+  return vendorVerificationDocumentOptions.find((option) => option.value === documentType)?.label || 'Not selected yet';
 }
 
 function formatPlanSummary(plan?: VendorSubscriptionPlanRecord | null) {
@@ -280,6 +309,12 @@ export function VendorApply() {
     });
   }
 
+  function handleVerificationDocumentChange(event: ChangeEvent<HTMLInputElement>) {
+    const nextFile = event.target.files?.[0] || null;
+    updateField('verification_document', nextFile);
+    event.target.value = '';
+  }
+
   function validateStep(targetStep: ApplicationStep) {
     const nextErrors = getStepErrors(form, targetStep);
 
@@ -361,6 +396,8 @@ export function VendorApply() {
         address: form.address.trim(),
         description: form.description?.trim() ?? '',
         subscription_plan: form.subscription_plan.trim(),
+        verification_document_type: form.verification_document_type.trim() as VendorVerificationDocumentType | '',
+        verification_document: form.verification_document,
       };
 
       const response = await submitVendorApplication(payload);
@@ -420,6 +457,16 @@ export function VendorApply() {
       icon: MapPin,
     },
     { label: 'Address', value: form.address || 'Not provided yet', icon: MapPin },
+    {
+      label: 'Verification Document Type',
+      value: formatDocumentLabel(form.verification_document_type),
+      icon: ShieldCheck,
+    },
+    {
+      label: 'Verification Document File',
+      value: form.verification_document?.name || 'Upload required before submission.',
+      icon: FileText,
+    },
     { label: 'Description', value: form.description || 'No description added yet.', icon: Store },
   ]), [form, selectedPlan]);
 
@@ -476,7 +523,7 @@ export function VendorApply() {
             <div className="space-y-2">
               <h2 className="text-2xl font-bold text-[var(--color-text-heading)]">Your application is under review</h2>
               <p className="text-[15px] text-[var(--color-text-body)]">
-                Submitted {formatDate(application?.created_at)}. Our team will review your business details before activating your seller workspace.
+                Submitted {formatDate(application?.created_at)}. Our team will review your business details and identification document before activating your seller workspace.
               </p>
             </div>
             <div className="rounded-[18px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5 text-left text-[14px] text-[var(--color-text-body)] space-y-3">
@@ -496,6 +543,15 @@ export function VendorApply() {
                 <MapPin className="w-5 h-5 text-[var(--color-primary)]" />
                 <span>{[application?.street, application?.ward, application?.city, application?.region].filter(Boolean).join(', ')}</span>
               </div>
+              {application?.has_verification_document && (
+                <div className="flex items-start gap-3">
+                  <FileText className="w-5 h-5 text-[var(--color-primary)] mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-[var(--color-text-heading)]">{application?.verification_document_type_label || 'Verification document'}</p>
+                    <p className="text-[13px] text-[var(--color-text-body)]">{application?.verification_document_original_name || 'Document uploaded'}</p>
+                  </div>
+                </div>
+              )}
             </div>
             {pageError && (
               <div className="rounded-[16px] border border-[var(--color-error)] bg-[var(--color-error-bg)] px-4 py-3 text-left text-[13px] font-medium text-[var(--color-error)]">
@@ -537,6 +593,13 @@ export function VendorApply() {
                 Review the feedback below, update your details, and submit a new application when you are ready.
               </p>
             </div>
+            {application?.has_verification_document && (
+              <div className="rounded-[18px] border border-[var(--color-border)] bg-[var(--color-bg-card)] px-5 py-4 text-left">
+                <p className="text-[12px] font-bold uppercase tracking-[0.3px] text-[var(--color-text-muted)] mb-2">Previous verification document</p>
+                <p className="text-[14px] font-semibold text-[var(--color-text-heading)]">{application?.verification_document_type_label || 'Verification document'}</p>
+                <p className="text-[13px] text-[var(--color-text-body)]">{application?.verification_document_original_name || 'Document uploaded'}</p>
+              </div>
+            )}
             <div className="rounded-[18px] border border-[var(--color-error)] bg-[var(--color-error-bg)] px-5 py-4 text-left">
               <p className="text-[12px] font-bold uppercase tracking-[0.3px] text-[var(--color-error)] mb-2">Rejection reason</p>
               <p className="text-[14px] text-[var(--color-text-heading)]">
@@ -593,7 +656,7 @@ export function VendorApply() {
             {[
               {
                 title: 'Verified Seller Trust',
-                description: 'Every application is reviewed before a vendor can publish products on the marketplace.',
+                description: 'Every application is reviewed with a government-issued identity document before a vendor can publish products on the marketplace.',
                 icon: ShieldCheck,
               },
               {
@@ -656,7 +719,7 @@ export function VendorApply() {
               <CardDescription>
                 {step === 1 && 'Tell us who will manage the business account.'}
                 {step === 2 && 'Share the business location details we need for seller verification.'}
-                {step === 3 && 'Choose the seller plan you want, then review your information before sending it for approval.'}
+                {step === 3 && 'Choose your seller plan, add one verification document, and review everything before sending it for approval.'}
               </CardDescription>
             </CardHeader>
 
@@ -804,6 +867,65 @@ export function VendorApply() {
                       />
                     </FormField>
 
+                    <div className="space-y-4">
+                      <FormField label="Verification Document Type" required error={fieldErrors.verification_document_type}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {vendorVerificationDocumentOptions.map((option) => {
+                            const isSelected = form.verification_document_type === option.value;
+
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => updateField('verification_document_type', option.value)}
+                                className={`rounded-[18px] border px-4 py-4 text-left transition-all ${
+                                  isSelected
+                                    ? 'border-[var(--color-primary)] bg-[var(--color-primary-bg)] shadow-sm'
+                                    : 'border-[var(--color-border)] bg-white hover:border-[var(--color-primary)] hover:bg-[var(--color-bg-card)]'
+                                }`}
+                              >
+                                <p className={`font-semibold ${isSelected ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-heading)]'}`}>
+                                  {option.label}
+                                </p>
+                                <p className="mt-1 text-sm text-[var(--color-text-body)]">
+                                  {option.description}
+                                </p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </FormField>
+
+                      <FormField label="Upload Verification Document" required error={fieldErrors.verification_document}>
+                        <label className="block rounded-[20px] border-2 border-dashed border-[var(--color-primary)] bg-[var(--color-primary-bg)]/35 px-5 py-6 cursor-pointer hover:bg-[var(--color-primary-bg)]/55 transition-colors">
+                          <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                            className="hidden"
+                            onChange={handleVerificationDocumentChange}
+                          />
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-full bg-white border border-[var(--color-border)] flex items-center justify-center shrink-0">
+                              <UploadCloud className="w-6 h-6 text-[var(--color-primary)]" />
+                            </div>
+                            <div className="space-y-1">
+                              <p className="font-semibold text-[var(--color-text-heading)]">
+                                {form.verification_document ? form.verification_document.name : 'Choose a PDF, JPG, or PNG file'}
+                              </p>
+                              <p className="text-sm text-[var(--color-text-body)]">
+                                Upload one clear government-issued identity document. Maximum size: 5 MB.
+                              </p>
+                              {application?.status === 'rejected' && application?.has_verification_document && !form.verification_document && (
+                                <p className="text-xs text-[var(--color-text-muted)]">
+                                  Previous file: {application.verification_document_original_name}. Upload a fresh copy before you resubmit.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </label>
+                      </FormField>
+                    </div>
+
                     <div className="rounded-[20px] bg-[var(--color-bg-card)] p-5 space-y-4 border border-[var(--color-border)]">
                       {reviewRows.map((row) => (
                         <div key={row.label} className="flex items-start gap-3 text-sm">
@@ -819,7 +941,7 @@ export function VendorApply() {
                     </div>
 
                     <p className="text-sm text-[var(--color-text-muted)]">
-                      By submitting this application, you confirm that the business information above is accurate and ready for review.
+                      By submitting this application, you confirm that the business information and verification document above are accurate and ready for review.
                     </p>
                   </div>
                 )}

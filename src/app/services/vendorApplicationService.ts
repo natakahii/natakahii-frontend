@@ -1,6 +1,36 @@
 import { apiClient } from './apiClient';
 
 export type VendorApplicationStatus = 'pending' | 'approved' | 'rejected';
+export type VendorVerificationDocumentType = 'national_id' | 'driver_licence' | 'voter_id' | 'passport';
+
+export interface VendorVerificationDocumentOption {
+  value: VendorVerificationDocumentType;
+  label: string;
+  description: string;
+}
+
+export const vendorVerificationDocumentOptions: VendorVerificationDocumentOption[] = [
+  {
+    value: 'national_id',
+    label: 'National ID',
+    description: 'Use a clear scan or photo of your national identity card.',
+  },
+  {
+    value: 'driver_licence',
+    label: 'Driver Licence',
+    description: 'Use a valid driver licence that matches the applicant details.',
+  },
+  {
+    value: 'voter_id',
+    label: 'Voter ID',
+    description: 'Use an official voter identification document.',
+  },
+  {
+    value: 'passport',
+    label: 'Passport',
+    description: 'Use the identification page from a valid passport.',
+  },
+];
 
 export interface VendorSubscriptionPlanRecord {
   id: number;
@@ -29,6 +59,8 @@ export interface VendorApplicationPayload {
   address: string;
   description?: string;
   subscription_plan: string;
+  verification_document_type: VendorVerificationDocumentType | '';
+  verification_document: File | null;
 }
 
 export interface VendorApplicationRecord {
@@ -46,6 +78,13 @@ export interface VendorApplicationRecord {
   description?: string;
   subscription_plan_id?: number | null;
   subscription_plan?: VendorSubscriptionPlanRecord | null;
+  verification_document_type?: VendorVerificationDocumentType | null;
+  verification_document_type_label?: string | null;
+  verification_document_original_name?: string | null;
+  verification_document_mime_type?: string | null;
+  verification_document_size?: number | null;
+  verification_document_download_url?: string | null;
+  has_verification_document?: boolean;
   status: VendorApplicationStatus;
   rejection_reason?: string | null;
   created_at?: string;
@@ -67,7 +106,26 @@ export interface VendorSubscriptionPlansResponse {
 }
 
 export function submitVendorApplication(payload: VendorApplicationPayload) {
-  return apiClient.post<VendorApplicationSubmitResponse>('/vendor-application', JSON.stringify(payload));
+  const formData = new FormData();
+
+  formData.append('business_name', payload.business_name);
+  formData.append('business_email', payload.business_email);
+  formData.append('full_name', payload.full_name);
+  formData.append('phone', payload.phone);
+  formData.append('region', payload.region);
+  formData.append('city', payload.city || '');
+  formData.append('ward', payload.ward);
+  formData.append('street', payload.street);
+  formData.append('address', payload.address);
+  formData.append('description', payload.description || '');
+  formData.append('subscription_plan', payload.subscription_plan);
+  formData.append('verification_document_type', payload.verification_document_type);
+
+  if (payload.verification_document) {
+    formData.append('verification_document', payload.verification_document);
+  }
+
+  return apiClient.post<VendorApplicationSubmitResponse>('/vendor-application', formData);
 }
 
 export function fetchVendorApplicationStatus() {
