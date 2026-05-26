@@ -9,7 +9,6 @@ import halopesaLogo from '../../assets/halopesa.png';
 import selcomLogo from '../../assets/selcom.png';
 import azampesaLogo from '../../assets/azampesa.png';
 import {
-  CheckCircle,
   ChevronRight,
   Dumbbell,
   Heart,
@@ -25,7 +24,7 @@ import {
   Zap,
   Video,
 } from 'lucide-react';
-import { Badge } from '../components/ui/badge';
+import { Badge, VendorVerificationBadge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { EmptyState } from '../components/ui/empty-state';
@@ -261,9 +260,13 @@ export function Home() {
                       </div>
                       <div className="p-4 flex flex-col flex-1">
                         <div className="text-[12px] text-[var(--color-text-muted)] mb-1 flex items-center justify-between">
-                          <span className="truncate flex items-center gap-1">
-                            {product.vendor?.shop_name || 'Verified Vendor'}
-                            {product.vendor?.status === 'approved' && <CheckCircle className="w-3 h-3 text-[var(--color-primary)] inline" />}
+                          <span className="min-w-0 flex items-center gap-2">
+                            <span className="truncate font-semibold text-[var(--color-text-body)]">
+                              {product.vendor?.shop_name || 'Verified Vendor'}
+                            </span>
+                            {product.vendor?.status === 'approved' && (
+                              <VendorVerificationBadge tone="compact" label="Verified" className="shrink-0" />
+                            )}
                           </span>
                           {rating ? (
                             <span className="flex items-center gap-1 text-[var(--color-text-heading)] font-medium">
@@ -451,14 +454,14 @@ export function Home() {
                 <Card key={vendor.id} className="snap-start shrink-0 w-[260px] p-5 flex flex-col items-center text-center gap-3">
                   <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[var(--color-border)] relative">
                     <ImageWithFallback src={vendor.logo || '/natakahii-logo.png'} alt={vendor.shop_name} className="w-full h-full object-cover" />
-                    {vendor.status === 'approved' && (
-                      <div className="absolute bottom-0 right-0 bg-white rounded-full p-0.5">
-                        <CheckCircle className="w-5 h-5 text-[var(--color-primary)] fill-white" />
-                      </div>
-                    )}
                   </div>
                   <div>
                     <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">{vendor.shop_name}</h3>
+                    {vendor.status === 'approved' && (
+                      <div className="mt-2 flex justify-center">
+                        <VendorVerificationBadge tone="default" label="Verified Store" />
+                      </div>
+                    )}
                     <div className="text-[13px] text-[var(--color-text-muted)] flex items-center justify-center gap-3 mt-1">
                       <span>{vendor.featuredProductCount} featured items</span>
                       <span className="w-1 h-1 rounded-full bg-[var(--color-border)]" />

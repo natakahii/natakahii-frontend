@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { CheckCircle, Heart, Search, ShoppingCart, SlidersHorizontal, Star, X, MapPin } from 'lucide-react';
-import { Badge } from '../components/ui/badge';
+import { Heart, Search, ShoppingCart, SlidersHorizontal, Star, X, MapPin } from 'lucide-react';
+import { Badge, VendorVerificationBadge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { EmptyState } from '../components/ui/empty-state';
@@ -505,9 +505,13 @@ export function Explore() {
                         </div>
                         <div className="p-4 flex flex-col flex-1">
                           <div className="text-[12px] text-[var(--color-text-muted)] mb-1 flex items-center justify-between">
-                            <span className="truncate flex items-center gap-1">
-                              {product.vendor?.shop_name || 'Verified Vendor'}
-                              {product.vendor?.status === 'approved' && <CheckCircle className="w-3 h-3 text-[var(--color-primary)] inline" />}
+                            <span className="min-w-0 flex items-center gap-2">
+                              <span className="truncate font-semibold text-[var(--color-text-body)]">
+                                {product.vendor?.shop_name || 'Verified Vendor'}
+                              </span>
+                              {product.vendor?.status === 'approved' && (
+                                <VendorVerificationBadge tone="compact" label="Verified" className="shrink-0" />
+                              )}
                             </span>
                             {rating ? (
                               <span className="flex items-center gap-1 text-[var(--color-text-heading)] font-medium">

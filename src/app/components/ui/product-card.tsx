@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion, useAnimationControls } from "motion/react";
-import { Heart, ShoppingCart, Star, CheckCircle, MapPin } from "lucide-react";
+import { Heart, ShoppingCart, Star, MapPin } from "lucide-react";
+import { VendorVerificationBadge } from "./badge";
 import { Button } from "./button";
 import { Card } from "./card";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
@@ -104,10 +105,18 @@ export function ProductCard({ product, onAddToCart, onLikeToggle }: ProductCardP
           <div className="p-4 flex flex-col flex-1">
             <div className="text-[12px] text-[var(--color-text-muted)] mb-1 flex items-center justify-between">
               {product.vendor?.shop_name && (
-                <span className="truncate flex items-center gap-1">
-                  {product.vendor.shop_name}
-                  <CheckCircle className="w-3 h-3 text-[var(--color-primary)] inline" />
-                </span>
+                <div className="min-w-0 flex items-center gap-2">
+                  <span className="truncate font-semibold text-[var(--color-text-body)]">
+                    {product.vendor.shop_name}
+                  </span>
+                  {product.vendor.status === 'approved' && (
+                    <VendorVerificationBadge
+                      tone="compact"
+                      label="Verified"
+                      className="shrink-0"
+                    />
+                  )}
+                </div>
               )}
               {product.reviews_avg_rating != null && (
                 <span className="flex items-center gap-1 text-[var(--color-text-heading)] font-medium">

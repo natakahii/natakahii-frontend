@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { motion, useAnimationControls } from 'motion/react';
-import { Bookmark, CheckCircle, ChevronRight, Clock, Heart, Minus, Plus, Share2, Sparkles, Star } from 'lucide-react';
+import { Bookmark, ChevronRight, Clock, Heart, Minus, Plus, Share2, Sparkles, Star } from 'lucide-react';
 import { AnimatedPrice } from '../components/ui/animated-price';
-import { Badge } from '../components/ui/badge';
+import { Badge, VendorVerificationBadge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { EmptyState } from '../components/ui/empty-state';
@@ -453,8 +453,11 @@ export function ProductDetail() {
         ) : null}
         {product.vendor ? (
           <>
-            <Link to={vendorStorefrontPath} className="hover:text-[var(--color-primary)] flex items-center gap-1">
-              {product.vendor.shop_name} {product.vendor.status === 'approved' && <CheckCircle className="w-3 h-3 text-[var(--color-primary)]" />}
+            <Link to={vendorStorefrontPath} className="hover:text-[var(--color-primary)] flex items-center gap-2">
+              <span>{product.vendor.shop_name}</span>
+              {product.vendor.status === 'approved' && (
+                <VendorVerificationBadge tone="compact" label="Verified" />
+              )}
             </Link>
             <ChevronRight className="w-4 h-4" />
           </>
@@ -494,7 +497,10 @@ export function ProductDetail() {
                 <div className="w-6 h-6 rounded-full overflow-hidden">
                   <ImageWithFallback src={product.vendor.logo || '/natakahii-logo.png'} alt={product.vendor.shop_name} className="w-full h-full object-cover" />
                 </div>
-                {product.vendor.shop_name} {product.vendor.status === 'approved' && <CheckCircle className="w-4 h-4 text-[var(--color-primary)]" />}
+                <span>{product.vendor.shop_name}</span>
+                {product.vendor.status === 'approved' && (
+                  <VendorVerificationBadge tone="compact" label="Verified" />
+                )}
               </Link>
             ) : null}
 
@@ -753,9 +759,11 @@ export function ProductDetail() {
                     <ImageWithFallback src={product.vendor?.logo || '/natakahii-logo.png'} alt={product.vendor?.shop_name || 'Vendor'} className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-[20px] text-[var(--color-text-heading)] flex items-center gap-2">
+                    <h3 className="font-bold text-[20px] text-[var(--color-text-heading)] flex flex-wrap items-center gap-2">
                       {product.vendor?.shop_name || 'Verified Vendor'}
-                      {product.vendor?.status === 'approved' && <CheckCircle className="w-4 h-4 text-[var(--color-primary)]" />}
+                      {product.vendor?.status === 'approved' && (
+                        <VendorVerificationBadge tone="default" label="Verified Store" />
+                      )}
                     </h3>
                     <p className="text-[14px] text-[var(--color-text-muted)] mt-1 capitalize">{product.vendor?.status || 'active'} seller</p>
                   </div>
@@ -779,8 +787,11 @@ export function ProductDetail() {
                   <ImageWithFallback src={product.vendor?.logo || '/natakahii-logo.png'} alt={product.vendor?.shop_name || 'Vendor'} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-[18px] text-[var(--color-text-heading)] flex items-center gap-1">
-                    {product.vendor?.shop_name || 'Verified Vendor'} {product.vendor?.status === 'approved' && <CheckCircle className="w-4 h-4 text-[var(--color-primary)]" />}
+                  <h3 className="font-bold text-[18px] text-[var(--color-text-heading)] flex flex-wrap items-center gap-2">
+                    <span>{product.vendor?.shop_name || 'Verified Vendor'}</span>
+                    {product.vendor?.status === 'approved' && (
+                      <VendorVerificationBadge tone="compact" label="Verified" />
+                    )}
                   </h3>
                   <div className="text-[13px] text-[var(--color-text-muted)] font-medium mt-1">
                     {product.vendor?.status === 'approved' ? 'Approved store' : 'Active store'} • {reviewsCount} product review{reviewsCount === 1 ? '' : 's'}
