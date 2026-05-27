@@ -153,11 +153,20 @@ export function Home() {
 
   return (
     <div className="flex flex-col gap-8 lg:gap-16 pb-20">
-      <section className="relative w-full bg-gradient-to-br from-[var(--color-primary-darker)] via-[var(--color-primary)] to-[var(--color-primary-light)] overflow-hidden pt-12 pb-20 lg:py-24 px-4">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[var(--color-accent)]/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[var(--color-info)]/20 rounded-full blur-[80px] translate-y-1/3 -translate-x-1/3 pointer-events-none" />
+      <section className="relative w-full min-h-[520px] overflow-hidden px-4 py-16 sm:min-h-[580px] lg:min-h-[640px] lg:py-24">
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          src="https://cdn.natakahii.com/natakahii-hero.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(4,11,30,0.42),rgba(4,11,30,0.62))]" />
 
-        <div className="container relative z-10 mx-auto max-w-5xl text-center flex flex-col items-center">
+        <div className="container relative z-10 mx-auto flex min-h-[calc(520px-8rem)] max-w-5xl flex-col items-center justify-center text-center sm:min-h-[calc(580px-8rem)] lg:min-h-[calc(640px-12rem)]">
           <h1 className="font-snasm text-[48px] sm:text-[64px] md:text-[80px] lg:text-[96px] text-white leading-[0.95] tracking-[-2px] mb-8 drop-shadow-[0_4px_30px_rgba(0,0,0,0.3)]" style={{ color: '#FFFFFF' }}>
             nataka hii.
           </h1>
