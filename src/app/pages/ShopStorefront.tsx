@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { ChevronRight, Heart, MapPin, Search, ShoppingBag, ShoppingCart, Star, Users } from 'lucide-react';
-import { Badge, VendorTrustBadge, VendorVerificationBadge } from '../components/ui/badge';
+import { Badge, VendorVerificationBadge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { EmptyState } from '../components/ui/empty-state';
@@ -247,11 +247,10 @@ export function ShopStorefront() {
 
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-[22px] md:text-[28px] font-bold text-[var(--color-text-heading)] leading-tight">
-                {vendor.shop_name}
+              <h1 className="inline-flex items-center gap-2 text-[22px] md:text-[28px] font-bold text-[var(--color-text-heading)] leading-tight">
+                <span>{vendor.shop_name}</span>
+                {vendorTier === 'premium' && <VendorVerificationBadge tone="hero" label="Verified vendor" />}
               </h1>
-              {vendorTier === 'premium' && <VendorVerificationBadge tone="hero" label="Premium Verified" />}
-              {vendorTier === 'kyc' && <VendorTrustBadge tone="hero" label="Approved Vendor" />}
               <p className="text-[13px] text-[var(--color-text-muted)]">
                 @{vendor.shop_slug || 'store'}
               </p>

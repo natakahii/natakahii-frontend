@@ -24,7 +24,7 @@ import {
   Zap,
   Video,
 } from 'lucide-react';
-import { Badge, VendorTrustBadge, VendorVerificationBadge } from '../components/ui/badge';
+import { Badge, VendorVerificationBadge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { EmptyState } from '../components/ui/empty-state';
@@ -267,10 +267,7 @@ export function Home() {
                               {product.vendor?.shop_name || 'Verified Vendor'}
                             </span>
                             {vendorTier === 'premium' && (
-                              <VendorVerificationBadge tone="compact" label="Premium" className="shrink-0" />
-                            )}
-                            {vendorTier === 'kyc' && (
-                              <VendorTrustBadge tone="compact" label="Approved" className="shrink-0" />
+                              <VendorVerificationBadge tone="compact" label="Verified vendor" className="shrink-0" />
                             )}
                           </span>
                           {rating ? (
@@ -464,26 +461,17 @@ export function Home() {
                       <ImageWithFallback src={vendor.logo || '/natakahii-logo.png'} alt={vendor.shop_name} className="w-full h-full object-cover" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">{vendor.shop_name}</h3>
-                      {vendorTier === 'premium' && (
-                        <div className="mt-2 flex justify-center">
-                          <VendorVerificationBadge tone="default" label="Premium Verified" />
-                        </div>
-                      )}
-                      {vendorTier === 'kyc' && (
-                        <div className="mt-2 flex justify-center">
-                          <VendorTrustBadge tone="default" label="Approved Vendor" />
-                        </div>
-                      )}
+                      <h3 className="inline-flex items-center justify-center gap-1.5 font-bold text-[16px] text-[var(--color-text-heading)]">
+                        <span>{vendor.shop_name}</span>
+                        {vendorTier === 'premium' && (
+                          <VendorVerificationBadge tone="default" label="Verified vendor" />
+                        )}
+                      </h3>
                       <div className="text-[13px] text-[var(--color-text-muted)] flex items-center justify-center gap-3 mt-1">
                         <span>{vendor.featuredProductCount} featured items</span>
                         <span className="w-1 h-1 rounded-full bg-[var(--color-border)]" />
                         <span>
-                          {vendorTier === 'premium'
-                            ? 'Premium seller'
-                            : vendorTier === 'kyc'
-                              ? 'Approved vendor'
-                              : 'Active store'}
+                          {vendorTier === 'premium' ? 'Verified seller' : 'Active store'}
                         </span>
                       </div>
                     </div>

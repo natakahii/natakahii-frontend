@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { motion, useAnimationControls } from 'motion/react';
 import { Bookmark, CheckCircle, ChevronRight, Clock, Heart, Minus, Plus, Share2, Sparkles, Star } from 'lucide-react';
 import { AnimatedPrice } from '../components/ui/animated-price';
-import { Badge, VendorTrustBadge, VendorVerificationBadge } from '../components/ui/badge';
+import { Badge, VendorVerificationBadge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { EmptyState } from '../components/ui/empty-state';
@@ -457,8 +457,7 @@ export function ProductDetail() {
           <>
             <Link to={vendorStorefrontPath} className="hover:text-[var(--color-primary)] flex items-center gap-2">
               <span>{product.vendor.shop_name}</span>
-              {vendorTier === 'premium' && <VendorVerificationBadge tone="compact" label="Premium" />}
-              {vendorTier === 'kyc' && <VendorTrustBadge tone="compact" label="Approved" />}
+              {vendorTier === 'premium' && <VendorVerificationBadge tone="compact" label="Verified vendor" />}
             </Link>
             <ChevronRight className="w-4 h-4" />
           </>
@@ -499,8 +498,7 @@ export function ProductDetail() {
                   <ImageWithFallback src={product.vendor.logo || '/natakahii-logo.png'} alt={product.vendor.shop_name} className="w-full h-full object-cover" />
                 </div>
                 <span>{product.vendor.shop_name}</span>
-                {vendorTier === 'premium' && <VendorVerificationBadge tone="compact" label="Premium" />}
-                {vendorTier === 'kyc' && <VendorTrustBadge tone="compact" label="Approved" />}
+                {vendorTier === 'premium' && <VendorVerificationBadge tone="compact" label="Verified vendor" />}
               </Link>
             ) : null}
 
@@ -761,8 +759,7 @@ export function ProductDetail() {
                   <div>
                     <h3 className="font-bold text-[20px] text-[var(--color-text-heading)] flex flex-wrap items-center gap-2">
                       {product.vendor?.shop_name || 'Verified Vendor'}
-                      {vendorTier === 'premium' && <VendorVerificationBadge tone="default" label="Premium Verified" />}
-                      {vendorTier === 'kyc' && <VendorTrustBadge tone="default" label="Approved Vendor" />}
+                      {vendorTier === 'premium' && <VendorVerificationBadge tone="default" label="Verified vendor" />}
                     </h3>
                     <p className="text-[14px] text-[var(--color-text-muted)] mt-1 capitalize">{product.vendor?.status || 'active'} seller</p>
                   </div>
@@ -788,15 +785,10 @@ export function ProductDetail() {
                 <div>
                   <h3 className="font-bold text-[18px] text-[var(--color-text-heading)] flex flex-wrap items-center gap-2">
                     <span>{product.vendor?.shop_name || 'Verified Vendor'}</span>
-                    {vendorTier === 'premium' && <VendorVerificationBadge tone="compact" label="Premium" />}
-                    {vendorTier === 'kyc' && <VendorTrustBadge tone="compact" label="Approved" />}
+                    {vendorTier === 'premium' && <VendorVerificationBadge tone="compact" label="Verified vendor" />}
                   </h3>
                   <div className="text-[13px] text-[var(--color-text-muted)] font-medium mt-1">
-                    {vendorTier === 'premium'
-                      ? 'Premium verified store'
-                      : vendorTier === 'kyc'
-                        ? 'Approved vendor'
-                        : 'Active store'}{' '}
+                    {vendorTier === 'premium' ? 'Verified store' : 'Active store'}{' '}
                     • {reviewsCount} product review{reviewsCount === 1 ? '' : 's'}
                   </div>
                 </div>

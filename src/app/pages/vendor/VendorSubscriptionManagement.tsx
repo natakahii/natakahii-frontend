@@ -11,7 +11,7 @@ import { fetchVendorSubscriptionPlans, VendorSubscriptionPlanRecord } from '../.
 import { fetchVendorSubscription, updateVendorSubscriptionPlan } from '../../services/vendorSubscriptionService';
 import { formatCurrency } from '../../utils/currency';
 import { getVendorVerificationDescriptor, isPremiumVerifiedVendor } from '../../utils/vendorVerification';
-import { VendorVerificationBadge, VendorTrustBadge } from '../../components/ui/badge';
+import { VendorVerificationBadge } from '../../components/ui/badge';
 import { VendorSubscriptionPlan } from './VendorSubscriptionPlan';
 
 function formatPlanPrice(plan: Pick<AuthSubscriptionPlan, 'is_free' | 'price' | 'billing_cycle'> | Pick<VendorSubscriptionPlanRecord, 'is_free' | 'price' | 'billing_cycle'> | null | undefined) {
@@ -139,7 +139,7 @@ export function VendorSubscriptionManagement() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text-heading)]">Subscription & Verification</h1>
           <p className="text-[var(--color-text-muted)] mt-1">
-            Manage the seller plan behind your storefront benefits, catalog allowance, and premium verification badge.
+            Manage the seller plan behind your storefront benefits, catalog allowance, and verification tick.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -175,10 +175,8 @@ export function VendorSubscriptionManagement() {
                 <h2 className="text-2xl font-bold text-[var(--color-text-heading)] mt-2">{verification.headline}</h2>
                 <p className="text-sm text-[var(--color-text-muted)] mt-2 max-w-2xl">{verification.detail}</p>
               </div>
-              {isPremiumVerifiedVendor(vendor) ? (
-                <VendorVerificationBadge tone="hero" label="Premium Verified" />
-              ) : (
-                <VendorTrustBadge tone="hero" label="Approved Vendor" />
+              {isPremiumVerifiedVendor(vendor) && (
+                <VendorVerificationBadge tone="hero" label="Verified vendor" />
               )}
             </div>
 
@@ -224,8 +222,8 @@ export function VendorSubscriptionManagement() {
                     </p>
                     <p className="text-sm text-[var(--color-text-muted)] mt-2">
                       {isPremiumVerifiedVendor(vendor)
-                        ? 'Your storefront now carries the premium subscribed-vendor badge.'
-                        : 'Upgrade to a paid vendor plan to unlock the premium verification badge.'}
+                        ? 'Your storefront now carries the blue verification tick.'
+                        : 'Upgrade to a paid vendor plan to unlock the verification tick.'}
                     </p>
                   </>
                 )}
@@ -241,7 +239,7 @@ export function VendorSubscriptionManagement() {
                   <div>
                     <h3 className="font-bold text-[var(--color-text-heading)]">Upgrade for premium visibility</h3>
                     <p className="text-sm text-[var(--color-text-muted)] mt-1">
-                      Free-plan sellers keep approved-vendor status, while paid plans unlock the premium storefront badge and higher selling limits.
+                      Free-plan sellers keep approved-vendor status with no public badge, while paid plans unlock the verification tick and higher selling limits.
                     </p>
                   </div>
                 </div>
@@ -303,7 +301,7 @@ export function VendorSubscriptionManagement() {
 
                 {canUpgrade && (
                   <p className="text-xs text-[var(--color-text-muted)] text-center">
-                    Paid plans unlock the premium verification badge shoppers now see across the marketplace.
+                    Paid plans unlock the verification tick shoppers now see across the marketplace.
                   </p>
                 )}
               </>
@@ -319,7 +317,7 @@ export function VendorSubscriptionManagement() {
         isLoading={isLoading}
         error={error}
         title="Choose the plan behind your storefront"
-        description="Free plans keep your store in approved-vendor status. Paid plans unlock the premium verification badge and can raise your catalog ceiling."
+        description="Free plans keep your store in approved-vendor status without a public badge. Paid plans unlock the verification tick and can raise your catalog ceiling."
         selectedLabel="Current choice"
         unselectedLabel="Choose plan"
       />

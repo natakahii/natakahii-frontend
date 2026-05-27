@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { AlertTriangle, ArrowUpRight, DollarSign, Globe2, Package, ShoppingBag, Store, Truck } from 'lucide-react';
-import { Badge, VendorTrustBadge, VendorVerificationBadge } from '../../components/ui/badge';
+import { Badge, VendorVerificationBadge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { EmptyState } from '../../components/ui/empty-state';
@@ -188,10 +188,8 @@ export function VendorDashboardHome() {
           <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-3">
-                {isPremiumVerifiedVendor(user?.vendor) ? (
-                  <VendorVerificationBadge tone="hero" label="Premium Verified" />
-                ) : (
-                  <VendorTrustBadge tone="hero" label="Approved Vendor" />
+                {isPremiumVerifiedVendor(user?.vendor) && (
+                  <VendorVerificationBadge tone="hero" label="Verified vendor" />
                 )}
                 {hasReachedProductLimit && (
                   <Badge className="bg-[var(--color-warning-bg)] text-[var(--color-warning)] hover:bg-[var(--color-warning-bg)]">
@@ -211,7 +209,7 @@ export function VendorDashboardHome() {
               <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--color-primary)]">Plan Momentum</p>
               <p className="mt-3 text-base font-bold text-[var(--color-text-heading)]">
                 {canUpgradePlan
-                  ? 'Move to a paid plan when you want the premium badge and more catalog headroom.'
+                  ? 'Move to a paid plan when you want the verification tick and more catalog headroom.'
                   : 'Your current plan is already supporting premium storefront trust across Nataka Hii.'}
               </p>
               <p className="mt-2 text-sm text-[var(--color-text-muted)]">
@@ -240,12 +238,12 @@ export function VendorDashboardHome() {
             <div className="rounded-[20px] border border-[var(--color-border)] bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Verification</p>
               <p className="text-lg font-bold text-[var(--color-text-heading)] mt-2">
-                {isPremiumVerifiedVendor(user?.vendor) ? 'Premium Badge' : 'Approved Vendor'}
+                {isPremiumVerifiedVendor(user?.vendor) ? 'Verification Badge' : 'No badge'}
               </p>
               <p className="text-xs text-[var(--color-text-muted)] mt-1">
                 {isPremiumVerifiedVendor(user?.vendor)
-                  ? 'Shown across marketplace surfaces.'
-                  : 'Marketplace-approved without a paid badge yet.'}
+                  ? 'Shown as a blue verification tick across marketplace surfaces.'
+                  : 'KYC approval does not show a public badge.'}
               </p>
             </div>
 
@@ -269,7 +267,7 @@ export function VendorDashboardHome() {
           {canUpgradePlan && (
             <div className="rounded-[20px] border border-[var(--color-primary)]/15 bg-[linear-gradient(135deg,rgba(20,36,144,0.04),rgba(255,105,49,0.05))] p-4">
               <p className="text-sm font-semibold text-[var(--color-text-heading)]">
-                Free-plan sellers keep approved-vendor status, while paid plans unlock the premium storefront badge shoppers see across Nataka Hii.
+                Free-plan sellers keep approved-vendor status with no public badge, while paid plans unlock the storefront verification tick shoppers see across Nataka Hii.
               </p>
             </div>
           )}

@@ -51,10 +51,6 @@ export function getVendorVerificationTier(vendor: VendorVerificationLike): 'prem
     return 'premium';
   }
 
-  if (isKycVerifiedVendor(vendor)) {
-    return 'kyc';
-  }
-
   return 'none';
 }
 
@@ -68,8 +64,8 @@ export function getVendorVerificationDescriptor(vendor: VendorVerificationLike):
   if (isPremiumVerifiedVendor(vendor)) {
     return {
       tier: 'premium',
-      headline: 'Premium verified',
-      detail: `This seller is an approved vendor on the ${planName} plan and carries the premium marketplace badge.`,
+      headline: 'Verified vendor',
+      detail: `This seller is an approved vendor on the ${planName} plan and carries the marketplace verification tick.`,
     };
   }
 

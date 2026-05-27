@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion, useAnimationControls } from "motion/react";
 import { Heart, ShoppingCart, Star, MapPin } from "lucide-react";
-import { VendorTrustBadge, VendorVerificationBadge } from "./badge";
+import { VendorVerificationBadge } from "./badge";
 import { Button } from "./button";
 import { Card } from "./card";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
@@ -112,10 +112,7 @@ export function ProductCard({ product, onAddToCart, onLikeToggle }: ProductCardP
                     {product.vendor.shop_name}
                   </span>
                   {vendorVerificationTier === 'premium' && (
-                    <VendorVerificationBadge tone="compact" label="Premium" className="shrink-0" />
-                  )}
-                  {vendorVerificationTier === 'kyc' && (
-                    <VendorTrustBadge tone="compact" label="Approved" className="shrink-0" />
+                    <VendorVerificationBadge tone="compact" label="Verified vendor" className="shrink-0" />
                   )}
                 </div>
               )}

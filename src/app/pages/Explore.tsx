@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Heart, Search, ShoppingCart, SlidersHorizontal, Star, X, MapPin } from 'lucide-react';
-import { Badge, VendorTrustBadge, VendorVerificationBadge } from '../components/ui/badge';
+import { Badge, VendorVerificationBadge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { EmptyState } from '../components/ui/empty-state';
@@ -512,10 +512,7 @@ export function Explore() {
                                 {product.vendor?.shop_name || 'Verified Vendor'}
                               </span>
                               {vendorTier === 'premium' && (
-                                <VendorVerificationBadge tone="compact" label="Premium" className="shrink-0" />
-                              )}
-                              {vendorTier === 'kyc' && (
-                                <VendorTrustBadge tone="compact" label="Approved" className="shrink-0" />
+                                <VendorVerificationBadge tone="compact" label="Verified vendor" className="shrink-0" />
                               )}
                             </span>
                             {rating ? (

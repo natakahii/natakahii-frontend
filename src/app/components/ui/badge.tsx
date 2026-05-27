@@ -50,48 +50,19 @@ export function Badge({ children, variant = 'active', className }: BadgeProps) {
 }
 
 export function VendorVerificationBadge({
-  label = 'Premium Verified',
-  tone = 'default',
+  label,
   className,
 }: VendorVerificationBadgeProps) {
-  const toneClasses = {
-    compact: "gap-1.5 px-2 py-1 text-[9.5px]",
-    default: "gap-2 px-2.5 py-1.5 text-[10.5px]",
-    hero: "gap-2.5 px-3.5 py-2 text-[11px]",
-  };
-
-  const iconWrapClasses = {
-    compact: "h-4 w-4",
-    default: "h-5 w-5",
-    hero: "h-6 w-6",
-  };
-
-  const iconClasses = {
-    compact: "h-2.75 w-2.75",
-    default: "h-3.25 w-3.25",
-    hero: "h-3.5 w-3.5",
-  };
-
   return (
     <span
+      aria-label={label || 'Verified vendor'}
+      title={label || 'Verified vendor'}
       className={cn(
-        "relative inline-flex items-center overflow-hidden rounded-full border border-[rgba(20,36,144,0.12)] bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(232,235,250,0.98)_58%,rgba(254,240,235,0.94))] text-[var(--color-primary-darker)] shadow-[0_12px_28px_rgba(20,36,144,0.12)] ring-1 ring-white/80 backdrop-blur-sm",
-        toneClasses[tone],
+        "inline-flex h-[1em] w-[1em] shrink-0 align-[-0.1em] items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--color-primary),var(--color-primary-light))] text-white shadow-[0_0.18em_0.42em_rgba(20,36,144,0.22)]",
         className
       )}
     >
-      <span className="absolute inset-x-0 top-0 h-px bg-white/90" />
-      <span
-        className={cn(
-          "relative z-[1] inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--color-primary),var(--color-primary-light))] text-white shadow-[0_8px_18px_rgba(20,36,144,0.24)]",
-          iconWrapClasses[tone]
-        )}
-      >
-        <BadgeCheck className={iconClasses[tone]} strokeWidth={2.8} />
-      </span>
-      <span className="relative z-[1] font-black uppercase tracking-[0.18em] leading-none">
-        {label}
-      </span>
+      <BadgeCheck className="h-[0.68em] w-[0.68em]" strokeWidth={2.9} />
     </span>
   );
 }
