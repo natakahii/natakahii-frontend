@@ -18,8 +18,8 @@ export function Navbar() {
   const { defaultRoute, hasRole, isAuthenticated, logout, user } = useAuth();
   const { totalItems } = useCart();
 
-  const homePath = isAuthenticated ? defaultRoute : '/';
-  const profileTarget = hasRole('vendor') ? '/vendor/dashboard' : '/profile';
+  const homePath = isAuthenticated ? '/customer' : '/';
+  const profileTarget = '/profile';
   const displayName = user?.name || 'Your account';
   const profilePhoto = user?.profile_photo || undefined;
 
@@ -184,7 +184,7 @@ export function Navbar() {
                     <div>
                       <div className="font-bold text-[var(--color-text-heading)] text-[16px]">{displayName}</div>
                       <Link to={profileTarget} onClick={() => setIsMobileMenuOpen(false)} className="text-[13px] text-[var(--color-primary)] font-bold hover:underline">
-                        {hasRole('vendor') ? 'Open Dashboard' : 'View Profile'}
+                        View Profile
                       </Link>
                     </div>
                   </div>
