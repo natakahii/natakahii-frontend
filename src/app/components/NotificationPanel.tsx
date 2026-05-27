@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bell, X, CheckCircle2, Box, MessageSquare, AlertCircle, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 import { EmptyState } from "./ui/empty-state";
+import { Skeleton } from "./ui/skeleton";
+import { fetchNotifications } from "../services/notificationService";
 
 interface NotificationItem {
-  id: number;
+  id: string;
   type: string;
   title: string;
   desc: string;
@@ -22,14 +24,88 @@ interface NotificationPanelProps {
 
 const initialNotifications: NotificationItem[] = [];
 
+function groupNotification(createdAt?: string): string {
+  if (!createdAt) {
+    return "older";
+  }
+
+  const created = new Date(createdAt);
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startOfYesterday = startOfToday - 24 * 60 * 60 * 1000;
+  const timestamp = created.getTime();
+
+  if (timestamp >= startOfToday) {
+    return "today";
+  }
+
+  if (timestamp >= startOfYesterday) {
+    return "yesterday";
+  }
+
+  return "older";
+}
+
+function formatNotificationTime(createdAt?: string): string {
+  if (!createdAt) {
+    return "Recently";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(createdAt));
+}
+
 export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   const [notifications, setNotifications] = useState(initialNotifications);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoading(true);
+
+    fetchNotifications()
+      .then((response) => {
+        if (!isMounted) return;
+
+        setNotifications(response.notifications.map((notification) => ({
+          id: notification.id,
+          type: notification.type,
+          title: notification.title,
+          desc: notification.message,
+          time: formatNotificationTime(notification.created_at),
+          unread: !notification.read_at,
+          group: groupNotification(notification.created_at),
+        })));
+      })
+      .catch(() => {
+        if (isMounted) {
+          setNotifications([]);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
 
   const handleMarkAllRead = () => {
     setNotifications(notifications.map(n => ({ ...n, unread: false })));
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     setNotifications(notifications.filter(n => n.id !== id));
   };
 
@@ -39,6 +115,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
       case "message": return <MessageSquare className="w-5 h-5 text-[#F05A28]" />;
       case "alert": return <AlertCircle className="w-5 h-5 text-[#D97706]" />;
       case "success": return <CheckCircle2 className="w-5 h-5 text-[#16A34A]" />;
+      case "vendor_product_published": return <Box className="w-5 h-5 text-[#142490]" />;
       default: return <Bell className="w-5 h-5 text-[#9BA5BC]" />;
     }
   };
@@ -88,7 +165,13 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-white hide-scrollbar">
-              {notifications.length === 0 ? (
+              {isLoading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <Skeleton key={index} className="h-24 rounded-[16px]" />
+                  ))}
+                </div>
+              ) : notifications.length === 0 ? (
                 <EmptyState 
                   variant="notifications" 
                   title="You're all caught up!" 

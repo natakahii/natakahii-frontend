@@ -57,6 +57,8 @@ export interface CatalogVendor {
   product_limit?: number | null;
   products_count?: number;
   followers_count?: number;
+  is_following?: boolean;
+  can_follow?: boolean;
   // Location fields from VendorApplication
   street?: string | null;
   region?: string | null;
@@ -240,6 +242,8 @@ export function normalizeVendor(vendor: any): CatalogVendor | undefined {
     product_limit: vendor.product_limit == null ? null : toNumber(vendor.product_limit),
     products_count: vendor.products_count == null ? undefined : toNumber(vendor.products_count),
     followers_count: vendor.followers_count == null ? undefined : toNumber(vendor.followers_count),
+    is_following: Boolean(vendor.is_following),
+    can_follow: vendor.can_follow == null ? undefined : Boolean(vendor.can_follow),
     // Location fields
     street: vendor.street || null,
     region: vendor.region || null,

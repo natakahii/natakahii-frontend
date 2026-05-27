@@ -155,8 +155,8 @@ export async function checkFollowingStatus(vendorIds: number[]): Promise<Record<
   }
 
   try {
-    const response = await apiClient.get<{ vendors: Array<{ id: number }> }>('/me/following/vendors?per_page=1000');
-    const followingIds = new Set(response?.vendors?.map((v) => v.id) || []);
+    const response = await apiClient.get<{ vendors: Array<{ id: number }> | { data?: Array<{ id: number }> } }>('/me/following/vendors?per_page=1000');
+    const followingIds = new Set(extractResourceArray<{ id: number }>(response?.vendors).map((v) => toNumber(v.id)));
 
     return vendorIds.reduce((acc, id) => {
       acc[id] = followingIds.has(id);

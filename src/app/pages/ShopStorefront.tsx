@@ -14,6 +14,8 @@ import { getProductPath } from '../utils/products';
 import { getVendorVerificationTier } from '../utils/vendorVerification';
 import { useCart } from '../providers/CartProvider';
 import { useToast } from '../components/ui/toast';
+import { useAuth } from '../providers/AuthProvider';
+import { checkFollowingStatus, followVendor, unfollowVendor } from '../services/videoFeedService';
 
 export function ShopStorefront() {
   const { shopSlug } = useParams();
@@ -28,7 +30,11 @@ export function ShopStorefront() {
   const [notFound, setNotFound] = useState(false);
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { isAuthenticated, user } = useAuth();
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
   const previousFilterKey = useRef('');
 
   const currentPage = Math.max(1, Number(searchParams.get('page') || '1') || 1);
@@ -83,6 +89,8 @@ export function ShopStorefront() {
         }
 
         setVendor(response.vendor);
+        setIsFollowing(Boolean(response.vendor.is_following));
+        setFollowersCount(response.vendor.followers_count ?? 0);
         setCategories(response.categories);
         setMeta(response.meta);
         setProducts((previousProducts) => {
@@ -139,10 +147,29 @@ export function ShopStorefront() {
   ].filter((filter): filter is { key: string; label: string } => Boolean(filter));
 
   const storefrontLabel = vendor?.shop_slug ? `natakahii.com/shop/${vendor.shop_slug}` : null;
-  const totalFollowers = vendor?.followers_count ?? 0;
+  useEffect(() => {
+    if (!isAuthenticated || !vendor?.id || user?.vendor?.id === vendor.id) {
+      return;
+    }
+
+    let isMounted = true;
+
+    checkFollowingStatus([vendor.id]).then((status) => {
+      if (isMounted) {
+        setIsFollowing(Boolean(status[vendor.id]));
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, user?.vendor?.id, vendor?.id]);
+
+  const totalFollowers = followersCount;
   const totalProducts = vendor?.products_count ?? meta.total;
   const vendorTier = getVendorVerificationTier(vendor);
   const hasFilters = Boolean(categoryParam || searchParam);
+  const isOwnStore = Boolean(user?.vendor?.id && vendor?.id && user.vendor.id === vendor.id);
 
   const updateParams = (updates: Record<string, string | null | undefined>, resetPage = true) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -174,6 +201,60 @@ export function ShopStorefront() {
 
   const handleLoadMore = () => {
     updateParams({ page: String(meta.current_page + 1) }, false);
+  };
+
+  const handleFollowToggle = async () => {
+    if (!vendor || isFollowLoading) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      toast({
+        type: 'info',
+        title: 'Sign in to follow stores',
+        message: 'Create or log into your account to get new product notifications from this vendor.',
+      });
+      return;
+    }
+
+    if (isOwnStore) {
+      toast({
+        type: 'info',
+        title: 'This is your store',
+        message: 'Vendors cannot follow their own storefront.',
+      });
+      return;
+    }
+
+    const nextFollowing = !isFollowing;
+    setIsFollowing(nextFollowing);
+    setFollowersCount((current) => nextFollowing ? current + 1 : Math.max(0, current - 1));
+    setIsFollowLoading(true);
+
+    try {
+      const response = nextFollowing
+        ? await followVendor(vendor.id)
+        : await unfollowVendor(vendor.id);
+
+      setFollowersCount(response.followers_count);
+      toast({
+        type: 'success',
+        title: nextFollowing ? 'Following vendor' : 'Vendor unfollowed',
+        message: nextFollowing
+          ? `You'll get notifications when ${vendor.shop_name} publishes new products.`
+          : `You will no longer receive new product notifications from ${vendor.shop_name}.`,
+      });
+    } catch (followError: any) {
+      setIsFollowing(!nextFollowing);
+      setFollowersCount((current) => nextFollowing ? Math.max(0, current - 1) : current + 1);
+      toast({
+        type: 'error',
+        title: 'Unable to update follow',
+        message: followError?.message || 'Please try again in a moment.',
+      });
+    } finally {
+      setIsFollowLoading(false);
+    }
   };
 
   if (isLoading && !vendor) {
@@ -278,6 +359,21 @@ export function ShopStorefront() {
                 <span className="text-[var(--color-text-heading)] font-semibold">{totalFollowers.toLocaleString()}</span>
                 <span>follower{totalFollowers === 1 ? '' : 's'}</span>
               </span>
+            </div>
+
+            <div className="mt-5">
+              <Button
+                type="button"
+                variant={isFollowing ? 'secondary' : 'primary'}
+                size="s"
+                onClick={handleFollowToggle}
+                isLoading={isFollowLoading}
+                disabled={isOwnStore}
+                className="gap-2"
+              >
+                <Heart className={`w-4 h-4 ${isFollowing ? 'fill-[var(--color-primary)]' : ''}`} />
+                {isOwnStore ? 'Your store' : isFollowing ? 'Following' : 'Follow Vendor'}
+              </Button>
             </div>
           </div>
         </div>

@@ -23,7 +23,7 @@ import {
   getProductPrimaryImage,
   toggleWishlist,
 } from '../services/productService';
-import { likeProduct, unlikeProduct, shareProduct } from '../services/videoFeedService';
+import { checkFollowingStatus, followVendor, likeProduct, shareProduct, unfollowVendor, unlikeProduct } from '../services/videoFeedService';
 import { formatCurrency } from '../utils/currency';
 import { getProductPath } from '../utils/products';
 import { getVendorVerificationTier } from '../utils/vendorVerification';
@@ -68,10 +68,12 @@ export function ProductDetail() {
   const [isWishlistLoading, setIsWishlistLoading] = useState(false);
   const [sharesCount, setSharesCount] = useState(0);
   const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
+  const [isFollowingVendor, setIsFollowingVendor] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<CatalogProduct[]>([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const heartControls = useAnimationControls();
 
   useEffect(() => {
@@ -106,6 +108,7 @@ export function ProductDetail() {
         setLikesCount(response.product.likes_count || 0);
         setIsWishlisted(response.product.is_wishlisted || false);
         setSharesCount(response.product.shares_count || 0);
+        setIsFollowingVendor(Boolean(response.product.vendor?.is_following));
 
         const initialSelections: Record<string, string> = {};
         const firstVariant = response.product.variants[0];
@@ -272,6 +275,7 @@ export function ProductDetail() {
   const reviewsCount = product?.reviews_count || recentReviews.length;
   const vendorStorefrontPath = getVendorStorefrontPath(product?.vendor);
   const vendorTier = getVendorVerificationTier(product?.vendor);
+  const isOwnVendor = Boolean(user?.vendor?.id && product?.vendor?.id && user.vendor.id === product.vendor.id);
 
   const { addToCart: addToCartContext } = useCart();
 
@@ -295,12 +299,70 @@ export function ProductDetail() {
     }
   };
 
-  const handleCatalogOnlyAction = () => {
-    toast({
-      type: 'info',
-      title: 'Feature Coming Soon',
-      message: 'This feature will be available in the next update.'
+  useEffect(() => {
+    const vendorId = product?.vendor?.id;
+
+    if (!isAuthenticated || !vendorId || isOwnVendor) {
+      return;
+    }
+
+    let isMounted = true;
+
+    checkFollowingStatus([vendorId]).then((status) => {
+      if (isMounted) {
+        setIsFollowingVendor(Boolean(status[vendorId]));
+      }
     });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, isOwnVendor, product?.vendor?.id]);
+
+  const handleFollowVendor = async () => {
+    const vendor = product?.vendor;
+
+    if (!vendor || isFollowLoading) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: { pathname: window.location.pathname } } });
+      return;
+    }
+
+    if (isOwnVendor) {
+      toast({
+        type: 'info',
+        title: 'This is your store',
+        message: 'Vendors cannot follow their own storefront.',
+      });
+      return;
+    }
+
+    const nextFollowing = !isFollowingVendor;
+    setIsFollowingVendor(nextFollowing);
+    setIsFollowLoading(true);
+
+    try {
+      await (nextFollowing ? followVendor(vendor.id) : unfollowVendor(vendor.id));
+      toast({
+        type: 'success',
+        title: nextFollowing ? 'Following vendor' : 'Vendor unfollowed',
+        message: nextFollowing
+          ? `You'll get notifications when ${vendor.shop_name} publishes new products.`
+          : `You will no longer receive new product notifications from ${vendor.shop_name}.`,
+      });
+    } catch (followError: any) {
+      setIsFollowingVendor(!nextFollowing);
+      toast({
+        type: 'error',
+        title: 'Unable to update follow',
+        message: followError?.message || 'Please try again in a moment.',
+      });
+    } finally {
+      setIsFollowLoading(false);
+    }
   };
 
   const handleLike = async () => {
@@ -794,13 +856,21 @@ export function ProductDetail() {
                 </div>
               </div>
               <div className="flex gap-2 mt-6">
-                <Button variant="primary" className="flex-1" onClick={handleCatalogOnlyAction}>Follow Vendor</Button>
+                <Button
+                  variant={isFollowingVendor ? 'secondary' : 'primary'}
+                  className="flex-1"
+                  onClick={handleFollowVendor}
+                  isLoading={isFollowLoading}
+                  disabled={isOwnVendor}
+                >
+                  {isOwnVendor ? 'Your Store' : isFollowingVendor ? 'Following' : 'Follow Vendor'}
+                </Button>
                 {product.vendor?.id ? (
                   <Link to={vendorStorefrontPath} className="flex-1">
                     <Button variant="secondary" className="w-full">Visit Store</Button>
                   </Link>
                 ) : (
-                  <Button variant="secondary" className="flex-1" onClick={handleCatalogOnlyAction}>Visit Store</Button>
+                  <Button variant="secondary" className="flex-1" disabled>Visit Store</Button>
                 )}
               </div>
             </Card>
