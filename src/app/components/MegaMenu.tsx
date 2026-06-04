@@ -113,7 +113,7 @@ export function MegaMenu() {
             <button
               type="button"
               onMouseEnter={openCategories}
-              onClick={() => setIsCategoriesOpen((open) => !open)}
+              onClick={openCategories}
               aria-expanded={isCategoriesOpen}
               className={cn(
                 'flex items-center gap-2 px-3 py-2 text-[14px] font-semibold transition-colors whitespace-nowrap border-b-2',
@@ -146,7 +146,7 @@ export function MegaMenu() {
             <div className="relative" onMouseEnter={openAppMenu}>
               <button
                 type="button"
-                onClick={() => setIsAppMenuOpen((open) => !open)}
+                onClick={openAppMenu}
                 aria-expanded={isAppMenuOpen}
                 className={cn(linkClass, 'flex items-center gap-1')}
               >
