@@ -4,6 +4,7 @@ import { Bell, Heart, Menu, Search, ShoppingCart, User, X } from 'lucide-react';
 import { Button, cn } from './ui/button';
 import { SearchInput } from './ui/input';
 import { NotificationPanel } from './NotificationPanel';
+import { MegaMenu } from './MegaMenu';
 import { useAuth } from '../providers/AuthProvider';
 import { useCart } from '../providers/CartProvider';
 import headerLogo from '../../assets/Nataka Hii Header.png';
@@ -155,6 +156,9 @@ export function Navbar() {
         </div>
       </div>
 
+      {/* Desktop mega dropdown category bar */}
+      <MegaMenu />
+
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-[100] bg-[var(--color-text-max)]/50 backdrop-blur-sm lg:hidden">
           <div className="absolute right-0 top-0 bottom-0 w-[80%] max-w-sm bg-white shadow-[var(--shadow-level-3)] p-6 flex flex-col">
@@ -166,6 +170,15 @@ export function Navbar() {
             </div>
 
             <div className="flex-1 overflow-y-auto">
+              {/* Mega menu links (mobile) */}
+              <nav className="mb-6 space-y-1 border-b border-[var(--color-border)] pb-4">
+                <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className="block text-[15px] font-medium text-[var(--color-text-body)] py-2">All Categories</Link>
+                <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className="block text-[15px] font-medium text-[var(--color-text-body)] py-2">Top Verified Seller/Vendor</Link>
+                <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className="block text-[15px] font-medium text-[var(--color-text-body)] py-2">Find near products</Link>
+                <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className="block text-[15px] font-medium text-[var(--color-text-body)] py-2">Resource Center</Link>
+                <span className="flex items-center justify-between text-[15px] font-medium text-[var(--color-text-body)] py-2">App &amp; extension <span className="text-[13px] text-[var(--color-text-muted)]">Coming soon...</span></span>
+                <Link to="/vendor/apply" onClick={() => setIsMobileMenuOpen(false)} className="block text-[15px] font-semibold text-[var(--color-accent)] py-2">Sell on natakahii</Link>
+              </nav>
               {!isAuthenticated ? (
                 <div className="space-y-4">
                   <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}><Button variant="primary" className="w-full justify-center">Sign Up</Button></Link>
