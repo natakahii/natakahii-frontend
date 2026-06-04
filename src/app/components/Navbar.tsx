@@ -83,7 +83,15 @@ export function Navbar() {
         <div className="hidden lg:flex items-center gap-4 flex-shrink-0">
           {!isAuthenticated ? (
             <>
-              <Link to="/login"><Button variant="ghost" className="font-semibold text-[14px]">Login</Button></Link>
+              <Link to="/cart" className="relative p-2 text-[var(--color-text-body)] hover:text-[var(--color-primary)] transition-colors">
+                <ShoppingCart className="w-5 h-5" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-accent)] text-[11px] font-bold text-white">
+                    {totalItems > 99 ? '99+' : totalItems}
+                  </span>
+                )}
+              </Link>
+              <Link to="/login"><Button variant="ghost" className="font-semibold text-[14px]"><User className="w-4 h-4 mr-1.5" />Login</Button></Link>
               <Link to="/register"><Button variant="primary" className="font-semibold text-[14px]">Sign Up</Button></Link>
             </>
           ) : (

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import {
   ChevronDown,
+  MapPin,
   Menu,
   Star,
   Smartphone,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from './ui/button';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ResourceCenterDropdown } from './ResourceCenterDropdown';
 import {
   fetchCategories,
   fetchProducts,
@@ -23,10 +25,12 @@ import {
   CatalogCategory,
   CatalogProduct,
 } from '../services/productService';
+import { getRegions } from '../data/tanzaniaLocations';
 import { formatCurrency } from '../utils/currency';
 import { getProductPath } from '../utils/products';
 
-const PRODUCTS_PER_CATEGORY = 8;
+const PRODUCTS_PER_CATEGORY = 16;
+const ALL_REGION = 'All';
 
 const CATEGORY_ICON_MAP: { pattern: RegExp; icon: LucideIcon }[] = [
   { pattern: /fashion|apparel|clothing|dress|shoe/, icon: Shirt },
@@ -44,16 +48,26 @@ function getCategoryIcon(category: CatalogCategory): LucideIcon {
 
 const FEATURED = 'featured' as const;
 type ActiveKey = number | typeof FEATURED;
+type ActiveDropdown = 'categories' | 'findNear' | 'resourceCenter' | 'appMenu' | null;
+
+const TANZANIA_REGIONS = [ALL_REGION, ...getRegions()];
 
 export function MegaMenu() {
   const [categories, setCategories] = useState<CatalogCategory[]>([]);
-  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
-  const [isAppMenuOpen, setIsAppMenuOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<ActiveDropdown>(null);
   const [activeKey, setActiveKey] = useState<ActiveKey>(FEATURED);
   const [productsByCategory, setProductsByCategory] = useState<Record<number, CatalogProduct[]>>({});
+  const [featuredProducts, setFeaturedProducts] = useState<CatalogProduct[]>([]);
+  const [featuredLoading, setFeaturedLoading] = useState(false);
   const [loadingCategory, setLoadingCategory] = useState<number | null>(null);
+  const [activeRegion, setActiveRegion] = useState(ALL_REGION);
+  const [regionProducts, setRegionProducts] = useState<CatalogProduct[]>([]);
+  const [regionLoading, setRegionLoading] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestedCategories = useRef<Set<number>>(new Set());
+  const featuredRequested = useRef(false);
+  const regionRequested = useRef<Set<string>>(new Set());
+  const regionProductsCache = useRef<Record<string, CatalogProduct[]>>({});
 
   useEffect(() => {
     let isMounted = true;
@@ -61,14 +75,34 @@ export function MegaMenu() {
       .then((data) => {
         if (isMounted) setCategories(data);
       })
-      .catch(() => {
-        /* keep menu functional even if categories fail to load */
-      });
+      .catch(() => {});
     return () => {
       isMounted = false;
     };
   }, []);
 
+  // Fetch featured/mixed products for "Categories for you"
+  useEffect(() => {
+    if (activeKey !== FEATURED || featuredRequested.current) return;
+    featuredRequested.current = true;
+    let isMounted = true;
+    setFeaturedLoading(true);
+    fetchProducts({ per_page: PRODUCTS_PER_CATEGORY })
+      .then((response) => {
+        if (isMounted) setFeaturedProducts(response.products);
+      })
+      .catch(() => {
+        featuredRequested.current = false;
+      })
+      .finally(() => {
+        if (isMounted) setFeaturedLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [activeKey]);
+
+  // Fetch products per category
   useEffect(() => {
     if (activeKey === FEATURED) return;
     const categoryId = activeKey;
@@ -95,6 +129,57 @@ export function MegaMenu() {
     };
   }, [activeKey]);
 
+  // Fetch products for active region
+  useEffect(() => {
+    if (activeDropdown !== 'findNear') return;
+
+    const region = activeRegion;
+
+    // Check cache
+    if (regionProductsCache.current[region]) {
+      setRegionProducts(regionProductsCache.current[region]);
+      return;
+    }
+
+    if (regionRequested.current.has(region)) return;
+    regionRequested.current.add(region);
+
+    let isMounted = true;
+    setRegionLoading(true);
+
+    const params = region === ALL_REGION
+      ? { per_page: PRODUCTS_PER_CATEGORY }
+      : { per_page: PRODUCTS_PER_CATEGORY, region };
+
+    fetchProducts(params)
+      .then((response) => {
+        if (isMounted) {
+          // If API doesn't filter by region, filter client-side
+          let filtered = response.products;
+          if (region !== ALL_REGION && filtered.length > 0) {
+            const regionFiltered = filtered.filter(
+              (product) => product.vendor?.region?.toLowerCase() === region.toLowerCase()
+            );
+            if (regionFiltered.length > 0) {
+              filtered = regionFiltered;
+            }
+          }
+          regionProductsCache.current[region] = filtered;
+          setRegionProducts(filtered);
+        }
+      })
+      .catch(() => {
+        regionRequested.current.delete(region);
+      })
+      .finally(() => {
+        if (isMounted) setRegionLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeDropdown, activeRegion]);
+
   const cancelClose = () => {
     if (closeTimer.current) {
       clearTimeout(closeTimer.current);
@@ -105,27 +190,18 @@ export function MegaMenu() {
   const closeAll = () => {
     cancelClose();
     closeTimer.current = setTimeout(() => {
-      setIsCategoriesOpen(false);
-      setIsAppMenuOpen(false);
+      setActiveDropdown(null);
     }, 120);
   };
 
-  const openCategories = () => {
+  const openDropdown = (dropdown: ActiveDropdown) => {
     cancelClose();
-    setIsAppMenuOpen(false);
-    setIsCategoriesOpen(true);
-  };
-
-  const openAppMenu = () => {
-    cancelClose();
-    setIsCategoriesOpen(false);
-    setIsAppMenuOpen(true);
+    setActiveDropdown(dropdown);
   };
 
   const closeNonCategory = () => {
     cancelClose();
-    setIsCategoriesOpen(false);
-    setIsAppMenuOpen(false);
+    setActiveDropdown(null);
   };
 
   const activeCategory =
@@ -139,6 +215,45 @@ export function MegaMenu() {
   const linkClass =
     'px-3 py-2 text-[14px] font-medium text-[var(--color-text-body)] hover:text-[var(--color-primary)] transition-colors whitespace-nowrap';
 
+  function renderProductGrid(products: CatalogProduct[]) {
+    return (
+      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3">
+        {products.map((product) => (
+          <Link
+            key={product.id}
+            to={getProductPath(product)}
+            onClick={() => setActiveDropdown(null)}
+            className="group flex flex-col gap-1"
+          >
+            <div className="aspect-square overflow-hidden rounded-[8px] border border-[var(--color-border)] bg-[var(--color-bg-page)]">
+              <ImageWithFallback
+                src={getProductPrimaryImage(product)}
+                alt={product.name}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+            <span className="text-[12px] font-semibold text-[var(--color-text-heading)]">
+              {formatCurrency(getProductPrice(product))}
+            </span>
+          </Link>
+        ))}
+      </div>
+    );
+  }
+
+  function renderLoadingGrid() {
+    return (
+      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3">
+        {Array.from({ length: PRODUCTS_PER_CATEGORY }).map((_, index) => (
+          <div key={index} className="flex flex-col gap-1">
+            <div className="aspect-square rounded-[8px] bg-[var(--color-bg-page)] animate-pulse" />
+            <div className="h-3 w-2/3 rounded-full bg-[var(--color-bg-page)] animate-pulse" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div
       className="hidden lg:block w-full bg-white border-b border-[var(--color-border)] relative z-40"
@@ -150,12 +265,12 @@ export function MegaMenu() {
           <div className="flex items-center">
             <button
               type="button"
-              onMouseEnter={openCategories}
-              onClick={openCategories}
-              aria-expanded={isCategoriesOpen}
+              onMouseEnter={() => openDropdown('categories')}
+              onClick={() => openDropdown('categories')}
+              aria-expanded={activeDropdown === 'categories'}
               className={cn(
                 'flex items-center gap-2 px-3 py-2 text-[14px] font-semibold transition-colors whitespace-nowrap border-b-2',
-                isCategoriesOpen
+                activeDropdown === 'categories'
                   ? 'text-[var(--color-primary)] border-[var(--color-primary)]'
                   : 'text-[var(--color-text-heading)] border-transparent hover:text-[var(--color-primary)]',
               )}
@@ -163,37 +278,65 @@ export function MegaMenu() {
               <Menu className="w-4 h-4" />
               All Categories
               <ChevronDown
-                className={cn('w-4 h-4 transition-transform', isCategoriesOpen && 'rotate-180')}
+                className={cn('w-4 h-4 transition-transform', activeDropdown === 'categories' && 'rotate-180')}
               />
             </button>
 
             <Link to="/explore" className={linkClass} onMouseEnter={closeNonCategory}>
               Top Verified Seller/Vendor
             </Link>
-            <Link to="/explore" className={linkClass} onMouseEnter={closeNonCategory}>
+            <button
+              type="button"
+              onMouseEnter={() => openDropdown('findNear')}
+              onClick={() => openDropdown('findNear')}
+              className={cn(
+                linkClass,
+                'flex items-center gap-1 border-b-2',
+                activeDropdown === 'findNear'
+                  ? 'text-[var(--color-primary)] border-[var(--color-primary)]'
+                  : 'border-transparent',
+              )}
+            >
               Find near products
-            </Link>
+              <ChevronDown
+                className={cn('w-4 h-4 transition-transform', activeDropdown === 'findNear' && 'rotate-180')}
+              />
+            </button>
           </div>
 
           {/* Right group */}
           <div className="flex items-center">
-            <Link to="/explore" className={linkClass} onMouseEnter={closeNonCategory}>
+            <button
+              type="button"
+              onMouseEnter={() => openDropdown('resourceCenter')}
+              onClick={() => openDropdown('resourceCenter')}
+              className={cn(
+                linkClass,
+                'flex items-center gap-1 border-b-2',
+                activeDropdown === 'resourceCenter'
+                  ? 'text-[var(--color-primary)] border-[var(--color-primary)]'
+                  : 'border-transparent',
+              )}
+            >
               Resource Center
-            </Link>
+              <ChevronDown
+                className={cn('w-4 h-4 transition-transform', activeDropdown === 'resourceCenter' && 'rotate-180')}
+              />
+            </button>
 
-            <div className="relative" onMouseEnter={openAppMenu}>
+            <div className="relative" onMouseEnter={() => openDropdown('appMenu')}>
               <button
                 type="button"
-                onClick={openAppMenu}
-                aria-expanded={isAppMenuOpen}
+                onClick={() => openDropdown('appMenu')}
+                aria-expanded={activeDropdown === 'appMenu'}
                 className={cn(linkClass, 'flex items-center gap-1')}
               >
                 App &amp; extension
                 <ChevronDown
-                  className={cn('w-4 h-4 transition-transform', isAppMenuOpen && 'rotate-180')}
+                  className={cn('w-4 h-4 transition-transform', activeDropdown === 'appMenu' && 'rotate-180')}
                 />
               </button>
-              {isAppMenuOpen && (
+              {activeDropdown === 'appMenu' && (
                 <div className="absolute right-0 top-full mt-1 w-56 rounded-[12px] border border-[var(--color-border)] bg-white shadow-[var(--shadow-level-2)] p-4">
                   <p className="text-[14px] font-medium text-[var(--color-text-muted)]">
                     Coming soon...
@@ -213,18 +356,18 @@ export function MegaMenu() {
         </nav>
       </div>
 
-      {/* Mega dropdown panel */}
-      {isCategoriesOpen && (
+      {/* ─── All Categories Dropdown ─── */}
+      {activeDropdown === 'categories' && (
         <div className="absolute left-0 right-0 top-full" onMouseEnter={cancelClose}>
-          <div className="container mx-auto px-4">
+          <div className="w-full px-4">
             <div className="flex bg-white rounded-b-[16px] border border-t-0 border-[var(--color-border)] shadow-[var(--shadow-level-3)] overflow-hidden max-h-[70vh]">
               {/* Sidebar */}
-              <div className="w-[280px] shrink-0 border-r border-[var(--color-border)] py-3 overflow-y-auto">
+              <div className="w-[220px] shrink-0 border-r border-[var(--color-border)] py-3 overflow-y-auto">
                 <button
                   type="button"
                   onMouseEnter={() => setActiveKey(FEATURED)}
                   className={cn(
-                    'flex items-center gap-3 w-full text-left px-6 py-3 text-[14px] font-medium transition-colors',
+                    'flex items-center gap-3 w-full text-left px-5 py-2.5 text-[13px] font-medium transition-colors',
                     activeKey === FEATURED
                       ? 'bg-[var(--color-primary-bg)] text-[var(--color-primary)]'
                       : 'text-[var(--color-text-body)] hover:bg-[var(--color-bg-page)]',
@@ -243,7 +386,7 @@ export function MegaMenu() {
                       type="button"
                       onMouseEnter={() => setActiveKey(category.id)}
                       className={cn(
-                        'flex items-center gap-3 w-full text-left px-6 py-3 text-[14px] font-medium transition-colors',
+                        'flex items-center gap-3 w-full text-left px-5 py-2.5 text-[13px] font-medium transition-colors',
                         isActive
                           ? 'bg-[var(--color-primary-bg)] text-[var(--color-primary)]'
                           : 'text-[var(--color-text-body)] hover:bg-[var(--color-bg-page)]',
@@ -257,15 +400,15 @@ export function MegaMenu() {
               </div>
 
               {/* Grid */}
-              <div className="flex-1 p-6 overflow-y-auto">
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-[18px] font-bold text-[var(--color-text-heading)]">
+              <div className="flex-1 p-5 overflow-y-auto">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[16px] font-bold text-[var(--color-text-heading)]">
                     {panelTitle}
                   </h3>
                   {activeCategory && (
                     <Link
                       to={`/explore?category=${activeCategory.id}`}
-                      onClick={() => setIsCategoriesOpen(false)}
+                      onClick={() => setActiveDropdown(null)}
                       className="text-[13px] font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)] whitespace-nowrap"
                     >
                       View all
@@ -274,84 +417,109 @@ export function MegaMenu() {
                 </div>
 
                 {activeCategory == null ? (
-                  /* Default: category tiles */
-                  categories.length === 0 ? (
-                    <p className="text-[14px] text-[var(--color-text-muted)]">
-                      Categories will appear here soon.
-                    </p>
+                  /* Default: mixed products from all categories */
+                  featuredLoading || featuredProducts.length === 0 ? (
+                    featuredLoading ? renderLoadingGrid() : (
+                      <p className="text-[14px] text-[var(--color-text-muted)]">
+                        Products will appear here soon.
+                      </p>
+                    )
                   ) : (
-                    <div className="grid grid-cols-4 xl:grid-cols-6 gap-x-4 gap-y-6">
-                      {categories.map((item) => {
-                        const Icon = getCategoryIcon(item);
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onMouseEnter={() => setActiveKey(item.id)}
-                            onClick={() => setActiveKey(item.id)}
-                            className="group flex flex-col items-center gap-2 text-center"
-                          >
-                            <div className="w-16 h-16 rounded-full bg-[var(--color-bg-page)] border border-[var(--color-border)] flex items-center justify-center group-hover:border-[var(--color-primary)] group-hover:bg-[var(--color-primary-bg)] transition-colors">
-                              <Icon className="w-7 h-7 text-[var(--color-text-body)] group-hover:text-[var(--color-primary)] transition-colors" />
-                            </div>
-                            <span className="text-[13px] text-[var(--color-text-body)] group-hover:text-[var(--color-primary)] transition-colors line-clamp-2">
-                              {item.name}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    renderProductGrid(featuredProducts)
                   )
                 ) : isLoadingProducts || activeProducts === undefined ? (
-                  /* Loading skeletons */
-                  <div className="grid grid-cols-3 xl:grid-cols-4 gap-4">
-                    {Array.from({ length: PRODUCTS_PER_CATEGORY }).map((_, index) => (
-                      <div key={index} className="flex flex-col gap-2">
-                        <div className="aspect-square rounded-[12px] bg-[var(--color-bg-page)] animate-pulse" />
-                        <div className="h-3 w-3/4 rounded-full bg-[var(--color-bg-page)] animate-pulse" />
-                        <div className="h-3 w-1/2 rounded-full bg-[var(--color-bg-page)] animate-pulse" />
-                      </div>
-                    ))}
-                  </div>
+                  renderLoadingGrid()
                 ) : activeProducts.length === 0 ? (
                   <p className="text-[14px] text-[var(--color-text-muted)]">
                     No products in {activeCategory.name} yet.{' '}
                     <Link
                       to={`/explore?category=${activeCategory.id}`}
-                      onClick={() => setIsCategoriesOpen(false)}
+                      onClick={() => setActiveDropdown(null)}
                       className="font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)]"
                     >
                       Browse the category
                     </Link>
                   </p>
                 ) : (
-                  /* Product images for the active category */
-                  <div className="grid grid-cols-3 xl:grid-cols-4 gap-4">
-                    {activeProducts.map((product) => (
-                      <Link
-                        key={product.id}
-                        to={getProductPath(product)}
-                        onClick={() => setIsCategoriesOpen(false)}
-                        className="group flex flex-col gap-2"
-                      >
-                        <div className="aspect-square overflow-hidden rounded-[12px] border border-[var(--color-border)] bg-[var(--color-bg-page)]">
-                          <ImageWithFallback
-                            src={getProductPrimaryImage(product)}
-                            alt={product.name}
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                        </div>
-                        <span className="text-[13px] text-[var(--color-text-body)] group-hover:text-[var(--color-primary)] transition-colors line-clamp-2">
-                          {product.name}
-                        </span>
-                        <span className="text-[13px] font-semibold text-[var(--color-text-heading)]">
-                          {formatCurrency(getProductPrice(product))}
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
+                  renderProductGrid(activeProducts)
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Find Near Products Dropdown ─── */}
+      {activeDropdown === 'findNear' && (
+        <div className="absolute left-0 right-0 top-full" onMouseEnter={cancelClose}>
+          <div className="w-full px-4">
+            <div className="flex bg-white rounded-b-[16px] border border-t-0 border-[var(--color-border)] shadow-[var(--shadow-level-3)] overflow-hidden max-h-[70vh]">
+              {/* Region Sidebar */}
+              <div className="w-[220px] shrink-0 border-r border-[var(--color-border)] py-3 overflow-y-auto">
+                {TANZANIA_REGIONS.map((region) => {
+                  const isActive = activeRegion === region;
+                  return (
+                    <button
+                      key={region}
+                      type="button"
+                      onMouseEnter={() => setActiveRegion(region)}
+                      className={cn(
+                        'flex items-center gap-3 w-full text-left px-5 py-2.5 text-[13px] font-medium transition-colors',
+                        isActive
+                          ? 'bg-[var(--color-primary-bg)] text-[var(--color-primary)]'
+                          : 'text-[var(--color-text-body)] hover:bg-[var(--color-bg-page)]',
+                      )}
+                    >
+                      <MapPin className="w-4 h-4" />
+                      {region}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Products Grid */}
+              <div className="flex-1 p-5 overflow-y-auto">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[16px] font-bold text-[var(--color-text-heading)]">
+                    Products in {activeRegion === ALL_REGION ? 'all regions' : activeRegion}
+                  </h3>
+                  <Link
+                    to={activeRegion === ALL_REGION ? '/explore' : `/explore?region=${encodeURIComponent(activeRegion)}`}
+                    onClick={() => setActiveDropdown(null)}
+                    className="text-[13px] font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)] whitespace-nowrap"
+                  >
+                    View all
+                  </Link>
+                </div>
+
+                {regionLoading ? (
+                  renderLoadingGrid()
+                ) : regionProducts.length === 0 ? (
+                  <p className="text-[14px] text-[var(--color-text-muted)]">
+                    No products found in {activeRegion === ALL_REGION ? 'any region' : activeRegion} yet.{' '}
+                    <Link
+                      to="/explore"
+                      onClick={() => setActiveDropdown(null)}
+                      className="font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)]"
+                    >
+                      Browse the catalog
+                    </Link>
+                  </p>
+                ) : (
+                  renderProductGrid(regionProducts)
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Resource Center Dropdown ─── */}
+      {activeDropdown === 'resourceCenter' && (
+        <div className="absolute left-0 right-0 top-full" onMouseEnter={cancelClose}>
+          <div className="w-full px-4">
+            <div className="bg-white rounded-b-[16px] border border-t-0 border-[var(--color-border)] shadow-[var(--shadow-level-3)] overflow-hidden">
+              <ResourceCenterDropdown onClose={() => setActiveDropdown(null)} />
             </div>
           </div>
         </div>
