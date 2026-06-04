@@ -11,6 +11,7 @@ export interface ProductFilterParams {
   sortBy?: 'created_at' | 'price' | 'name';
   sortDir?: 'asc' | 'desc';
   page?: number;
+  region?: string;
 }
 
 export interface CatalogCategory {
@@ -380,6 +381,7 @@ export async function fetchProducts(params: ProductFilterParams = {}): Promise<P
   if (params.sortBy) query.set('sort_by', params.sortBy);
   if (params.sortDir) query.set('sort_dir', params.sortDir);
   if (params.page) query.set('page', String(params.page));
+  if (params.region) query.set('region', params.region);
 
   const queryString = query.toString();
   const response = await apiClient.get<any>(`/products${queryString ? `?${queryString}` : ''}`);
