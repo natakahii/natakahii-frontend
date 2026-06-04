@@ -624,32 +624,32 @@ export function ProductDetail() {
             ))}
           </div>
 
-          <div className="flex flex-col gap-4 mb-6">
-            <div className="flex gap-4">
-              <div className="flex items-center bg-[var(--color-bg-card)] rounded-full h-14 p-1 border-2 border-[var(--color-border)] w-fit shrink-0">
+          <div className="flex flex-col gap-3 mb-6">
+            <div className="flex gap-3">
+              <div className="flex items-center bg-[var(--color-bg-card)] rounded-full h-11 p-1 border-2 border-[var(--color-border)] w-fit shrink-0">
                 <button
                   onClick={() => setQty((currentQty) => Math.max(1, currentQty - 1))}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-text-heading)] hover:bg-white hover:shadow-sm transition-all disabled:opacity-40"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--color-text-heading)] hover:bg-white hover:shadow-sm transition-all disabled:opacity-40"
                   disabled={qty <= 1}
                 >
-                  <Minus className="w-5 h-5" />
+                  <Minus className="w-4 h-4" />
                 </button>
-                <span className="w-8 text-center font-bold text-[16px] text-[var(--color-text-heading)]">{qty}</span>
+                <span className="w-8 text-center font-bold text-[14px] text-[var(--color-text-heading)]">{qty}</span>
                 <button
                   onClick={() => setQty((currentQty) => Math.min(currentStock, currentQty + 1))}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-text-heading)] hover:bg-white hover:shadow-sm transition-all disabled:opacity-40"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--color-text-heading)] hover:bg-white hover:shadow-sm transition-all disabled:opacity-40"
                   disabled={qty >= currentStock}
                 >
-                  <Plus className="w-5 h-5" />
+                  <Plus className="w-4 h-4" />
                 </button>
               </div>
 
-              <Button variant="primary" size="l" className="flex-1 shadow-md" onClick={handleAddToCart} disabled={currentStock <= 0}>
+              <Button variant="primary" size="m" className="flex-1 shadow-md" onClick={handleAddToCart} disabled={currentStock <= 0}>
                 Add to Cart
               </Button>
             </div>
 
-            <Button variant="primary" size="l" className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] shadow-[var(--shadow-level-2)] border-none text-[18px]" onClick={handleBuyNow} disabled={currentStock <= 0}>
+            <Button variant="primary" size="m" className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] shadow-[var(--shadow-level-2)] border-none" onClick={handleBuyNow} disabled={currentStock <= 0}>
               Buy Now
             </Button>
           </div>
