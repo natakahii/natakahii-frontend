@@ -9,15 +9,10 @@ import halopesaLogo from '../../assets/halopesa.png';
 import selcomLogo from '../../assets/selcom.png';
 import azampesaLogo from '../../assets/azampesa.png';
 import {
-  ChevronRight,
-  Dumbbell,
   Heart,
-  Home as HomeIcon,
   Play,
   MapPin,
-  Shirt,
   ShoppingCart,
-  Smartphone,
   Sparkles,
   Star,
   Watch,
@@ -31,10 +26,8 @@ import { EmptyState } from '../components/ui/empty-state';
 import { Skeleton } from '../components/ui/skeleton';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import {
-  CatalogCategory,
   CatalogProduct,
   CatalogVendor,
-  fetchCategories,
   fetchProducts,
   getProductDiscountPercent,
   getProductPrice,
@@ -46,23 +39,8 @@ import { getProductPath } from '../utils/products';
 import { getVendorStorefrontPath } from '../utils/storefront';
 import { getVendorVerificationTier } from '../utils/vendorVerification';
 
-const CATEGORY_ICON_MAP = [
-  { pattern: /fashion|apparel|clothing|dress/, icon: Shirt },
-  { pattern: /electronics|phone|tech|device/, icon: Smartphone },
-  { pattern: /home|living|furniture|decor/, icon: HomeIcon },
-  { pattern: /accessories|watch|jewelry/, icon: Watch },
-  { pattern: /beauty|cosmetic|skin/, icon: Sparkles },
-  { pattern: /sport|fitness/, icon: Dumbbell },
-];
-
-function getCategoryIcon(category: CatalogCategory) {
-  const label = `${category.icon || ''} ${category.slug} ${category.name}`.toLowerCase();
-  return CATEGORY_ICON_MAP.find((entry) => entry.pattern.test(label))?.icon || Zap;
-}
-
 export function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<CatalogProduct[]>([]);
-  const [categories, setCategories] = useState<CatalogCategory[]>([]);
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,16 +54,12 @@ export function Home() {
       setError(null);
 
       try {
-        const [categoryData, productData] = await Promise.all([
-          fetchCategories(),
-          fetchProducts({ per_page: 100 }), // Load 100 featured products on home
-        ]);
+        const productData = await fetchProducts({ per_page: 100 }); // Load 100 featured products on home
 
         if (!isMounted) {
           return;
         }
 
-        setCategories(categoryData);
         setFeaturedProducts(productData.products);
 
         // Fetch videos separately - don't let video feed failure break the whole page
@@ -106,7 +80,6 @@ export function Home() {
           return;
         }
 
-        setCategories([]);
         setFeaturedProducts([]);
         setError(loadError?.message || 'Unable to load the latest catalog right now.');
       } finally {
@@ -149,8 +122,6 @@ export function Home() {
     return Array.from(uniqueVendors.values()).slice(0, 4);
   }, [featuredProducts]);
 
-  const topCategories = categories.slice(0, 6);
-
   return (
     <div className="flex flex-col gap-8 lg:gap-16 pb-20">
       <section className="relative w-full min-h-[520px] overflow-hidden px-4 py-16 sm:min-h-[580px] lg:min-h-[640px] lg:py-24">
@@ -181,51 +152,6 @@ export function Home() {
       </section>
 
       <div className="container mx-auto px-4 flex flex-col gap-12 lg:gap-20">
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-times-bold text-[22px] lg:text-[28px] text-[var(--color-text-heading)] tracking-[-0.5px]">Trending Categories</h2>
-            <Link to="/explore" className="text-[var(--color-primary)] font-semibold text-[14px] hover:text-[var(--color-accent)] flex items-center gap-1">
-              See All <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          {isLoading ? (
-            <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="shrink-0 w-[100px] md:w-[120px] flex flex-col items-center gap-3">
-                  <Skeleton className="w-[80px] h-[80px] md:w-[100px] md:h-[100px] rounded-[24px]" />
-                  <Skeleton className="w-20 h-4 rounded-full" />
-                </div>
-              ))}
-            </div>
-          ) : topCategories.length > 0 ? (
-            <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory -mx-4 px-4 lg:mx-0 lg:px-0">
-              {topCategories.map((category) => {
-                const Icon = getCategoryIcon(category);
-
-                return (
-                  <Link to={`/explore?category=${category.id}`} key={category.id} className="snap-start shrink-0 w-[100px] md:w-[120px] group flex flex-col items-center gap-3">
-                    <div className="w-[80px] h-[80px] md:w-[100px] md:h-[100px] rounded-[24px] bg-[var(--color-bg-card)] flex flex-col items-center justify-center shadow-sm group-hover:shadow-md group-hover:bg-[var(--color-primary-bg)] transition-all duration-300 group-hover:-translate-y-1">
-                      <Icon className="w-8 h-8 text-[var(--color-text-heading)] group-hover:text-[var(--color-primary)] transition-colors" />
-                    </div>
-                    <span className="text-[13px] md:text-[14px] font-medium text-center text-[var(--color-text-heading)] group-hover:text-[var(--color-primary)]">
-                      {category.name}
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <EmptyState
-              variant="products"
-              title="Categories are on the way"
-              description={error || 'We could not load categories at the moment.'}
-              actionLabel="Browse Products"
-              actionHref="/explore"
-            />
-          )}
-        </section>
-
         <section>
           <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-[var(--color-accent-bg)] to-transparent p-4 rounded-t-[16px] border-l-4 border-[var(--color-accent)]">
             <div className="flex items-center gap-3">
