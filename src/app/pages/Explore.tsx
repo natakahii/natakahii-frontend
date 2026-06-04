@@ -16,11 +16,14 @@ import {
   getProductPrice,
   getProductPrimaryImage,
 } from '../services/productService';
+import { getRegions } from '../data/tanzaniaLocations';
 import { formatCurrency } from '../utils/currency';
 import { getProductPath } from '../utils/products';
 import { getVendorVerificationTier } from '../utils/vendorVerification';
 import { useCart } from '../providers/CartProvider';
 import { useToast } from '../components/ui/toast';
+
+const TANZANIA_REGIONS = ['All', ...getRegions()];
 
 function parseNumberParam(value: string | null): number | undefined {
   if (!value) {
@@ -51,6 +54,7 @@ export function Explore() {
   const categoryParam = searchParams.get('category') || '';
   const vendorParam = searchParams.get('vendor') || '';
   const searchParam = searchParams.get('search') || '';
+  const regionParam = searchParams.get('region') || '';
   const minPriceParam = parseNumberParam(searchParams.get('min_price'));
   const maxPriceParam = parseNumberParam(searchParams.get('max_price'));
   const sortBy = (searchParams.get('sort_by') as 'created_at' | 'price' | 'name' | null) || 'created_at';
@@ -92,6 +96,7 @@ export function Explore() {
       categoryParam,
       vendorParam,
       searchParam,
+      regionParam,
       minPriceParam,
       maxPriceParam,
       sortBy,
@@ -111,6 +116,7 @@ export function Explore() {
       category: categoryParam || undefined,
       vendorId: vendorParam || undefined,
       search: searchParam || undefined,
+      region: regionParam || undefined,
       minPrice: minPriceParam,
       maxPrice: maxPriceParam,
       sortBy,
@@ -124,15 +130,67 @@ export function Explore() {
         }
 
         setMeta(response.meta);
+
+        let filteredProducts = response.products;
+
+        // Client-side region filtering as fallback
+        if (regionParam && filteredProducts.length > 0) {
+          const regionFiltered = filteredProducts.filter(
+            (p) => p.vendor?.region?.toLowerCase() === regionParam.toLowerCase()
+          );
+          if (regionFiltered.length > 0) {
+            filteredProducts = regionFiltered;
+          }
+        }
+
+        // Client-side search enhancement: also match description, location, price
+        if (searchParam && filteredProducts.length === 0) {
+          // Re-search without API param, filter locally
+          fetchProducts({
+            category: categoryParam || undefined,
+            vendorId: vendorParam || undefined,
+            minPrice: minPriceParam,
+            maxPrice: maxPriceParam,
+            sortBy,
+            sortDir,
+            page: currentPage,
+            per_page: 100,
+          }).then((fallback) => {
+            if (!isMounted) return;
+            const q = searchParam.toLowerCase();
+            const localFiltered = fallback.products.filter((p) => {
+              const name = (p.name || '').toLowerCase();
+              const desc = (p.description || '').toLowerCase();
+              const vendorRegion = (p.vendor?.region || '').toLowerCase();
+              const vendorCity = (p.vendor?.city || '').toLowerCase();
+              const vendorStreet = (p.vendor?.street || '').toLowerCase();
+              const shopName = (p.vendor?.shop_name || '').toLowerCase();
+              const priceStr = String(p.price);
+              return (
+                name.includes(q) ||
+                desc.includes(q) ||
+                vendorRegion.includes(q) ||
+                vendorCity.includes(q) ||
+                vendorStreet.includes(q) ||
+                shopName.includes(q) ||
+                priceStr.includes(q)
+              );
+            });
+            setProducts(localFiltered);
+            setMeta((prev) => ({ ...prev, total: localFiltered.length }));
+          }).catch(() => {});
+          return;
+        }
+
         setProducts((previousProducts) => {
           if (!shouldAppend) {
-            return response.products;
+            return filteredProducts;
           }
 
           const seenIds = new Set(previousProducts.map((product) => product.id));
           const nextProducts = [...previousProducts];
 
-          response.products.forEach((product) => {
+          filteredProducts.forEach((product) => {
             if (!seenIds.has(product.id)) {
               nextProducts.push(product);
             }
@@ -164,7 +222,7 @@ export function Explore() {
     return () => {
       isMounted = false;
     };
-  }, [categoryParam, currentPage, maxPriceParam, minPriceParam, searchParam, sortBy, sortDir, vendorParam]);
+  }, [categoryParam, currentPage, maxPriceParam, minPriceParam, regionParam, searchParam, sortBy, sortDir, vendorParam]);
 
   const selectedCategory = useMemo(
     () => categories.find((category) => String(category.id) === categoryParam) || null,
@@ -180,12 +238,13 @@ export function Explore() {
     return productWithVendor?.vendor?.shop_name || `Vendor #${vendorParam}`;
   }, [products, vendorParam]);
 
-  const pageTitle = selectedCategory?.name || selectedVendorName || 'All Products';
+  const pageTitle = selectedCategory?.name || selectedVendorName || (regionParam ? `Products in ${regionParam}` : 'All Products');
 
   const activeFilters = [
     selectedCategory ? { key: 'category', label: selectedCategory.name } : null,
     selectedVendorName ? { key: 'vendor', label: selectedVendorName } : null,
     searchParam ? { key: 'search', label: `"${searchParam}"` } : null,
+    regionParam ? { key: 'region', label: regionParam } : null,
     minPriceParam != null || maxPriceParam != null
       ? { key: 'price', label: `${minPriceParam ? formatCurrency(minPriceParam) : 'Min'} - ${maxPriceParam ? formatCurrency(maxPriceParam) : 'Max'}` }
       : null,
@@ -234,15 +293,16 @@ export function Explore() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 lg:py-12">
-      <div className="text-[12px] text-[var(--color-text-muted)] mb-6 flex items-center gap-2">
+    <div className="container mx-auto px-4 py-6 lg:py-10">
+      <div className="text-[12px] text-[var(--color-text-muted)] mb-4 flex items-center gap-2">
         <Link to="/" className="hover:text-[var(--color-primary)]">Home</Link>
         <span>/</span>
         <span className="text-[var(--color-text-heading)] font-medium">{pageTitle}</span>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="lg:hidden flex items-center justify-between border-b border-[var(--color-border)] pb-4">
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Mobile Filter Button */}
+        <div className="lg:hidden flex items-center justify-between border-b border-[var(--color-border)] pb-3">
           <Button variant="secondary" size="s" onClick={() => setIsFilterOpen(true)} className="flex items-center gap-2 rounded-full border-[var(--color-border)] text-[var(--color-text-body)] hover:bg-[var(--color-bg-card)]">
             <SlidersHorizontal className="w-4 h-4" /> Filters
           </Button>
@@ -267,6 +327,7 @@ export function Explore() {
           </div>
         </div>
 
+        {/* Mobile Filter Panel */}
         {isFilterOpen && (
           <div className="lg:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity" onClick={() => setIsFilterOpen(false)}>
             <div
@@ -280,7 +341,7 @@ export function Explore() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-8">
+              <div className="p-6 space-y-6">
                 <form onSubmit={handleSearchSubmit} className="space-y-3">
                   <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Search</h3>
                   <div className="relative">
@@ -288,28 +349,48 @@ export function Explore() {
                     <input
                       value={searchInput}
                       onChange={(event) => setSearchInput(event.target.value)}
-                      placeholder="Search catalog"
+                      placeholder="Search by name, description, location, price..."
                       className="w-full bg-[var(--color-bg-card)] rounded-[12px] pl-10 pr-4 py-3 text-[14px] text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     />
                   </div>
                 </form>
 
                 <div>
-                  <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] mb-4">Categories</h3>
-                  <div className="space-y-3">
+                  <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] mb-3">Categories</h3>
+                  <div className="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto">
                     <button
                       onClick={() => updateParams({ category: null })}
-                      className={`w-full text-left px-4 py-3 rounded-[12px] border transition-all ${!categoryParam ? 'border-[var(--color-primary)] bg-[var(--color-primary-bg)] text-[var(--color-primary)]' : 'border-[var(--color-border)] hover:border-[var(--color-primary)]'}`}
+                      className={`px-3 py-2 rounded-[10px] text-[13px] font-medium transition-all ${!categoryParam ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-bg-page)] text-[var(--color-text-body)]'}`}
                     >
-                      All categories
+                      All
                     </button>
                     {categories.map((category) => (
                       <button
                         key={category.id}
                         onClick={() => updateParams({ category: String(category.id) })}
-                        className={`w-full text-left px-4 py-3 rounded-[12px] border transition-all ${categoryParam === String(category.id) ? 'border-[var(--color-primary)] bg-[var(--color-primary-bg)] text-[var(--color-primary)]' : 'border-[var(--color-border)] hover:border-[var(--color-primary)]'}`}
+                        className={`px-3 py-2 rounded-[10px] text-[13px] font-medium transition-all ${categoryParam === String(category.id) ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-bg-page)] text-[var(--color-text-body)]'}`}
                       >
                         {category.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] mb-3">Location</h3>
+                  <div className="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto">
+                    {TANZANIA_REGIONS.map((region) => (
+                      <button
+                        key={region}
+                        onClick={() => updateParams({ region: region === 'All' ? null : region })}
+                        className={`flex items-center gap-1 px-3 py-2 rounded-[10px] text-[13px] font-medium transition-all ${
+                          (region === 'All' && !regionParam) || regionParam === region
+                            ? 'bg-[var(--color-primary)] text-white'
+                            : 'bg-[var(--color-bg-page)] text-[var(--color-text-body)]'
+                        }`}
+                      >
+                        <MapPin className="w-3 h-3" />
+                        {region}
                       </button>
                     ))}
                   </div>
@@ -344,27 +425,28 @@ export function Explore() {
           </div>
         )}
 
-        <div className="hidden lg:block lg:w-[280px] shrink-0 sticky top-24 self-start">
-          <div className="space-y-8">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block lg:w-[260px] shrink-0 sticky top-24 self-start max-h-[calc(100vh-120px)] overflow-y-auto">
+          <div className="space-y-6">
             <div>
-              <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] mb-4">Search</h3>
+              <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] mb-3">Search</h3>
               <form onSubmit={handleSearchSubmit} className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
                 <input
                   value={searchInput}
                   onChange={(event) => setSearchInput(event.target.value)}
-                  placeholder="Search products"
-                  className="w-full bg-[var(--color-bg-card)] rounded-[12px] pl-10 pr-4 py-3 text-[14px] text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  placeholder="Name, description, location..."
+                  className="w-full bg-[var(--color-bg-card)] rounded-[12px] pl-10 pr-4 py-2.5 text-[13px] text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </form>
             </div>
 
             <div>
-              <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] mb-4">Categories</h3>
-              <div className="space-y-3">
+              <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] mb-3">Categories</h3>
+              <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
                 <button
                   onClick={() => updateParams({ category: null })}
-                  className={`w-full text-left px-4 py-3 rounded-[12px] border transition-all ${!categoryParam ? 'border-[var(--color-primary)] bg-[var(--color-primary-bg)] text-[var(--color-primary)]' : 'border-[var(--color-border)] hover:border-[var(--color-primary)]'}`}
+                  className={`w-full text-left px-3 py-2 rounded-[10px] text-[13px] font-medium transition-all ${!categoryParam ? 'bg-[var(--color-primary-bg)] text-[var(--color-primary)] border border-[var(--color-primary)]' : 'border border-transparent hover:bg-[var(--color-bg-page)]'}`}
                 >
                   All categories
                 </button>
@@ -372,11 +454,11 @@ export function Explore() {
                   <button
                     key={category.id}
                     onClick={() => updateParams({ category: String(category.id) })}
-                    className={`w-full text-left px-4 py-3 rounded-[12px] border transition-all ${categoryParam === String(category.id) ? 'border-[var(--color-primary)] bg-[var(--color-primary-bg)] text-[var(--color-primary)]' : 'border-[var(--color-border)] hover:border-[var(--color-primary)]'}`}
+                    className={`w-full text-left px-3 py-2 rounded-[10px] text-[13px] font-medium transition-all ${categoryParam === String(category.id) ? 'bg-[var(--color-primary-bg)] text-[var(--color-primary)] border border-[var(--color-primary)]' : 'border border-transparent hover:bg-[var(--color-bg-page)]'}`}
                   >
                     <span className="block font-semibold">{category.name}</span>
                     {category.products_count != null && (
-                      <span className="block text-[12px] text-[var(--color-text-muted)] mt-1">{category.products_count} products</span>
+                      <span className="block text-[11px] text-[var(--color-text-muted)] mt-0.5">{category.products_count} products</span>
                     )}
                   </button>
                 ))}
@@ -384,14 +466,14 @@ export function Explore() {
             </div>
 
             <div>
-              <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] mb-4">Price Range (TZS)</h3>
-              <div className="flex items-center gap-2 mb-4">
+              <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] mb-3">Price Range (TZS)</h3>
+              <div className="flex items-center gap-2 mb-3">
                 <input
                   type="number"
                   placeholder="Min"
                   value={draftMinPrice}
                   onChange={(event) => setDraftMinPrice(event.target.value)}
-                  className="w-full bg-[var(--color-bg-card)] rounded-[12px] px-4 py-3 text-[14px] text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full bg-[var(--color-bg-card)] rounded-[10px] px-3 py-2 text-[13px] text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
                 <span className="text-[var(--color-text-muted)]">-</span>
                 <input
@@ -399,14 +481,14 @@ export function Explore() {
                   placeholder="Max"
                   value={draftMaxPrice}
                   onChange={(event) => setDraftMaxPrice(event.target.value)}
-                  className="w-full bg-[var(--color-bg-card)] rounded-[12px] px-4 py-3 text-[14px] text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full bg-[var(--color-bg-card)] rounded-[10px] px-3 py-2 text-[13px] text-[var(--color-text-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={() => { setDraftMinPrice(''); setDraftMaxPrice(''); updateParams({ min_price: null, max_price: null }); }}>
+              <div className="flex gap-2">
+                <Button variant="outline" size="xs" className="flex-1" onClick={() => { setDraftMinPrice(''); setDraftMaxPrice(''); updateParams({ min_price: null, max_price: null }); }}>
                   Clear
                 </Button>
-                <Button variant="primary" className="flex-1" onClick={handleApplyPrice}>
+                <Button variant="primary" size="xs" className="flex-1" onClick={handleApplyPrice}>
                   Apply
                 </Button>
               </div>
@@ -414,30 +496,50 @@ export function Explore() {
           </div>
         </div>
 
-        <div className="flex-1">
-          <div className="hidden lg:block mb-8">
-            <div className="flex items-center justify-between mb-4 gap-4">
-              <h1 className="text-[28px] font-bold tracking-tight text-[var(--color-text-heading)]">
-                {pageTitle} <span className="text-[var(--color-text-muted)] text-[16px] font-normal ml-2">{meta.total.toLocaleString()} results</span>
+        {/* Main Content */}
+        <div className="flex-1 min-w-0">
+          <div className="hidden lg:block mb-6">
+            <div className="flex items-center justify-between mb-3 gap-4">
+              <h1 className="text-[24px] font-bold tracking-tight text-[var(--color-text-heading)]">
+                {pageTitle} <span className="text-[var(--color-text-muted)] text-[14px] font-normal ml-2">{meta.total.toLocaleString()} results</span>
               </h1>
-              <div className="flex items-center gap-3 bg-[var(--color-bg-card)] px-4 py-2 rounded-full">
-                <span className="text-[13px] font-medium text-[var(--color-text-muted)]">Sort by:</span>
-                <select
-                  value={`${sortBy}:${sortDir}`}
-                  onChange={(event) => {
-                    const [nextSortBy, nextSortDir] = event.target.value.split(':');
-                    updateParams({
-                      sort_by: nextSortBy,
-                      sort_dir: nextSortDir,
-                    });
-                  }}
-                  className="bg-transparent font-bold text-[14px] text-[var(--color-text-heading)] focus:outline-none cursor-pointer"
-                >
-                  <option value="created_at:desc">Newest</option>
-                  <option value="price:asc">Price: Low to High</option>
-                  <option value="price:desc">Price: High to Low</option>
-                  <option value="name:asc">Name A-Z</option>
-                </select>
+              <div className="flex items-center gap-3">
+                {/* Filter by location */}
+                <div className="flex items-center gap-2 bg-[var(--color-bg-card)] px-3 py-1.5 rounded-full">
+                  <MapPin className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+                  <select
+                    value={regionParam || ''}
+                    onChange={(event) => {
+                      updateParams({ region: event.target.value || null });
+                    }}
+                    className="bg-transparent font-medium text-[13px] text-[var(--color-text-heading)] focus:outline-none cursor-pointer"
+                  >
+                    <option value="">All Locations</option>
+                    {getRegions().map((region) => (
+                      <option key={region} value={region}>{region}</option>
+                    ))}
+                  </select>
+                </div>
+                {/* Sort by */}
+                <div className="flex items-center gap-2 bg-[var(--color-bg-card)] px-3 py-1.5 rounded-full">
+                  <span className="text-[13px] font-medium text-[var(--color-text-muted)]">Sort by:</span>
+                  <select
+                    value={`${sortBy}:${sortDir}`}
+                    onChange={(event) => {
+                      const [nextSortBy, nextSortDir] = event.target.value.split(':');
+                      updateParams({
+                        sort_by: nextSortBy,
+                        sort_dir: nextSortDir,
+                      });
+                    }}
+                    className="bg-transparent font-bold text-[13px] text-[var(--color-text-heading)] focus:outline-none cursor-pointer"
+                  >
+                    <option value="created_at:desc">Newest</option>
+                    <option value="price:asc">Price: Low to High</option>
+                    <option value="price:desc">Price: High to Low</option>
+                    <option value="name:asc">Name A-Z</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -447,7 +549,7 @@ export function Explore() {
                   <button
                     key={filter.key}
                     onClick={() => updateParams({
-                      [filter.key === 'category' ? 'category' : filter.key === 'vendor' ? 'vendor' : filter.key === 'search' ? 'search' : 'min_price']: null,
+                      [filter.key === 'price' ? 'min_price' : filter.key]: null,
                       ...(filter.key === 'price' ? { max_price: null } : {}),
                     })}
                     className="inline-flex items-center gap-1 bg-[var(--color-primary-bg)] text-[var(--color-primary)] px-3 py-1 rounded-full text-[12px] font-medium"
@@ -464,11 +566,11 @@ export function Explore() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {Array.from({ length: 8 }).map((_, index) => (
                 <Card key={index} className="h-full flex flex-col">
                   <Skeleton className="aspect-[4/5] rounded-t-[16px]" />
-                  <div className="p-4 space-y-3">
+                  <div className="p-3 space-y-2">
                     <Skeleton className="w-2/3 h-3" />
                     <Skeleton className="w-full h-4" />
                     <Skeleton className="w-1/2 h-5" />
@@ -486,7 +588,7 @@ export function Explore() {
             />
           ) : (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {products.map((product) => {
                   const discountPercent = getProductDiscountPercent(product);
                   const rating = product.reviews_avg_rating ? product.reviews_avg_rating.toFixed(1) : null;
@@ -505,9 +607,9 @@ export function Explore() {
                             {discountPercent ? `-${discountPercent}%` : 'Live'}
                           </Badge>
                         </div>
-                        <div className="p-4 flex flex-col flex-1">
+                        <div className="p-3 flex flex-col flex-1">
                           <div className="text-[12px] text-[var(--color-text-muted)] mb-1 flex items-center justify-between">
-                            <span className="min-w-0 flex items-center gap-2">
+                            <span className="min-w-0 flex items-center gap-1.5">
                               <span className="truncate font-semibold text-[var(--color-text-body)]">
                                 {product.vendor?.shop_name || 'Verified Vendor'}
                               </span>
@@ -524,22 +626,22 @@ export function Explore() {
                             )}
                           </div>
                           {product.vendor && (
-                            <div className="text-[11px] text-[var(--color-text-muted)] mb-2 flex items-center gap-1">
+                            <div className="text-[11px] text-[var(--color-text-muted)] mb-1.5 flex items-center gap-1">
                               <MapPin className="w-3 h-3 shrink-0" />
                               <span className="truncate">
                                 {[product.vendor.street, product.vendor.region, product.vendor.city].filter(Boolean).join(', ') || product.vendor.shop_name || 'Verified Vendor'}
                               </span>
                             </div>
                           )}
-                          <h3 className="font-semibold text-[14px] text-[var(--color-text-heading)] line-clamp-2 mb-3 group-hover:text-[var(--color-primary)] transition-colors">
+                          <h3 className="font-semibold text-[13px] text-[var(--color-text-heading)] line-clamp-2 mb-2 group-hover:text-[var(--color-primary)] transition-colors">
                             {product.name}
                           </h3>
                           <div className="mt-auto flex items-end justify-between">
                             <div>
                               {product.discount_price && product.discount_price < product.price && (
-                                <div className="text-[12px] text-[var(--color-text-muted)] line-through decoration-red-500/50">{formatCurrency(product.price)}</div>
+                                <div className="text-[11px] text-[var(--color-text-muted)] line-through decoration-red-500/50">{formatCurrency(product.price)}</div>
                               )}
-                              <div className="text-[16px] lg:text-[18px] font-bold text-[var(--color-text-heading)] tracking-tight">
+                              <div className="text-[16px] font-bold text-[var(--color-text-heading)] tracking-tight">
                                 {formatCurrency(price)}
                               </div>
                             </div>
@@ -568,7 +670,7 @@ export function Explore() {
                 })}
               </div>
 
-              {/* Infinite scroll trigger - hidden element that triggers load when visible */}
+              {/* Infinite scroll trigger */}
               {meta.current_page < meta.last_page && (
                 <div
                   ref={(el) => {

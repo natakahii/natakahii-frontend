@@ -19,7 +19,7 @@ import {
   Zap,
   Video,
 } from 'lucide-react';
-import { Badge, VendorVerificationBadge } from '../components/ui/badge';
+import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { EmptyState } from '../components/ui/empty-state';
@@ -27,7 +27,6 @@ import { Skeleton } from '../components/ui/skeleton';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import {
   CatalogProduct,
-  CatalogVendor,
   fetchProducts,
   getProductDiscountPercent,
   getProductPrice,
@@ -36,7 +35,6 @@ import {
 import { fetchVideoFeed, VideoItem } from '../services/videoFeedService';
 import { formatCurrency } from '../utils/currency';
 import { getProductPath } from '../utils/products';
-import { getVendorStorefrontPath } from '../utils/storefront';
 import { getVendorVerificationTier } from '../utils/vendorVerification';
 
 export function Home() {
@@ -95,32 +93,6 @@ export function Home() {
       isMounted = false;
     };
   }, []);
-
-  const spotlightVendors = useMemo(() => {
-    const uniqueVendors = new Map<number, CatalogVendor & { featuredProductCount: number }>();
-
-    featuredProducts.forEach((product) => {
-      const vendor = product.vendor;
-
-      if (!vendor?.id) {
-        return;
-      }
-
-      const existing = uniqueVendors.get(vendor.id);
-
-      if (existing) {
-        existing.featuredProductCount += 1;
-        return;
-      }
-
-      uniqueVendors.set(vendor.id, {
-        ...vendor,
-        featuredProductCount: 1,
-      });
-    });
-
-    return Array.from(uniqueVendors.values()).slice(0, 4);
-  }, [featuredProducts]);
 
   return (
     <div className="flex flex-col gap-8 lg:gap-16 pb-20">
@@ -367,65 +339,6 @@ export function Home() {
               ))
             )}
           </div>
-        </section>
-
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-times-bold text-[22px] lg:text-[28px] text-[var(--color-text-heading)] tracking-[-0.5px]">Top Verified Vendors</h2>
-          </div>
-
-          {isLoading ? (
-            <div className="flex gap-4 overflow-x-auto pb-6 hide-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <Card key={index} className="shrink-0 w-[260px] p-5 flex flex-col items-center text-center gap-3">
-                  <Skeleton className="w-20 h-20 rounded-full" />
-                  <Skeleton className="w-32 h-4" />
-                  <Skeleton className="w-24 h-3" />
-                  <Skeleton className="w-full h-9 rounded-full" />
-                </Card>
-              ))}
-            </div>
-          ) : spotlightVendors.length > 0 ? (
-            <div className="flex gap-4 overflow-x-auto pb-6 hide-scrollbar snap-x snap-mandatory -mx-4 px-4 lg:mx-0 lg:px-0">
-              {spotlightVendors.map((vendor) => {
-                const vendorTier = getVendorVerificationTier(vendor);
-
-                return (
-                  <Card key={vendor.id} className="snap-start shrink-0 w-[260px] p-5 flex flex-col items-center text-center gap-3">
-                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[var(--color-border)] relative">
-                      <ImageWithFallback src={vendor.logo || '/natakahii-logo.png'} alt={vendor.shop_name} className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <h3 className="inline-flex items-center justify-center gap-1.5 font-bold text-[16px] text-[var(--color-text-heading)]">
-                        <span>{vendor.shop_name}</span>
-                        {vendorTier === 'premium' && (
-                          <VendorVerificationBadge tone="default" label="Verified vendor" />
-                        )}
-                      </h3>
-                      <div className="text-[13px] text-[var(--color-text-muted)] flex items-center justify-center gap-3 mt-1">
-                        <span>{vendor.featuredProductCount} featured items</span>
-                        <span className="w-1 h-1 rounded-full bg-[var(--color-border)]" />
-                        <span>
-                          {vendorTier === 'premium' ? 'Verified seller' : 'Active store'}
-                        </span>
-                      </div>
-                    </div>
-                    <Link to={getVendorStorefrontPath(vendor)} className="w-full">
-                      <Button variant="secondary" size="s" className="w-full mt-2 rounded-full font-bold">Shop This Vendor</Button>
-                    </Link>
-                  </Card>
-                );
-              })}
-            </div>
-          ) : (
-            <EmptyState
-              variant="products"
-              title="Vendor spotlight is getting ready"
-              description={error || 'Vendors will appear here as products are published.'}
-              actionLabel="Explore Catalog"
-              actionHref="/explore"
-            />
-          )}
         </section>
 
         {/* Payment Partners - Infinite Scroll */}
