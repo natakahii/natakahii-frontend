@@ -180,11 +180,8 @@ export function Navbar() {
             <div className="flex-1 overflow-y-auto">
               {/* Mega menu links (mobile) */}
               <nav className="mb-6 space-y-1 border-b border-[var(--color-border)] pb-4">
-                <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className="block text-[15px] font-medium text-[var(--color-text-body)] py-2">All Categories</Link>
+                <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className="block text-[15px] font-medium text-[var(--color-text-body)] py-2">Browse All Products</Link>
                 <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className="block text-[15px] font-medium text-[var(--color-text-body)] py-2">Top Verified Seller/Vendor</Link>
-                <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className="block text-[15px] font-medium text-[var(--color-text-body)] py-2">Find near products</Link>
-                <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className="block text-[15px] font-medium text-[var(--color-text-body)] py-2">Resource Center</Link>
-                <span className="flex items-center justify-between text-[15px] font-medium text-[var(--color-text-body)] py-2">App &amp; extension <span className="text-[13px] text-[var(--color-text-muted)]">Coming soon...</span></span>
                 <Link to="/vendor/apply" onClick={() => setIsMobileMenuOpen(false)} className="block text-[15px] font-semibold text-[var(--color-accent)] py-2">Sell on natakahii</Link>
               </nav>
               {!isAuthenticated ? (
