@@ -14,7 +14,19 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from './ui/button';
-import { fetchCategories, CatalogCategory } from '../services/productService';
+import { ImageWithFallback } from './figma/ImageWithFallback';
+import {
+  fetchCategories,
+  fetchProducts,
+  getProductPrice,
+  getProductPrimaryImage,
+  CatalogCategory,
+  CatalogProduct,
+} from '../services/productService';
+import { formatCurrency } from '../utils/currency';
+import { getProductPath } from '../utils/products';
+
+const PRODUCTS_PER_CATEGORY = 8;
 
 const CATEGORY_ICON_MAP: { pattern: RegExp; icon: LucideIcon }[] = [
   { pattern: /fashion|apparel|clothing|dress|shoe/, icon: Shirt },
@@ -38,7 +50,10 @@ export function MegaMenu() {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isAppMenuOpen, setIsAppMenuOpen] = useState(false);
   const [activeKey, setActiveKey] = useState<ActiveKey>(FEATURED);
+  const [productsByCategory, setProductsByCategory] = useState<Record<number, CatalogProduct[]>>({});
+  const [loadingCategory, setLoadingCategory] = useState<number | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestedCategories = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     let isMounted = true;
@@ -53,6 +68,32 @@ export function MegaMenu() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (activeKey === FEATURED) return;
+    const categoryId = activeKey;
+    if (requestedCategories.current.has(categoryId)) return;
+    requestedCategories.current.add(categoryId);
+
+    let isMounted = true;
+    setLoadingCategory(categoryId);
+    fetchProducts({ category: String(categoryId), per_page: PRODUCTS_PER_CATEGORY })
+      .then((response) => {
+        if (isMounted) {
+          setProductsByCategory((prev) => ({ ...prev, [categoryId]: response.products }));
+        }
+      })
+      .catch(() => {
+        requestedCategories.current.delete(categoryId);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingCategory((current) => (current === categoryId ? null : current));
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeKey]);
 
   const cancelClose = () => {
     if (closeTimer.current) {
@@ -90,11 +131,8 @@ export function MegaMenu() {
   const activeCategory =
     activeKey === FEATURED ? null : categories.find((category) => category.id === activeKey) || null;
 
-  const gridItems: CatalogCategory[] = activeCategory
-    ? activeCategory.children.length > 0
-      ? activeCategory.children
-      : [activeCategory]
-    : categories;
+  const activeProducts = activeCategory ? productsByCategory[activeCategory.id] : undefined;
+  const isLoadingProducts = activeCategory != null && loadingCategory === activeCategory.id;
 
   const panelTitle = activeCategory ? activeCategory.name : 'Categories for you';
 
@@ -220,34 +258,97 @@ export function MegaMenu() {
 
               {/* Grid */}
               <div className="flex-1 p-6 overflow-y-auto">
-                <h3 className="text-[18px] font-bold text-[var(--color-text-heading)] mb-5">
-                  {panelTitle}
-                </h3>
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-[18px] font-bold text-[var(--color-text-heading)]">
+                    {panelTitle}
+                  </h3>
+                  {activeCategory && (
+                    <Link
+                      to={`/explore?category=${activeCategory.id}`}
+                      onClick={() => setIsCategoriesOpen(false)}
+                      className="text-[13px] font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)] whitespace-nowrap"
+                    >
+                      View all
+                    </Link>
+                  )}
+                </div>
 
-                {gridItems.length === 0 ? (
+                {activeCategory == null ? (
+                  /* Default: category tiles */
+                  categories.length === 0 ? (
+                    <p className="text-[14px] text-[var(--color-text-muted)]">
+                      Categories will appear here soon.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-4 xl:grid-cols-6 gap-x-4 gap-y-6">
+                      {categories.map((item) => {
+                        const Icon = getCategoryIcon(item);
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onMouseEnter={() => setActiveKey(item.id)}
+                            onClick={() => setActiveKey(item.id)}
+                            className="group flex flex-col items-center gap-2 text-center"
+                          >
+                            <div className="w-16 h-16 rounded-full bg-[var(--color-bg-page)] border border-[var(--color-border)] flex items-center justify-center group-hover:border-[var(--color-primary)] group-hover:bg-[var(--color-primary-bg)] transition-colors">
+                              <Icon className="w-7 h-7 text-[var(--color-text-body)] group-hover:text-[var(--color-primary)] transition-colors" />
+                            </div>
+                            <span className="text-[13px] text-[var(--color-text-body)] group-hover:text-[var(--color-primary)] transition-colors line-clamp-2">
+                              {item.name}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )
+                ) : isLoadingProducts || activeProducts === undefined ? (
+                  /* Loading skeletons */
+                  <div className="grid grid-cols-3 xl:grid-cols-4 gap-4">
+                    {Array.from({ length: PRODUCTS_PER_CATEGORY }).map((_, index) => (
+                      <div key={index} className="flex flex-col gap-2">
+                        <div className="aspect-square rounded-[12px] bg-[var(--color-bg-page)] animate-pulse" />
+                        <div className="h-3 w-3/4 rounded-full bg-[var(--color-bg-page)] animate-pulse" />
+                        <div className="h-3 w-1/2 rounded-full bg-[var(--color-bg-page)] animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+                ) : activeProducts.length === 0 ? (
                   <p className="text-[14px] text-[var(--color-text-muted)]">
-                    Categories will appear here soon.
+                    No products in {activeCategory.name} yet.{' '}
+                    <Link
+                      to={`/explore?category=${activeCategory.id}`}
+                      onClick={() => setIsCategoriesOpen(false)}
+                      className="font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)]"
+                    >
+                      Browse the category
+                    </Link>
                   </p>
                 ) : (
-                  <div className="grid grid-cols-4 xl:grid-cols-6 gap-x-4 gap-y-6">
-                    {gridItems.map((item) => {
-                      const Icon = getCategoryIcon(item);
-                      return (
-                        <Link
-                          key={item.id}
-                          to={`/explore?category=${item.id}`}
-                          onClick={() => setIsCategoriesOpen(false)}
-                          className="group flex flex-col items-center gap-2 text-center"
-                        >
-                          <div className="w-16 h-16 rounded-full bg-[var(--color-bg-page)] border border-[var(--color-border)] flex items-center justify-center group-hover:border-[var(--color-primary)] group-hover:bg-[var(--color-primary-bg)] transition-colors">
-                            <Icon className="w-7 h-7 text-[var(--color-text-body)] group-hover:text-[var(--color-primary)] transition-colors" />
-                          </div>
-                          <span className="text-[13px] text-[var(--color-text-body)] group-hover:text-[var(--color-primary)] transition-colors line-clamp-2">
-                            {item.name}
-                          </span>
-                        </Link>
-                      );
-                    })}
+                  /* Product images for the active category */
+                  <div className="grid grid-cols-3 xl:grid-cols-4 gap-4">
+                    {activeProducts.map((product) => (
+                      <Link
+                        key={product.id}
+                        to={getProductPath(product)}
+                        onClick={() => setIsCategoriesOpen(false)}
+                        className="group flex flex-col gap-2"
+                      >
+                        <div className="aspect-square overflow-hidden rounded-[12px] border border-[var(--color-border)] bg-[var(--color-bg-page)]">
+                          <ImageWithFallback
+                            src={getProductPrimaryImage(product)}
+                            alt={product.name}
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                        <span className="text-[13px] text-[var(--color-text-body)] group-hover:text-[var(--color-primary)] transition-colors line-clamp-2">
+                          {product.name}
+                        </span>
+                        <span className="text-[13px] font-semibold text-[var(--color-text-heading)]">
+                          {formatCurrency(getProductPrice(product))}
+                        </span>
+                      </Link>
+                    ))}
                   </div>
                 )}
               </div>
