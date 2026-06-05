@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import {
   Search,
-  Smartphone, Shirt, Home as HomeIcon, Watch, Sparkles, Zap, ChevronRight, Store, Dumbbell
+  Zap, ChevronRight, Store
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { ProductCard } from '../components/ui/product-card';
 import { formatCurrency } from '../utils/currency';
@@ -13,25 +12,10 @@ import { getProductPath } from '../utils/products';
 import { useAuth } from '../providers/AuthProvider';
 import { useCart } from '../providers/CartProvider';
 import { useToast } from '../components/ui/toast';
-import { fetchProducts, fetchCategories, CatalogProduct, getProductPrimaryImage, CatalogCategory } from '../services/productService';
-
-const CATEGORY_ICON_MAP = [
-  { pattern: /fashion|apparel|clothing|dress/, icon: Shirt },
-  { pattern: /electronics|phone|tech|device/, icon: Smartphone },
-  { pattern: /home|living|furniture|decor/, icon: HomeIcon },
-  { pattern: /accessories|watch|jewelry/, icon: Watch },
-  { pattern: /beauty|cosmetic|skin/, icon: Sparkles },
-  { pattern: /sport|fitness/, icon: Dumbbell },
-];
-
-function getCategoryIcon(category: CatalogCategory) {
-  const label = `${category.icon || ''} ${category.slug} ${category.name}`.toLowerCase();
-  return CATEGORY_ICON_MAP.find((entry) => entry.pattern.test(label))?.icon || Zap;
-}
+import { fetchProducts, CatalogProduct, getProductPrimaryImage } from '../services/productService';
 
 export function CustomerHome() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [categories, setCategories] = useState<CatalogCategory[]>([]);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,13 +42,9 @@ export function CustomerHome() {
     setIsLoading(true);
     setError(null);
 
-    Promise.all([
-      fetchCategories(),
-      fetchProducts({ per_page: 8, status: 'active' })
-    ])
-      .then(([categoryData, productData]) => {
+    fetchProducts({ per_page: 8, status: 'active' })
+      .then((productData) => {
         if (!isMounted) return;
-        setCategories(categoryData);
         setProducts(productData.products);
       })
       .catch((err) => {
