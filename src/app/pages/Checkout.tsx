@@ -2,9 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
-import { Loader2, ChevronRight } from 'lucide-react';
-
-import { Button } from '../components/ui/button';
 import { useCart } from '../providers/CartProvider';
 import { orderService } from '../services/orderService';
 import { pollPaymentStatus, paymentService } from '../services/paymentService';
@@ -601,59 +598,7 @@ export function Checkout() {
         </div>
       </div>
 
-      {/* Mobile Fixed Bottom Bar */}
-      {step === 2 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--color-border)] p-4 flex items-center gap-4 z-50 sm:hidden shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
-          <div className="flex-1">
-            <p className="text-[11px] text-[var(--color-text-muted)]">Pay Amount</p>
-            <p className="text-[18px] font-bold text-[var(--color-accent)]">{formatCurrency(total)}</p>
-          </div>
-          {paymentFlowStep === 'select' && (
-            <Button
-              variant="primary" size="xl"
-              className="flex-1 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] shadow-[var(--shadow-level-2)]"
-              disabled={loading}
-              onClick={handleStartPaymentFlow}
-            >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>PAY <ChevronRight className="w-5 h-5 ml-1" /></>}
-            </Button>
-          )}
-          {paymentFlowStep === 'request' && (
-            <Button
-              variant="primary" size="xl"
-              className="flex-1 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] shadow-[var(--shadow-level-2)]"
-              onClick={() => {
-                const v = validateProviderPhone(paymentMethod, mpesaPhone);
-                if (!v.valid) { setPaymentPhoneError(v.message); return; }
-                setPaymentPhoneError('');
-                setPaymentFlowStep('confirm');
-              }}
-            >
-              Continue <ChevronRight className="w-5 h-5 ml-1" />
-            </Button>
-          )}
-          {paymentFlowStep === 'confirm' && (
-            <Button
-              variant="primary" size="xl"
-              className="flex-1 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] shadow-[var(--shadow-level-2)]"
-              disabled={loading}
-              onClick={handlePlaceOrder}
-            >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>COMPLETE PAYMENT <ChevronRight className="w-5 h-5 ml-1" /></>}
-            </Button>
-          )}
-          {(paymentFlowStep === 'processing' || paymentFlowStep === 'awaiting' || paymentFlowStep === 'redirecting' || paymentFlowStep === 'hosted_redirect') && (
-            <Button variant="primary" size="xl" className="flex-1 bg-[var(--color-text-muted)]" disabled>
-              <Loader2 className="w-5 h-5 animate-spin mr-2" /> {paymentFlowStep === 'processing' ? 'Processing...' : (paymentFlowStep === 'redirecting' || paymentFlowStep === 'hosted_redirect') ? 'Redirecting...' : 'Waiting...'}
-            </Button>
-          )}
-          {paymentFlowStep === 'qr' && (
-            <Button variant="primary" size="xl" className="flex-1 bg-[var(--color-text-muted)]" disabled>
-              <Loader2 className="w-5 h-5 animate-spin mr-2" /> Waiting for scan...
-            </Button>
-          )}
-        </div>
-      )}
+      {/* Mobile Fixed Bottom Bar removed for embedded design */}
     </div>
   );
 }

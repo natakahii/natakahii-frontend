@@ -13,7 +13,7 @@ export function CheckoutProgress({ step, className }: CheckoutProgressProps) {
   ];
 
   return (
-    <div className={cn("bg-white rounded-[24px] shadow-lg p-4 sm:p-6 mb-6", className)}>
+    <div className={cn("hidden lg:block bg-white rounded-[24px] shadow-lg p-4 sm:p-6 mb-6", className)}>
       <div className="flex items-center justify-center">
         <div className="flex items-center gap-2 sm:gap-4 w-full max-w-lg px-2">
           {steps.map((s, index) => (

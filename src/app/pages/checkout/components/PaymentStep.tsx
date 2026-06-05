@@ -68,10 +68,8 @@ export function PaymentStep({
   mobileNumber,
   qrCodeUrl,
 }: PaymentStepProps) {
-  const isMobileMoney = ['mpesa', 'airtel_money', 'halopesa', 'mixx_by_yas'].includes(paymentMethod);
-
   return (
-    <div className="space-y-8 bg-white p-6 sm:p-8 pb-24 sm:pb-8 rounded-[24px] shadow-sm border border-[var(--color-border)]/50">
+    <div className="space-y-8 bg-white p-6 sm:p-8 rounded-[24px] shadow-sm border border-[var(--color-border)]/50">
       {/* Header */}
       <div className="flex items-center gap-3 pb-6 border-b border-[var(--color-border)]">
         <div className="w-10 h-10 rounded-full bg-[var(--color-accent-bg)] flex items-center justify-center shrink-0">
@@ -145,6 +143,29 @@ export function PaymentStep({
             </button>
           </div>
 
+          {/* Mobile action button - embedded below payment categories */}
+          <div className="sm:hidden mt-6 space-y-4">
+            <div className="flex items-center justify-between p-4 bg-[var(--color-bg-page)] rounded-[16px] border border-[var(--color-border)]/50">
+              <span className="text-[13px] font-semibold text-[var(--color-text-muted)]">Pay Amount</span>
+              <span className="text-[18px] font-bold text-[var(--color-accent)]">{formatCurrency(total)}</span>
+            </div>
+            <Button
+              onClick={handleStartPaymentFlow}
+              disabled={loading}
+              variant="primary"
+              size="xl"
+              className="w-full shadow-[var(--shadow-level-2)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] h-14 text-[16px] font-bold"
+            >
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>PAY <ChevronRight className="w-5 h-5 ml-2" /></>}
+            </Button>
+            <button 
+              onClick={handleBack}
+              className="w-full text-center py-2 text-[14px] font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
+            >
+              Back to Shipping
+            </button>
+          </div>
+
           {error && <div className="text-red-500 text-[14px] font-medium bg-red-50 rounded-[8px] p-3">{error}</div>}
 
           {/* Desktop Pay button */}
@@ -207,6 +228,33 @@ export function PaymentStep({
             </div>
           </div>
 
+          {/* Mobile action button - embedded below phone input and tips */}
+          <div className="sm:hidden mt-6 space-y-4">
+            <div className="flex items-center justify-between p-4 bg-[var(--color-bg-page)] rounded-[16px] border border-[var(--color-border)]/50">
+              <span className="text-[13px] font-semibold text-[var(--color-text-muted)]">Pay Amount</span>
+              <span className="text-[18px] font-bold text-[var(--color-accent)]">{formatCurrency(total)}</span>
+            </div>
+            <Button
+              onClick={() => {
+                const v = validateProviderPhone(paymentMethod, mpesaPhone);
+                if (!v.valid) { setPaymentPhoneError(v.message); return; }
+                setPaymentPhoneError('');
+                setPaymentFlowStep('confirm');
+              }}
+              variant="primary"
+              size="xl"
+              className="w-full shadow-[var(--shadow-level-2)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] h-14 text-[16px] font-bold"
+            >
+              Continue <ChevronRight className="w-5 h-5 ml-2" />
+            </Button>
+            <button 
+              onClick={handleBack}
+              className="w-full text-center py-2 text-[14px] font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
+            >
+              Change Payment Method
+            </button>
+          </div>
+
           {error && <div className="text-red-500 text-[14px] font-medium bg-red-50 rounded-[8px] p-3">{error}</div>}
 
           {/* Desktop Continue button */}
@@ -245,6 +293,29 @@ export function PaymentStep({
               <Phone className="w-4 h-4 text-[var(--color-primary)]" />
               <span className="text-[13px] font-bold text-[var(--color-text-heading)]">{mpesaPhone}</span>
             </div>
+          </div>
+
+          {/* Mobile action button - embedded below confirm instructions */}
+          <div className="sm:hidden mt-6 space-y-4">
+            <div className="flex items-center justify-between p-4 bg-[var(--color-bg-page)] rounded-[16px] border border-[var(--color-border)]/50">
+              <span className="text-[13px] font-semibold text-[var(--color-text-muted)]">Total to Pay</span>
+              <span className="text-[18px] font-bold text-[var(--color-accent)]">{formatCurrency(total)}</span>
+            </div>
+            <Button
+              onClick={handleCompletePayment}
+              disabled={loading}
+              variant="primary"
+              size="xl"
+              className="w-full shadow-[var(--shadow-level-2)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] h-14 text-[16px] font-bold"
+            >
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>COMPLETE PAYMENT <ChevronRight className="w-5 h-5 ml-2" /></>}
+            </Button>
+            <button 
+              onClick={handleBack}
+              className="w-full text-center py-2 text-[14px] font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
+            >
+              Change Details
+            </button>
           </div>
 
           {error && <div className="text-red-500 text-[14px] font-medium bg-red-50 rounded-[8px] p-3">{error}</div>}
