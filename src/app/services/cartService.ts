@@ -9,6 +9,7 @@ export interface CartItem {
     id: number;
     name: string;
     price: number;
+    effective_price?: number;
     stock: number; // Main product stock
     images?: Array<{ image_path: string }>;
   };

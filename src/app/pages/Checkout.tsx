@@ -189,7 +189,10 @@ export function Checkout() {
       .catch(() => setAvailableStations([]));
   }, [selectedWard, selectedDistrict, selectedRegion]);
 
-  const subtotal = items.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => {
+    const price = item.product?.effective_price ?? item.product?.price ?? 0;
+    return sum + price * item.quantity;
+  }, 0);
   const platformFee = Math.round(subtotal * 0.02);
   const shippingCost = shippingProviders.find(p => p.id === shippingMethod)?.price || 0;
   const total = subtotal + platformFee + shippingCost;

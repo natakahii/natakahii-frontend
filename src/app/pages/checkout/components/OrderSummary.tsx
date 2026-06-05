@@ -44,7 +44,7 @@ export function OrderSummary({
                 {item.variant_id ? `Variant: #${item.variant_id}` : 'Default'} · Qty: {item.quantity}
               </p>
               <p className="text-[14px] font-bold text-[var(--color-accent)] mt-1">
-                {formatCurrency((item.product?.price || 0) * item.quantity)}
+                {formatCurrency((item.product?.effective_price ?? item.product?.price ?? 0) * item.quantity)}
               </p>
             </div>
           </div>

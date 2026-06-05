@@ -54,7 +54,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!raw) return null;
     const items = raw.items || [];
     const total_items = raw.total_items ?? items.reduce((sum, item) => sum + item.quantity, 0);
-    const total_amount = raw.total_amount ?? items.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+    const total_amount = raw.total_amount ?? items.reduce((sum, item) => {
+      const price = item.product?.effective_price ?? item.product?.price ?? 0;
+      return sum + price * item.quantity;
+    }, 0);
     return { ...raw, items, total_items, total_amount };
   };
 

@@ -251,7 +251,7 @@ export function SuccessStep({
                   <p className="text-[13px] font-bold text-[var(--color-text-heading)] truncate">{item.product?.name || 'Product'}</p>
                   <p className="text-[12px] text-[var(--color-text-muted)]">Qty: {item.quantity}</p>
                 </div>
-                <p className="text-[13px] font-bold text-[var(--color-text-heading)]">{formatCurrency((item.product?.price || 0) * item.quantity)}</p>
+                <p className="text-[13px] font-bold text-[var(--color-text-heading)]">{formatCurrency((item.product?.effective_price ?? item.product?.price ?? 0) * item.quantity)}</p>
               </div>
             ))}
           </div>
