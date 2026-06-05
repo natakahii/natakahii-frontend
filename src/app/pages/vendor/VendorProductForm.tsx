@@ -2,17 +2,13 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
   ArrowLeft,
-  Film,
   ImagePlus,
-  Info,
   Plus,
-  Save,
   Trash2,
   UploadCloud,
 } from 'lucide-react';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { EmptyState } from '../../components/ui/empty-state';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { Input } from '../../components/ui/input';
@@ -21,8 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Skeleton } from '../../components/ui/skeleton';
 import { Textarea } from '../../components/ui/textarea';
 import { useToast } from '../../components/ui/toast';
-import { VendorSuccessFeedback } from '../../components/vendor';
-import { useAuth } from '../../providers/AuthProvider';
+import { VendorCard, VendorPageHeader, VendorSuccessFeedback } from '../../components/vendor';
 import {
   CatalogCategory,
   CatalogProductImage,
@@ -39,9 +34,8 @@ import {
   updateVendorProduct,
   uploadVendorProductMedia,
 } from '../../services/vendorProductService';
-import { formatCurrency } from '../../utils/currency';
+import { safeFormatCurrency } from '../../utils/currency';
 import { getProductPath } from '../../utils/products';
-import { getVendorStorefrontPath } from '../../utils/storefront';
 
 const MAX_PRODUCT_IMAGES = 10;
 const MAX_PRODUCT_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -116,6 +110,26 @@ function extractFieldErrors(error: any): ProductFieldErrors {
   }, {});
 }
 
+function FormSection({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <VendorCard className="p-5 sm:p-6">
+      <div className="mb-4 sm:mb-5">
+        <h2 className="text-base sm:text-lg font-bold vendor-heading text-[var(--color-text-heading)]">{title}</h2>
+        {hint ? <p className="text-xs sm:text-sm text-[var(--color-text-muted)] mt-1 vendor-body">{hint}</p> : null}
+      </div>
+      {children}
+    </VendorCard>
+  );
+}
+
 function buildVariantRowsFromProduct(productResponse: VendorProductDetailResponse['product']): VariantRowState[] {
   return productResponse.variants.map((variant, index) => ({
     id: variant.id ? `variant-${variant.id}` : `variant-${index}`,
@@ -167,7 +181,6 @@ export function VendorProductForm() {
   const { productId } = useParams<{ productId: string }>();
   const isEditMode = Boolean(productId);
   const { toast } = useToast();
-  const { user } = useAuth();
   const previewUrlsRef = useRef<string[]>([]);
   const videoPreviewUrlRef = useRef<string | null>(null);
 
@@ -205,8 +218,6 @@ export function VendorProductForm() {
   );
   const totalImageCount = existingImages.length + newImages.length;
   const previewImage = newImages[0]?.preview || existingImages[0]?.image_path || '/natakahii-logo.png';
-  const storefrontPath = getVendorStorefrontPath(user?.vendor);
-  const hasStorefront = Boolean(user?.vendor?.shop_slug || user?.vendor?.id);
   const publicProductPath = currentProductId
     ? getProductPath({ id: currentProductId, slug: currentProductSlug })
     : null;
@@ -657,32 +668,14 @@ export function VendorProductForm() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Skeleton className="w-10 h-10 rounded-full" />
-          <div className="space-y-2">
-            <Skeleton className="w-48 h-7" />
-            <Skeleton className="w-72 h-4" />
-          </div>
-        </div>
+        <Skeleton className="h-10 w-56 rounded-xl" />
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2 space-y-6">
+          <div className="xl:col-span-2 space-y-4">
             {Array.from({ length: 4 }).map((_, index) => (
-              <Card key={index} className="border-[var(--color-border)] shadow-sm">
-                <CardContent className="p-6 space-y-4">
-                  <Skeleton className="w-48 h-6" />
-                  <Skeleton className="w-full h-12" />
-                  <Skeleton className="w-full h-36" />
-                </CardContent>
-              </Card>
+              <Skeleton key={index} className="h-48 rounded-[24px]" />
             ))}
           </div>
-          <Card className="border-[var(--color-border)] shadow-sm">
-            <CardContent className="p-6 space-y-4">
-              <Skeleton className="aspect-square rounded-[18px]" />
-              <Skeleton className="w-3/4 h-6" />
-              <Skeleton className="w-1/2 h-5" />
-            </CardContent>
-          </Card>
+          <Skeleton className="h-96 rounded-[24px]" />
         </div>
       </div>
     );
@@ -701,81 +694,60 @@ export function VendorProductForm() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24 lg:pb-6">
       <VendorSuccessFeedback
         show={showSuccess}
         message={isEditMode ? 'Product Updated!' : 'Product Created!'}
         onComplete={() => navigate('/vendor/dashboard/products')}
       />
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/vendor/dashboard/products')}>
-            <ArrowLeft className="w-5 h-5 text-[var(--color-text-heading)]" />
-          </Button>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text-heading)]">
-              {isEditMode ? 'Edit Product' : 'Add New Product'}
-            </h1>
-            <p className="text-[var(--color-text-muted)]">
-              Build a real catalog listing with gallery images, inventory details, variants, and optional video-commerce media.
-            </p>
-          </div>
-        </div>
 
-        <div className="flex flex-wrap gap-2">
-          {publicProductPath && currentStatus === 'active' && (
-            <Button
-              type="button"
-              variant="outline"
-              className="border-[var(--color-primary)] text-[var(--color-primary)]"
-              onClick={() => navigate(publicProductPath)}
-            >
-              View Public Product
-            </Button>
-          )}
-          {hasStorefront && (
-            <Button
-              type="button"
-              variant="outline"
-              className="border-[var(--color-primary)] text-[var(--color-primary)]"
-              onClick={() => navigate(storefrontPath)}
-            >
-              View Storefront
-            </Button>
-          )}
-          <Badge className="capitalize bg-[var(--color-primary-bg)] text-[var(--color-primary)] hover:bg-[var(--color-primary-bg)]">
+      <VendorPageHeader
+        title={isEditMode ? 'Edit Product' : 'Add Product'}
+        description="Listing details, media, and inventory."
+        badge={
+          <Badge className="capitalize bg-[var(--vendor-accent-action-bg)] text-[var(--vendor-accent-action)] border-0">
             {formatStatus(currentStatus)}
           </Badge>
-          <Button
-            type="button"
-            variant="outline"
-            className="border-[var(--color-primary)] text-[var(--color-primary)]"
-            onClick={() => void handleSubmit('draft')}
-            isLoading={submitMode === 'draft'}
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Save as Draft
-          </Button>
-          <Button
-            type="button"
-            className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white"
-            onClick={() => void handleSubmit('active')}
-            isLoading={submitMode === 'active'}
-          >
-            {isEditMode ? 'Update Live Product' : 'Publish Product'}
-          </Button>
-        </div>
+        }
+        actions={
+          <div className="hidden sm:flex flex-wrap gap-2">
+            {publicProductPath && currentStatus === 'active' && (
+              <Button type="button" variant="outline" className="rounded-xl" onClick={() => navigate(publicProductPath)}>
+                View Live
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => void handleSubmit('draft')}
+              isLoading={submitMode === 'draft'}
+            >
+              Save Draft
+            </Button>
+            <Button
+              type="button"
+              className="rounded-xl bg-[var(--vendor-accent-action)] hover:bg-[#6d28d9] text-white"
+              onClick={() => void handleSubmit('active')}
+              isLoading={submitMode === 'active'}
+            >
+              {isEditMode ? 'Update' : 'Publish'}
+            </Button>
+          </div>
+        }
+      />
+
+      <div className="flex sm:hidden">
+        <Button variant="ghost" size="sm" className="-ml-2 gap-1" onClick={() => navigate('/vendor/dashboard/products')}>
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-        <div className="xl:col-span-2 space-y-6">
-          <Card className="border-[var(--color-border)] shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Basic Information</CardTitle>
-              <CardDescription>These details power your storefront listing and product discovery.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="space-y-1.5">
+        <div className="xl:col-span-2 space-y-4 sm:space-y-6">
+          <FormSection title="Basics">
+            <div className="space-y-4">
                 <Label htmlFor="product-name">Product Name</Label>
                 <Input
                   id="product-name"
@@ -822,22 +794,16 @@ export function VendorProductForm() {
                     setDescription(event.target.value);
                     clearFieldError('description');
                   }}
-                  placeholder="Describe the product, materials, fit, key selling points, and anything buyers should know."
-                  className="min-h-[180px]"
+                  placeholder="Describe materials, fit, and key details."
+                  className="min-h-[140px]"
                   aria-invalid={Boolean(fieldErrors.description)}
                 />
                 {fieldErrors.description && <p className="text-[12px] font-bold text-[var(--color-error)]">{fieldErrors.description}</p>}
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </FormSection>
 
-          <Card className="border-[var(--color-border)] shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Pricing & Inventory</CardTitle>
-              <CardDescription>Set the base listing price, stock, and storefront inventory status.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
+          <FormSection title="Pricing & stock">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Label htmlFor="product-price">Regular Price (TZS)</Label>
                 <Input
                   id="product-price"
@@ -855,7 +821,7 @@ export function VendorProductForm() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="product-discount">Discount Price (Optional)</Label>
+                <Label htmlFor="product-discount">Sale price</Label>
                 <Input
                   id="product-discount"
                   type="number"
@@ -886,24 +852,17 @@ export function VendorProductForm() {
                   error={Boolean(fieldErrors.stock)}
                 />
                 {fieldErrors.stock && <p className="text-[12px] font-bold text-[var(--color-error)]">{fieldErrors.stock}</p>}
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </FormSection>
 
-          <Card className="border-[var(--color-border)] shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Product Gallery</CardTitle>
-              <CardDescription>These images appear on the storefront product page. The first image becomes the cover image.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <label className="border-2 border-dashed border-[var(--color-primary)] bg-[var(--color-primary-bg)]/30 rounded-[20px] p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-[var(--color-primary-bg)]/50 transition-colors">
-                <div className="w-12 h-12 rounded-full bg-[var(--color-primary-bg)] flex items-center justify-center mb-4">
-                  <UploadCloud className="w-6 h-6 text-[var(--color-primary)]" />
+          <FormSection title="Gallery" hint={`Up to ${MAX_PRODUCT_IMAGES} images · JPG, PNG, WebP · 5 MB max`}>
+            <div className="space-y-4">
+              <label className="border-2 border-dashed border-[var(--vendor-accent-action)]/30 bg-[var(--vendor-accent-action-bg)]/20 rounded-[20px] p-6 sm:p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-[var(--vendor-accent-action-bg)]/40 transition-colors">
+                <div className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center mb-3 shadow-sm">
+                  <UploadCloud className="w-5 h-5 text-[var(--vendor-accent-action)]" />
                 </div>
-                <h3 className="font-semibold text-[var(--color-text-heading)]">Upload Product Images</h3>
-                <p className="text-sm text-[var(--color-text-muted)] mt-1">
-                  Add up to {MAX_PRODUCT_IMAGES} images. JPEG, PNG, and WebP are supported, up to 5 MB each.
-                </p>
+                <h3 className="font-semibold text-sm text-[var(--color-text-heading)]">Upload images</h3>
+                <p className="text-xs text-[var(--color-text-muted)] mt-1">First image becomes the cover</p>
                     <input type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple className="hidden" onChange={handleAddImages} />
               </label>
 
@@ -948,19 +907,15 @@ export function VendorProductForm() {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-[18px] border border-dashed border-[var(--color-border)] p-6 text-sm text-[var(--color-text-muted)] text-center">
-                  No product images added yet.
+                <div className="rounded-[16px] border border-dashed border-[var(--color-border)] p-6 text-sm text-[var(--color-text-muted)] text-center">
+                  No images yet
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </FormSection>
 
-          <Card className="border-[var(--color-border)] shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Variants</CardTitle>
-              <CardDescription>Create color, size, or option-based SKUs when your product has multiple buyable versions.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
+          <FormSection title="Variants" hint="Optional — for size, color, or SKU options">
+            <div className="space-y-4">
               {variantAttributes.length > 0 ? (
                 <>
                   <div className="space-y-3">
@@ -989,13 +944,10 @@ export function VendorProductForm() {
 
                   {selectedVariantAttributeIds.length > 0 ? (
                     <>
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm text-[var(--color-text-muted)]">
-                          Add one row for each sellable variant combination you want vendors to manage.
-                        </div>
-                        <Button type="button" variant="outline" size="sm" onClick={addVariantRow}>
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Variant Row
+                      <div className="flex justify-between items-center gap-3 flex-wrap">
+                        <Button type="button" variant="outline" size="sm" className="rounded-xl" onClick={addVariantRow}>
+                          <Plus className="w-4 h-4 mr-1" />
+                          Add row
                         </Button>
                       </div>
 
@@ -1138,37 +1090,27 @@ export function VendorProductForm() {
                           ))}
                         </div>
                       ) : (
-                        <div className="rounded-[18px] border border-dashed border-[var(--color-border)] p-6 text-sm text-[var(--color-text-muted)] text-center">
-                          Variant attributes are selected, but no variant rows exist yet.
+                        <div className="rounded-[16px] border border-dashed border-[var(--color-border)] p-5 text-sm text-[var(--color-text-muted)] text-center">
+                          Add variant rows above
                         </div>
                       )}
                     </>
                   ) : (
-                    <div className="rounded-[18px] border border-dashed border-[var(--color-border)] p-6 text-sm text-[var(--color-text-muted)]">
-                      Leave this section empty if the product is sold as one simple item with no option-based SKUs.
+                    <div className="rounded-[16px] border border-dashed border-[var(--color-border)] p-5 text-sm text-[var(--color-text-muted)]">
+                      Select attributes above to add variant rows.
                     </div>
                   )}
                 </>
               ) : (
-                <div className="rounded-[18px] border border-dashed border-[var(--color-border)] p-6 text-sm text-[var(--color-text-muted)] text-center">
-                  This product will be sold as a single item. Variant options are not enabled for this platform.
+                <div className="rounded-[16px] border border-dashed border-[var(--color-border)] p-5 text-sm text-[var(--color-text-muted)] text-center">
+                  Single-item listing — no variants
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </FormSection>
 
-          <Card className="border-[var(--color-border)] shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Social Commerce Media</CardTitle>
-              <CardDescription>Attach a short-form product video so this listing can participate in the video feed and seller storytelling flow.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="rounded-[18px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 flex items-start gap-3">
-                <Film className="w-5 h-5 text-[var(--color-primary)] mt-0.5 shrink-0" />
-                <p className="text-sm text-[var(--color-text-body)]">
-                  Videos upload after the product itself is saved. That keeps product publishing reliable even if a large video file needs a second step.
-                </p>
-              </div>
+          <FormSection title="Video" hint="Optional · MP4/WebM · uploads after save">
+            <div className="space-y-4">
 
               {socialVideos.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1197,16 +1139,16 @@ export function VendorProductForm() {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-[18px] border border-dashed border-[var(--color-border)] p-6 text-sm text-[var(--color-text-muted)] text-center">
-                  No social commerce videos have been attached yet.
+                <div className="rounded-[16px] border border-dashed border-[var(--color-border)] p-5 text-sm text-[var(--color-text-muted)] text-center">
+                  No video attached
                 </div>
               )}
 
-              <div className="rounded-[20px] border-2 border-dashed border-[var(--color-accent)] bg-[var(--color-accent-bg)]/30 p-6 space-y-4">
+              <div className="rounded-[20px] border-2 border-dashed border-[var(--vendor-accent-action)]/40 bg-[var(--vendor-accent-action-bg)]/20 p-5 space-y-4">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div>
-                    <h3 className="font-semibold text-[var(--color-text-heading)]">Upload a Feed Video</h3>
-                    <p className="text-sm text-[var(--color-text-muted)] mt-1">MP4 or WebM, up to 50MB. Great for demos, styling clips, and short product explainers.</p>
+                    <h3 className="font-semibold text-sm text-[var(--color-text-heading)]">Add feed video</h3>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">MP4 or WebM, up to 50 MB</p>
                   </div>
                   <label className="inline-flex items-center gap-2 cursor-pointer rounded-full bg-white border border-[var(--color-border)] px-4 py-2 text-sm font-semibold text-[var(--color-text-heading)]">
                     <ImagePlus className="w-4 h-4" />
@@ -1244,35 +1186,30 @@ export function VendorProductForm() {
 
                 {fieldErrors.video && <p className="text-[12px] font-bold text-[var(--color-error)]">{fieldErrors.video}</p>}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </FormSection>
         </div>
 
         <div className="xl:col-span-1">
-          <div className="sticky top-24 space-y-6">
-            <Card className="border-[var(--color-border)] shadow-sm overflow-hidden">
-              <div className="bg-[var(--color-bg-card)] p-4 flex justify-between items-center border-b border-[var(--color-border)]">
-                <span className="font-medium text-[var(--color-text-heading)] flex items-center gap-2">
-                  <Info className="w-4 h-4 text-[var(--color-text-muted)]" />
-                  Listing Preview
-                </span>
-                <Badge variant="outline" className="capitalize bg-white text-[var(--color-text-heading)] border-[var(--color-border)]">
-                  {formatStatus(currentStatus)}
-                </Badge>
+          <div className="xl:sticky xl:top-24 space-y-4">
+            <VendorCard glow className="overflow-hidden p-0">
+              <div className="bg-[var(--color-bg-card)]/80 px-4 py-3 flex justify-between items-center border-b border-[var(--color-border)]">
+                <span className="text-sm font-medium text-[var(--color-text-heading)]">Preview</span>
+                <Badge variant="outline" className="capitalize text-xs">{formatStatus(currentStatus)}</Badge>
               </div>
-              <CardContent className="p-4 space-y-4">
+              <div className="p-4 space-y-4">
                 <div className="aspect-square bg-[var(--color-bg-page)] rounded-[18px] border border-[var(--color-border)] overflow-hidden">
                   <ImageWithFallback src={previewImage} alt={name || 'Product preview'} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-[var(--color-text-heading)] line-clamp-2">
-                    {name || 'Your product name will appear here'}
+                  <h3 className="font-bold text-base sm:text-lg text-[var(--color-text-heading)] line-clamp-2">
+                    {name || 'Product name'}
                   </h3>
-                  <p className="text-[var(--color-accent)] font-bold text-xl mt-2">
-                    {price ? formatCurrency(Number(price)) : formatCurrency(0)}
+                  <p className="text-[var(--vendor-accent-action)] font-bold text-xl mt-1">
+                    {price ? safeFormatCurrency(Number(price)) : safeFormatCurrency(0)}
                   </p>
                   {discountPrice && Number(discountPrice) < Number(price || 0) ? (
-                    <p className="text-sm text-[var(--color-text-muted)] line-through">{formatCurrency(Number(price))}</p>
+                    <p className="text-sm text-[var(--color-text-muted)] line-through">{safeFormatCurrency(Number(price))}</p>
                   ) : null}
                 </div>
 
@@ -1290,55 +1227,71 @@ export function VendorProductForm() {
                 </div>
 
                 {selectedVariantAttributes.length > 0 && (
-                  <div className="rounded-[16px] border border-[var(--color-border)] p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.3px] text-[var(--color-text-muted)] mb-2">Variant Setup</p>
-                    <div className="flex flex-wrap gap-2">
+                  <div className="rounded-[14px] border border-[var(--color-border)] p-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-2">Variants</p>
+                    <div className="flex flex-wrap gap-1.5">
                       {selectedVariantAttributes.map((attribute) => (
-                        <Badge key={attribute.id} variant="outline" className="bg-[var(--color-primary-bg)] text-[var(--color-primary)] border-transparent">
+                        <Badge key={attribute.id} variant="outline" className="text-xs bg-[var(--vendor-accent-action-bg)] text-[var(--vendor-accent-action)] border-0">
                           {attribute.name}
                         </Badge>
                       ))}
                     </div>
-                    <p className="text-xs text-[var(--color-text-muted)] mt-3">{variantRows.length} sellable variant row{variantRows.length === 1 ? '' : 's'} configured</p>
+                    <p className="text-xs text-[var(--color-text-muted)] mt-2">{variantRows.length} row{variantRows.length === 1 ? '' : 's'}</p>
                   </div>
                 )}
 
-                <div className="rounded-[16px] border border-[var(--color-border)] p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.3px] text-[var(--color-text-muted)] mb-2">Social Commerce</p>
-                  <p className="text-sm text-[var(--color-text-body)]">
+                <div className="rounded-[14px] border border-[var(--color-border)] p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] mb-1">Video</p>
+                  <p className="text-xs text-[var(--color-text-body)]">
                     {socialVideos.length + (newVideoFile ? 1 : 0) > 0
-                      ? `${socialVideos.length + (newVideoFile ? 1 : 0)} video asset${socialVideos.length + (newVideoFile ? 1 : 0) === 1 ? '' : 's'} ready for the feed.`
-                      : 'No video attached yet.'}
+                      ? `${socialVideos.length + (newVideoFile ? 1 : 0)} attached`
+                      : 'None'}
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </VendorCard>
 
-            <div className="flex flex-col gap-3">
+            <div className="hidden lg:flex flex-col gap-3">
               <Button
                 type="button"
-                className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white font-bold text-base h-14"
+                className="w-full rounded-xl bg-[var(--vendor-accent-action)] hover:bg-[#6d28d9] text-white font-bold h-12"
                 onClick={() => void handleSubmit('active')}
                 isLoading={submitMode === 'active'}
               >
-                {isEditMode ? 'Update Live Product' : 'Publish Product'}
+                {isEditMode ? 'Update' : 'Publish'}
               </Button>
               <Button
                 type="button"
                 variant="outline"
-                className="w-full border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary-bg)] h-14"
+                className="w-full rounded-xl h-12"
                 onClick={() => void handleSubmit('draft')}
                 isLoading={submitMode === 'draft'}
               >
-                Save as Draft
+                Save Draft
               </Button>
             </div>
-
-            <p className="text-xs text-center text-[var(--color-text-muted)]">
-              Publishing makes the product available in the live storefront. Social commerce video uploads happen right after the product save finishes.
-            </p>
           </div>
         </div>
+      </div>
+
+      <div className="fixed bottom-16 left-0 right-0 z-30 border-t border-[var(--color-border)] bg-white/95 backdrop-blur-md p-3 flex gap-2 sm:hidden md:ml-0">
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1 rounded-xl h-11"
+          onClick={() => void handleSubmit('draft')}
+          isLoading={submitMode === 'draft'}
+        >
+          Draft
+        </Button>
+        <Button
+          type="button"
+          className="flex-1 rounded-xl h-11 bg-[var(--vendor-accent-action)] hover:bg-[#6d28d9] text-white"
+          onClick={() => void handleSubmit('active')}
+          isLoading={submitMode === 'active'}
+        >
+          {isEditMode ? 'Update' : 'Publish'}
+        </Button>
       </div>
     </div>
   );

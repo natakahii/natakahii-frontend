@@ -188,7 +188,14 @@ export function VendorWalletPage() {
               size="sm"
               onClick={() => setPayoutModalOpen(true)}
               disabled={!wallet || wallet.available_balance < MIN_PAYOUT_AMOUNT}
-              className="gap-2 rounded-xl bg-[var(--vendor-accent-action)] hover:bg-[#6d28d9]"
+              title={
+                !wallet
+                  ? 'Loading wallet…'
+                  : wallet.available_balance < MIN_PAYOUT_AMOUNT
+                    ? `Minimum payout: ${MIN_PAYOUT_AMOUNT.toLocaleString()} TZS (available: ${safeFormatCurrency(wallet.available_balance)})`
+                    : 'Request a payout'
+              }
+              className="gap-2 rounded-xl bg-[var(--vendor-accent-action)] hover:bg-[#6d28d9] disabled:opacity-40"
             >
               <Plus className="h-4 w-4" />
               Request Payout
@@ -196,6 +203,13 @@ export function VendorWalletPage() {
           </>
         }
       />
+
+      {wallet && wallet.available_balance < MIN_PAYOUT_AMOUNT && (
+        <p className="text-sm text-[var(--color-text-muted)] vendor-body -mt-2">
+          Request Payout unlocks when available balance reaches {MIN_PAYOUT_AMOUNT.toLocaleString()} TZS
+          (currently {safeFormatCurrency(wallet.available_balance)}).
+        </p>
+      )}
 
       {error && !wallet && <VendorInlineError message={error} onRetry={() => loadWallet(page, transactionType)} />}
 
