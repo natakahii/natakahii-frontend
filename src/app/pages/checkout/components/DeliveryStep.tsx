@@ -54,7 +54,7 @@ export function DeliveryStep({
   error,
 }: DeliveryStepProps) {
   return (
-    <div className="space-y-8 bg-white p-6 sm:p-8 pb-24 sm:pb-8 rounded-[24px] shadow-sm border border-[var(--color-border)]/50">
+    <div className="space-y-8 bg-white p-6 sm:p-8 rounded-[24px] shadow-sm border border-[var(--color-border)]/50">
       <div className="flex items-center gap-3 pb-6 border-b border-[var(--color-border)]">
         <div className="w-10 h-10 rounded-full bg-[var(--color-primary-bg)] flex items-center justify-center shrink-0">
           <MapPin className="w-5 h-5 text-[var(--color-primary)]" />
@@ -122,6 +122,24 @@ export function DeliveryStep({
             </button>
           </div>
         )}
+
+        {/* Mobile action button - embedded below address section */}
+        <div className="sm:hidden mt-6 space-y-2">
+          <Button
+            onClick={handleNext}
+            variant="primary"
+            size="xl"
+            className="w-full shadow-[var(--shadow-level-2)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] h-14 text-[16px] font-bold"
+          >
+            CONFIRM ORDER <ChevronRight className="w-5 h-5 ml-2" />
+          </Button>
+          <button 
+            onClick={handleBack}
+            className="w-full text-center py-2 text-[14px] font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
+          >
+            Back to Cart
+          </button>
+        </div>
       </div>
 
       {error && <div className="text-red-500 text-[14px] font-medium bg-red-50 rounded-[8px] p-3">{error}</div>}

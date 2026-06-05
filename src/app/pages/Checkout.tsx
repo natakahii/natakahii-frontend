@@ -462,7 +462,7 @@ export function Checkout() {
 
   if (step === 3) {
     return (
-      <div className="bg-black/50 fixed inset-0 z-40 flex items-start justify-center overflow-y-auto p-4 sm:p-6 backdrop-blur-sm">
+      <div className="bg-black/50 fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto p-4 sm:p-6 backdrop-blur-sm">
         <div className="w-full max-w-6xl relative z-10 my-auto">
           <CheckoutProgress step={3} />
           <SuccessStep 
@@ -492,7 +492,7 @@ export function Checkout() {
   }
 
   return (
-    <div className="bg-black/50 fixed inset-0 z-40 flex items-start justify-center overflow-y-auto p-4 sm:p-6 backdrop-blur-sm">
+    <div className="bg-black/50 fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto p-4 sm:p-6 backdrop-blur-sm">
       <div className="w-full max-w-[720px] relative z-10 my-auto">
         <CheckoutProgress step={step} />
 
@@ -602,21 +602,6 @@ export function Checkout() {
       </div>
 
       {/* Mobile Fixed Bottom Bar */}
-      {step === 1 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--color-border)] p-4 flex items-center gap-4 z-50 sm:hidden shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
-          <div className="flex-1">
-            <p className="text-[11px] text-[var(--color-text-muted)]">Total Amount</p>
-            <p className="text-[18px] font-bold text-[var(--color-accent)]">{formatCurrency(total)}</p>
-          </div>
-          <Button
-            variant="primary" size="xl"
-            className="flex-1 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] shadow-[var(--shadow-level-2)]"
-            onClick={handleNext}
-          >
-            CONFIRM ORDER <ChevronRight className="w-5 h-5 ml-1" />
-          </Button>
-        </div>
-      )}
       {step === 2 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--color-border)] p-4 flex items-center gap-4 z-50 sm:hidden shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
           <div className="flex-1">
