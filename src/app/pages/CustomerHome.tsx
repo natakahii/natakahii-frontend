@@ -151,25 +151,7 @@ export function CustomerHome() {
       </section>
 
       <div className="container mx-auto px-4 flex flex-col gap-12 lg:gap-16">
-        
-        {/* CATEGORIES */}
-        <section>
-          <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar snap-x snap-mandatory -mx-4 px-4 lg:mx-0 lg:px-0">
-            {categories.slice(0, 6).map((category) => {
-              const Icon = getCategoryIcon(category);
-              return (
-                <Link to={`/explore?category=${category.id}`} key={category.id} className="snap-start shrink-0 w-[100px] md:w-[120px] group flex flex-col items-center gap-3">
-                  <div className="w-[80px] h-[80px] md:w-[100px] md:h-[100px] rounded-[24px] bg-white border border-[var(--color-border)] flex items-center justify-center shadow-sm group-hover:shadow-md group-hover:border-[var(--color-primary)] transition-all duration-300 group-hover:-translate-y-1">
-                    <Icon className="w-8 h-8 text-[var(--color-text-heading)] group-hover:text-[var(--color-primary)] transition-colors" />
-                  </div>
-                  <span className="text-[13px] md:text-[14px] font-medium text-center text-[var(--color-text-heading)] group-hover:text-[var(--color-primary)]">
-                    {category.name}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
+      
 
         {/* FOR YOU */}
         <section>
