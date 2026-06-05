@@ -40,6 +40,20 @@ export function CustomerHome() {
   const { toast } = useToast();
 
   useEffect(() => {
+    if (user) {
+      const hasWelcomedThisSession = sessionStorage.getItem(`welcomed_${user.id}`);
+      if (!hasWelcomedThisSession) {
+        toast({ 
+           type: 'success', 
+           title: `Welcome back, ${user.name}!`,
+           message: "Great to see you again."
+         });
+        sessionStorage.setItem(`welcomed_${user.id}`, 'true');
+      }
+    }
+  }, [user, toast]);
+
+  useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
     setError(null);
@@ -76,22 +90,15 @@ export function CustomerHome() {
   return (
     <div className="flex flex-col gap-8 lg:gap-16 pb-20">
       
-      {/* PERSONALIZED HERO & AI RECOMMENDATION STRIP */}
+      {/* HERO & RECOMMENDATION STRIP */}
       <section className="bg-white border-b border-[var(--color-border)] pb-8 pt-6 lg:pt-10">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
-            <div>
-              <h1 className="text-[32px] md:text-[40px] font-bold text-[var(--color-text-heading)] tracking-tight">
-                Karibu, <span className="text-[var(--color-primary)]">{user?.name || 'there'}!</span> 👋
-              </h1>
-              <p className="text-[16px] text-[var(--color-text-muted)] mt-1">Ready to discover something new today?</p>
-            </div>
-            
-            <div className="w-full md:w-auto flex-1 max-w-md bg-white rounded-full flex items-center p-1.5 border border-[var(--color-border)] focus-within:border-[var(--color-primary)] focus-within:ring-2 focus-within:ring-[var(--color-primary-lighter)] transition-all">
+            <div className="w-full md:w-auto flex-1 max-w-2xl bg-white rounded-full flex items-center p-1.5 border border-[var(--color-border)] focus-within:border-[var(--color-primary)] focus-within:ring-2 focus-within:ring-[var(--color-primary-lighter)] transition-all">
               <Search className="w-5 h-5 text-[var(--color-text-muted)] ml-3" />
               <input 
                 type="text" 
-                placeholder="Search for items, brands..." 
+                placeholder="Search for items, brands, categories..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 bg-transparent border-none text-[15px] font-medium text-[var(--color-text-heading)] placeholder:text-[var(--color-text-muted)] focus:outline-none px-3 h-10"
@@ -100,17 +107,17 @@ export function CustomerHome() {
             </div>
           </div>
 
-          {/* AI Recommendation Strip */}
-          <div className="bg-white rounded-[16px] p-5 md:p-6 flex flex-col md:flex-row items-center gap-6 border border-[var(--color-border)] shadow-sm">
-            <div className="flex items-center gap-4 shrink-0 bg-white p-4 rounded-[12px] border border-[var(--color-border)]">
-              <div className="w-12 h-12 rounded-full bg-[var(--color-accent-bg)] flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-[var(--color-accent)]" />
+          {/* Browsing Recommendation Strip */}
+          <div className="bg-[var(--color-bg-page)] rounded-[20px] p-5 md:p-6 flex flex-col md:flex-row items-center gap-6 border border-[var(--color-border)] shadow-sm">
+            <div className="flex items-center gap-4 shrink-0 px-2">
+              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm border border-[var(--color-border)]">
+                <Zap className="w-6 h-6 text-[var(--color-primary)]" />
               </div>
               <div>
-                <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] flex items-center gap-2">
-                  AI Picks for You <Badge variant="hot-deal" className="bg-[var(--color-accent)]/10 text-[var(--color-accent)]">New</Badge>
+                <h3 className="font-bold text-[17px] text-[var(--color-text-heading)]">
+                  Pick up where you left off
                 </h3>
-                <p className="text-[13px] text-[var(--color-text-muted)]">Based on your recent browsing</p>
+                <p className="text-[13px] text-[var(--color-text-muted)]">Based on your browsing history</p>
               </div>
             </div>
 

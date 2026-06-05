@@ -832,7 +832,7 @@ export function Checkout() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-8 bg-white p-6 sm:p-8 rounded-[24px] shadow-sm border border-[var(--color-border)]/50"
+                  className="space-y-8 bg-white p-6 sm:p-8 pb-24 sm:pb-8 rounded-[24px] shadow-sm border border-[var(--color-border)]/50"
                 >
                   <div className="flex items-center gap-3 pb-6 border-b border-[var(--color-border)]">
                     <div className="w-10 h-10 rounded-full bg-[var(--color-primary-bg)] flex items-center justify-center shrink-0">
@@ -965,7 +965,7 @@ export function Checkout() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-8 bg-white p-6 sm:p-8 rounded-[24px] shadow-sm border border-[var(--color-border)]/50"
+                  className="space-y-8 bg-white p-6 sm:p-8 pb-24 sm:pb-8 rounded-[24px] shadow-sm border border-[var(--color-border)]/50"
                 >
                   {/* Header */}
                   <div className="flex items-center gap-3 pb-6 border-b border-[var(--color-border)]">
@@ -1290,8 +1290,8 @@ export function Checkout() {
 
             {/* ─── Address Modal ─── */}
             <Dialog open={addressDrawerOpen} onOpenChange={setAddressDrawerOpen}>
-              <DialogContent className="bg-white sm:max-w-[520px] p-0 gap-0 overflow-hidden rounded-[20px]">
-                <DialogHeader className="border-b border-[var(--color-border)] pb-4 pt-6 px-6 relative">
+              <DialogContent className="bg-white sm:max-w-[520px] p-0 gap-0 overflow-hidden rounded-[20px] flex flex-col max-h-[90vh] sm:max-h-[85vh]">
+                <DialogHeader className="border-b border-[var(--color-border)] pb-4 pt-6 px-4 sm:px-6 relative shrink-0">
                   <DialogTitle className="text-center text-[18px] text-[var(--color-text-heading)]">
                     {locView !== 'none' ? 'Where To Ship Your Product' : 'Shipping Address'}
                   </DialogTitle>
@@ -1300,7 +1300,7 @@ export function Checkout() {
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="overflow-y-auto p-6 space-y-5 max-h-[65vh]">
+                <div className="overflow-y-auto p-4 sm:p-6 space-y-5 flex-1">
                   {/* Location Selector View */}
                   {locView !== 'none' && (
                     <div className="space-y-3">
@@ -1543,7 +1543,7 @@ export function Checkout() {
 
                 {/* Footer */}
                 {locView === 'none' && (
-                  <div className="border-t border-[var(--color-border)] p-6">
+                  <div className="border-t border-[var(--color-border)] p-4 sm:p-6 shrink-0 bg-white">
                     <Button
                       variant="primary"
                       size="xl"
@@ -1559,8 +1559,8 @@ export function Checkout() {
 
             {/* ─── Payment Method Modal ─── */}
             <Dialog open={paymentDrawerOpen} onOpenChange={setPaymentDrawerOpen}>
-              <DialogContent className="bg-white sm:max-w-[480px] p-0 gap-0 overflow-hidden rounded-[20px]">
-                <DialogHeader className="border-b border-[var(--color-border)] pb-4 pt-6 px-6 relative">
+              <DialogContent className="bg-white sm:max-w-[480px] p-0 gap-0 overflow-hidden rounded-[20px] flex flex-col max-h-[90vh] sm:max-h-[85vh]">
+                <DialogHeader className="border-b border-[var(--color-border)] pb-4 pt-6 px-4 sm:px-6 relative shrink-0">
                   <DialogTitle className="text-center text-[18px] text-[var(--color-text-heading)]">
                     {paymentDrawerCategory === 'mobile' ? 'Mobile Payment' : paymentDrawerCategory === 'card' ? 'Card / Bank Payment' : 'Select Payment Method'}
                   </DialogTitle>
@@ -1569,7 +1569,7 @@ export function Checkout() {
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="overflow-y-auto p-6 space-y-3 max-h-[60vh]">
+                <div className="overflow-y-auto p-4 sm:p-6 space-y-3 flex-1">
                   {paymentDrawerCategory === 'mobile' && (
                     <>
                       {mobileProviders.map((provider) => (
