@@ -460,99 +460,97 @@ export function MegaMenu() {
         {/* ─── All Categories Dropdown ─── */}
         {activeDropdown === 'categories' && (
           <div className="absolute left-0 right-0 top-full" onMouseEnter={cancelClose}>
-            <div className="container mx-auto px-4">
-              <div className="flex bg-white rounded-b-[16px] border border-t-0 border-[var(--color-border)] shadow-[var(--shadow-level-3)] overflow-hidden max-h-[70vh]">
-                {/* Sidebar */}
-                <div className="w-[220px] shrink-0 border-r border-[var(--color-border)] py-3 overflow-y-auto">
-                  <button
-                    type="button"
-                    onMouseEnter={() => setActiveKey(FEATURED)}
-                    className={cn(
-                      'flex items-center gap-3 w-full text-left px-5 py-2.5 text-[13px] font-medium transition-colors',
-                      activeKey === FEATURED
-                        ? 'bg-[var(--color-primary-bg)] text-[var(--color-primary)]'
-                        : 'text-[var(--color-text-body)] hover:bg-[var(--color-bg-page)]',
-                    )}
-                  >
-                    <Star className="w-4 h-4" />
-                    Categories for you
-                  </button>
+            <div className="flex bg-white border border-t-0 border-[var(--color-border)] shadow-[var(--shadow-level-3)] overflow-hidden max-h-[70vh]">
+              {/* Sidebar */}
+              <div className="w-[220px] shrink-0 border-r border-[var(--color-border)] py-3 overflow-y-auto">
+                <button
+                  type="button"
+                  onMouseEnter={() => setActiveKey(FEATURED)}
+                  className={cn(
+                    'flex items-center gap-3 w-full text-left px-5 py-2.5 text-[13px] font-medium transition-colors',
+                    activeKey === FEATURED
+                      ? 'bg-[var(--color-primary-bg)] text-[var(--color-primary)]'
+                      : 'text-[var(--color-text-body)] hover:bg-[var(--color-bg-page)]',
+                  )}
+                >
+                  <Star className="w-4 h-4" />
+                  Categories for you
+                </button>
 
-                  {categories.map((category) => {
-                    const Icon = getCategoryIcon(category);
-                    const isActive = activeKey === category.id;
-                    return (
-                      <button
-                        key={category.id}
-                        type="button"
-                        onMouseEnter={() => setActiveKey(category.id)}
-                        className={cn(
-                          'flex items-center gap-3 w-full text-left px-5 py-2.5 text-[13px] font-medium transition-colors',
-                          isActive
-                            ? 'bg-[var(--color-primary-bg)] text-[var(--color-primary)]'
-                            : 'text-[var(--color-text-body)] hover:bg-[var(--color-bg-page)]',
-                        )}
-                      >
-                        <Icon className="w-4 h-4" />
-                        {category.name}
-                      </button>
-                    );
-                  })}
-                </div>
+                {categories.map((category) => {
+                  const Icon = getCategoryIcon(category);
+                  const isActive = activeKey === category.id;
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onMouseEnter={() => setActiveKey(category.id)}
+                      className={cn(
+                        'flex items-center gap-3 w-full text-left px-5 py-2.5 text-[13px] font-medium transition-colors',
+                        isActive
+                          ? 'bg-[var(--color-primary-bg)] text-[var(--color-primary)]'
+                          : 'text-[var(--color-text-body)] hover:bg-[var(--color-bg-page)]',
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {category.name}
+                    </button>
+                  );
+                })}
+              </div>
 
-                {/* Grid */}
-                <div className="flex-1 p-5 overflow-y-auto">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[16px] font-bold text-[var(--color-text-heading)]">
-                      {panelTitle}
-                    </h3>
-                    {activeCategory && (
-                      <Link
-                        to={`/explore?category=${activeCategory.id}`}
-                        onClick={() => setActiveDropdown(null)}
-                        className="text-[13px] font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)] whitespace-nowrap"
-                      >
-                        View all
-                      </Link>
-                    )}
-                  </div>
-
-                  {activeCategory == null ? (
-                    featuredLoading || featuredProducts.length === 0 ? (
-                      featuredLoading ? renderLoadingGrid() : (
-                        <p className="text-[14px] text-[var(--color-text-muted)]">
-                          Products will appear here soon.
-                        </p>
-                      )
-                    ) : (
-                      <>
-                        {renderProductGrid(featuredProducts)}
-                        {/* Vendor Spotlight */}
-                        <div className="mt-6 pt-5 border-t border-[var(--color-border)]">
-                          <h4 className="text-[14px] font-bold text-[var(--color-text-heading)] mb-3">
-                            Top Verified Vendors
-                          </h4>
-                          {renderVendorCards()}
-                        </div>
-                      </>
-                    )
-                  ) : isLoadingProducts || activeProducts === undefined ? (
-                    renderLoadingGrid()
-                  ) : activeProducts.length === 0 ? (
-                    <p className="text-[14px] text-[var(--color-text-muted)]">
-                      No products in {activeCategory.name} yet.{' '}
-                      <Link
-                        to={`/explore?category=${activeCategory.id}`}
-                        onClick={() => setActiveDropdown(null)}
-                        className="font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)]"
-                      >
-                        Browse the category
-                      </Link>
-                    </p>
-                  ) : (
-                    renderProductGrid(activeProducts)
+              {/* Grid */}
+              <div className="flex-1 p-5 overflow-y-auto">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[16px] font-bold text-[var(--color-text-heading)]">
+                    {panelTitle}
+                  </h3>
+                  {activeCategory && (
+                    <Link
+                      to={`/explore?category=${activeCategory.id}`}
+                      onClick={() => setActiveDropdown(null)}
+                      className="text-[13px] font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)] whitespace-nowrap"
+                    >
+                      View all
+                    </Link>
                   )}
                 </div>
+
+                {activeCategory == null ? (
+                  featuredLoading || featuredProducts.length === 0 ? (
+                    featuredLoading ? renderLoadingGrid() : (
+                      <p className="text-[14px] text-[var(--color-text-muted)]">
+                        Products will appear here soon.
+                      </p>
+                    )
+                  ) : (
+                    <>
+                      {renderProductGrid(featuredProducts)}
+                      {/* Vendor Spotlight */}
+                      <div className="mt-6 pt-5 border-t border-[var(--color-border)]">
+                        <h4 className="text-[14px] font-bold text-[var(--color-text-heading)] mb-3">
+                          Top Verified Vendors
+                        </h4>
+                        {renderVendorCards()}
+                      </div>
+                    </>
+                  )
+                ) : isLoadingProducts || activeProducts === undefined ? (
+                  renderLoadingGrid()
+                ) : activeProducts.length === 0 ? (
+                  <p className="text-[14px] text-[var(--color-text-muted)]">
+                    No products in {activeCategory.name} yet.{' '}
+                    <Link
+                      to={`/explore?category=${activeCategory.id}`}
+                      onClick={() => setActiveDropdown(null)}
+                      className="font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)]"
+                    >
+                      Browse the category
+                    </Link>
+                  </p>
+                ) : (
+                  renderProductGrid(activeProducts)
+                )}
               </div>
             </div>
           </div>
@@ -561,63 +559,61 @@ export function MegaMenu() {
         {/* ─── Find Near Products Dropdown ─── */}
         {activeDropdown === 'findNear' && (
           <div className="absolute left-0 right-0 top-full" onMouseEnter={cancelClose}>
-            <div className="container mx-auto px-4">
-              <div className="flex bg-white rounded-b-[16px] border border-t-0 border-[var(--color-border)] shadow-[var(--shadow-level-3)] overflow-hidden max-h-[70vh]">
-                {/* Region Sidebar */}
-                <div className="w-[220px] shrink-0 border-r border-[var(--color-border)] py-3 overflow-y-auto">
-                  {TANZANIA_REGIONS.map((region) => {
-                    const isActive = activeRegion === region;
-                    return (
-                      <button
-                        key={region}
-                        type="button"
-                        onMouseEnter={() => setActiveRegion(region)}
-                        className={cn(
-                          'flex items-center gap-3 w-full text-left px-5 py-2.5 text-[13px] font-medium transition-colors',
-                          isActive
-                            ? 'bg-[var(--color-primary-bg)] text-[var(--color-primary)]'
-                            : 'text-[var(--color-text-body)] hover:bg-[var(--color-bg-page)]',
-                        )}
-                      >
-                        <MapPin className="w-4 h-4" />
-                        {region}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Products Grid */}
-                <div className="flex-1 p-5 overflow-y-auto">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[16px] font-bold text-[var(--color-text-heading)]">
-                      Products in {activeRegion === ALL_REGION ? 'all regions' : activeRegion}
-                    </h3>
-                    <Link
-                      to={activeRegion === ALL_REGION ? '/explore' : `/explore?region=${encodeURIComponent(activeRegion)}`}
-                      onClick={() => setActiveDropdown(null)}
-                      className="text-[13px] font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)] whitespace-nowrap"
+            <div className="flex bg-white border border-t-0 border-[var(--color-border)] shadow-[var(--shadow-level-3)] overflow-hidden max-h-[70vh]">
+              {/* Region Sidebar */}
+              <div className="w-[220px] shrink-0 border-r border-[var(--color-border)] py-3 overflow-y-auto">
+                {TANZANIA_REGIONS.map((region) => {
+                  const isActive = activeRegion === region;
+                  return (
+                    <button
+                      key={region}
+                      type="button"
+                      onMouseEnter={() => setActiveRegion(region)}
+                      className={cn(
+                        'flex items-center gap-3 w-full text-left px-5 py-2.5 text-[13px] font-medium transition-colors',
+                        isActive
+                          ? 'bg-[var(--color-primary-bg)] text-[var(--color-primary)]'
+                          : 'text-[var(--color-text-body)] hover:bg-[var(--color-bg-page)]',
+                      )}
                     >
-                      View all
-                    </Link>
-                  </div>
+                      <MapPin className="w-4 h-4" />
+                      {region}
+                    </button>
+                  );
+                })}
+              </div>
 
-                  {regionLoading ? (
-                    renderSpinner()
-                  ) : regionProducts.length === 0 ? (
-                    <p className="text-[14px] text-[var(--color-text-muted)]">
-                      No products found in {activeRegion === ALL_REGION ? 'any region' : activeRegion} yet.{' '}
-                      <Link
-                        to="/explore"
-                        onClick={() => setActiveDropdown(null)}
-                        className="font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)]"
-                      >
-                        Browse the catalog
-                      </Link>
-                    </p>
-                  ) : (
-                    renderProductGrid(regionProducts)
-                  )}
+              {/* Products Grid */}
+              <div className="flex-1 p-5 overflow-y-auto">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[16px] font-bold text-[var(--color-text-heading)]">
+                    Products in {activeRegion === ALL_REGION ? 'all regions' : activeRegion}
+                  </h3>
+                  <Link
+                    to={activeRegion === ALL_REGION ? '/explore' : `/explore?region=${encodeURIComponent(activeRegion)}`}
+                    onClick={() => setActiveDropdown(null)}
+                    className="text-[13px] font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)] whitespace-nowrap"
+                  >
+                    View all
+                  </Link>
                 </div>
+
+                {regionLoading ? (
+                  renderSpinner()
+                ) : regionProducts.length === 0 ? (
+                  <p className="text-[14px] text-[var(--color-text-muted)]">
+                    No products found in {activeRegion === ALL_REGION ? 'any region' : activeRegion} yet.{' '}
+                    <Link
+                      to="/explore"
+                      onClick={() => setActiveDropdown(null)}
+                      className="font-semibold text-[var(--color-primary)] hover:text-[var(--color-accent)]"
+                    >
+                      Browse the catalog
+                    </Link>
+                  </p>
+                ) : (
+                  renderProductGrid(regionProducts)
+                )}
               </div>
             </div>
           </div>
@@ -626,10 +622,8 @@ export function MegaMenu() {
         {/* ─── Resource Center Dropdown ─── */}
         {activeDropdown === 'resourceCenter' && (
           <div className="absolute left-0 right-0 top-full" onMouseEnter={cancelClose}>
-            <div className="container mx-auto px-4">
-              <div className="bg-white rounded-b-[16px] border border-t-0 border-[var(--color-border)] shadow-[var(--shadow-level-3)] overflow-hidden">
-                <ResourceCenterDropdown onClose={() => setActiveDropdown(null)} />
-              </div>
+            <div className="bg-white border border-t-0 border-[var(--color-border)] shadow-[var(--shadow-level-3)] overflow-hidden">
+              <ResourceCenterDropdown onClose={() => setActiveDropdown(null)} />
             </div>
           </div>
         )}
