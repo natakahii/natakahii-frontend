@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Skeleton } from '../../components/ui/skeleton';
 import { Textarea } from '../../components/ui/textarea';
 import { useToast } from '../../components/ui/toast';
+import { VendorSuccessFeedback } from '../../components/vendor';
 import { useAuth } from '../../providers/AuthProvider';
 import {
   CatalogCategory,
@@ -194,6 +195,7 @@ export function VendorProductForm() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [submitMode, setSubmitMode] = useState<VendorProductStatus | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [deletingMediaId, setDeletingMediaId] = useState<number | null>(null);
 
   const categoryOptions = useMemo(() => flattenCategories(categories), [categories]);
@@ -639,7 +641,7 @@ export function VendorProductForm() {
         message: response.message,
       });
 
-      navigate('/vendor/dashboard/products');
+      setShowSuccess(true);
     } catch (error: any) {
       setFieldErrors(extractFieldErrors(error));
       toast({
@@ -700,6 +702,11 @@ export function VendorProductForm() {
 
   return (
     <div className="space-y-6">
+      <VendorSuccessFeedback
+        show={showSuccess}
+        message={isEditMode ? 'Product Updated!' : 'Product Created!'}
+        onComplete={() => navigate('/vendor/dashboard/products')}
+      />
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/vendor/dashboard/products')}>

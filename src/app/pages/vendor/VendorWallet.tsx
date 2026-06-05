@@ -1,8 +1,16 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  Wallet, TrendingUp, Clock, Lock, ArrowUpRight, ArrowDownLeft,
-  Loader2, RefreshCw, Plus
+  Wallet,
+  TrendingUp,
+  Clock,
+  Lock,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Loader2,
+  RefreshCw,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import {
@@ -21,68 +29,85 @@ import {
   SelectValue,
 } from '../../components/ui/select';
 import { Input } from '../../components/ui/input';
-import { formatCurrency } from '../../utils/currency';
-import { vendorPaymentService, VendorWalletData, WalletTransaction } from '../../services/vendorPaymentService';
+import { safeFormatCurrency } from '../../utils/currency';
+import {
+  vendorPaymentService,
+  VendorWalletData,
+  WalletTransaction,
+  MIN_PAYOUT_AMOUNT,
+} from '../../services/vendorPaymentService';
 import { toast } from '../../components/ui/toast';
+import {
+  VendorBalanceTile,
+  VendorCard,
+  VendorEmptyState,
+  VendorInlineError,
+  VendorPageHeader,
+  VendorSuccessFeedback,
+  VendorTableSkeleton,
+  VendorWalletSkeleton,
+} from '../../components/vendor';
 
-interface BalanceTile {
-  title: string;
-  amount: number;
-  description: string;
-  icon: React.ReactNode;
-  color: string;
-}
+const PAGE_SIZE = 15;
 
 export function VendorWalletPage() {
   const [wallet, setWallet] = useState<VendorWalletData | null>(null);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Payout request modal
   const [payoutModalOpen, setPayoutModalOpen] = useState(false);
   const [payoutAmount, setPayoutAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('mpesa');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [accountNumber, setAccountNumber] = useState('');
-  const [bankName, setBankName] = useState('');
-  const [accountHolder, setAccountHolder] = useState('');
   const [submittingPayout, setSubmittingPayout] = useState(false);
-  const [payoutEstimate, setPayoutEstimate] = useState<any>(null);
+  const [payoutEstimate, setPayoutEstimate] = useState<{
+    amount: number;
+    fee: number;
+    net_amount: number;
+    processing_time: string;
+  } | null>(null);
   const [calculatingEstimate, setCalculatingEstimate] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  // Filters
   const [transactionType, setTransactionType] = useState('all');
+  const [page, setPage] = useState(1);
+  const [totalTransactions, setTotalTransactions] = useState(0);
 
-  const loadWallet = async () => {
+  const loadWallet = useCallback(async (pageNum = 1, typeFilter = transactionType) => {
     setLoading(true);
+    setError(null);
     try {
-      const [walletData, transactionsData] = await Promise.all([
-        vendorPaymentService.getWallet(),
+      const [details, transactionsData] = await Promise.all([
+        vendorPaymentService.getWalletDetails(),
         vendorPaymentService.getWalletTransactions({
-          limit: 20,
+          transaction_type: typeFilter === 'all' ? undefined : typeFilter,
+          page: pageNum,
+          limit: PAGE_SIZE,
         }),
       ]);
-      setWallet(walletData);
+      setWallet(details.wallet);
       setTransactions(transactionsData.data);
-    } catch (error) {
-      console.error('Failed to load wallet:', error);
-      toast({ type: 'error', title: 'Failed to load wallet' });
+      setTotalTransactions(transactionsData.total);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load wallet';
+      setError(message);
+      toast({ type: 'error', title: message });
     } finally {
       setLoading(false);
     }
-  };
+  }, [transactionType]);
 
   useEffect(() => {
-    loadWallet();
-  }, []);
+    loadWallet(page, transactionType);
+  }, [page, transactionType, loadWallet]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await loadWallet();
+      await loadWallet(page, transactionType);
       toast({ type: 'success', title: 'Wallet refreshed' });
-    } catch (error) {
+    } catch {
       toast({ type: 'error', title: 'Failed to refresh wallet' });
     } finally {
       setRefreshing(false);
@@ -90,434 +115,176 @@ export function VendorWalletPage() {
   };
 
   const handleEstimatePayout = async () => {
-    if (!payoutAmount || isNaN(Number(payoutAmount))) {
+    const amount = Number(payoutAmount);
+    if (!payoutAmount || !Number.isFinite(amount)) {
       toast({ type: 'error', title: 'Please enter a valid amount' });
       return;
     }
 
     setCalculatingEstimate(true);
     try {
-      const estimate = await vendorPaymentService.estimatePayoutFees(
-        Number(payoutAmount),
-        paymentMethod
-      );
+      const estimate = await vendorPaymentService.estimatePayoutFees(amount, paymentMethod);
       setPayoutEstimate(estimate);
-    } catch (error: any) {
-      console.error('Failed to estimate payout:', error);
-      toast({ type: 'error', title: error.message || 'Failed to estimate payout' });
+    } catch (err: unknown) {
+      toast({ type: 'error', title: err instanceof Error ? err.message : 'Failed to estimate payout' });
     } finally {
       setCalculatingEstimate(false);
     }
   };
 
   const handleRequestPayout = async () => {
-    if (!payoutAmount || isNaN(Number(payoutAmount))) {
+    const amount = Number(payoutAmount);
+    if (!payoutAmount || !Number.isFinite(amount)) {
       toast({ type: 'error', title: 'Please enter a valid amount' });
       return;
     }
 
-    if (Number(payoutAmount) < 10000) {
-      toast({ type: 'error', title: 'Minimum payout amount is 10,000 TZS' });
+    if (amount < MIN_PAYOUT_AMOUNT) {
+      toast({ type: 'error', title: `Minimum payout is ${MIN_PAYOUT_AMOUNT.toLocaleString()} TZS` });
       return;
     }
 
-    if (!wallet || Number(payoutAmount) > wallet.available_balance) {
+    if (!wallet || amount > wallet.available_balance) {
       toast({ type: 'error', title: 'Insufficient available balance' });
-      return;
-    }
-
-    if (paymentMethod === 'bank_transfer' && (!accountNumber || !bankName || !accountHolder)) {
-      toast({ type: 'error', title: 'Please fill in all bank details' });
-      return;
-    }
-
-    if (['mpesa', 'airtel_money', 'mixx_by_yas', 'halopesa'].includes(paymentMethod) && !phoneNumber) {
-      toast({ type: 'error', title: 'Please enter a phone number' });
       return;
     }
 
     setSubmittingPayout(true);
     try {
-      await vendorPaymentService.requestPayout({
-        amount: Number(payoutAmount),
-        payment_method: paymentMethod as 'mpesa' | 'airtel_money' | 'mixx_by_yas' | 'halopesa' | 'bank_transfer',
-        phone_number: phoneNumber || undefined,
-        account_number: accountNumber || undefined,
-        bank_name: bankName || undefined,
-        account_holder_name: accountHolder || undefined,
-      });
-
-      toast({ type: 'success', title: 'Payout request submitted successfully' });
+      await vendorPaymentService.requestPayout({ amount });
+      setShowSuccess(true);
+      toast({ type: 'success', title: 'Payout request submitted!' });
       setPayoutModalOpen(false);
       setPayoutAmount('');
-      setPaymentMethod('mpesa');
-      setPhoneNumber('');
-      setAccountNumber('');
-      setBankName('');
-      setAccountHolder('');
       setPayoutEstimate(null);
-
-      // Reload wallet
-      await loadWallet();
-    } catch (error: any) {
-      console.error('Failed to request payout:', error);
-      toast({ type: 'error', title: error.message || 'Failed to request payout' });
+      await loadWallet(page, transactionType);
+    } catch (err: unknown) {
+      toast({ type: 'error', title: err instanceof Error ? err.message : 'Failed to request payout' });
     } finally {
       setSubmittingPayout(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
-      </div>
-    );
-  }
+  const totalPages = Math.max(1, Math.ceil(totalTransactions / PAGE_SIZE));
 
-  if (!wallet) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 p-6 flex items-center justify-center">
-        <div className="text-center">
-          <AlertIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-slate-900 mb-2">Failed to Load Wallet</h2>
-          <p className="text-slate-600 mb-4">Unable to retrieve wallet information</p>
-          <Button onClick={handleRefresh}>Try Again</Button>
-        </div>
-      </div>
-    );
+  if (loading && !wallet) {
+    return <VendorWalletSkeleton />;
   }
-
-  const balanceTiles: BalanceTile[] = [
-    {
-      title: 'Available Balance',
-      amount: wallet.available_balance,
-      description: 'Ready to withdraw',
-      icon: <Wallet className="h-5 w-5" />,
-      color: 'from-blue-600 to-blue-700',
-    },
-    {
-      title: 'Pending Balance',
-      amount: wallet.pending_balance,
-      description: 'Awaiting delivery',
-      icon: <Clock className="h-5 w-5" />,
-      color: 'from-yellow-600 to-yellow-700',
-    },
-    {
-      title: 'Held Balance',
-      amount: wallet.held_balance,
-      description: 'Under dispute',
-      icon: <Lock className="h-5 w-5" />,
-      color: 'from-orange-600 to-orange-700',
-    },
-    {
-      title: 'Lifetime Earnings',
-      amount: wallet.lifetime_earnings,
-      description: 'Total earned',
-      icon: <TrendingUp className="h-5 w-5" />,
-      color: 'from-green-600 to-green-700',
-    },
-  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Wallet</h1>
-            <p className="text-slate-600">Manage your earnings and request payouts</p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="gap-2"
-            >
-              {refreshing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
+    <div className="space-y-6">
+      <VendorSuccessFeedback show={showSuccess} message="Payout Requested!" onComplete={() => setShowSuccess(false)} />
+
+      <VendorPageHeader
+        title="Wallet"
+        description="Manage earnings and request payouts."
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="gap-2 rounded-xl">
+              {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               Refresh
             </Button>
             <Button
+              size="sm"
               onClick={() => setPayoutModalOpen(true)}
-              disabled={wallet.available_balance === 0}
-              className="gap-2"
+              disabled={!wallet || wallet.available_balance < MIN_PAYOUT_AMOUNT}
+              className="gap-2 rounded-xl bg-[var(--vendor-accent-action)] hover:bg-[#6d28d9]"
             >
               <Plus className="h-4 w-4" />
               Request Payout
             </Button>
+          </>
+        }
+      />
+
+      {error && !wallet && <VendorInlineError message={error} onRetry={() => loadWallet(page, transactionType)} />}
+
+      {wallet && (
+        <>
+          {/* Hero balance band */}
+          <VendorCard glow className="p-8 bg-[var(--vendor-bg)] border-[var(--vendor-border)] text-white overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--vendor-accent-action)]/20 to-transparent pointer-events-none" />
+            <div className="relative">
+              <p className="text-sm text-white/60 vendor-body">Available Balance</p>
+              <p className="text-4xl sm:text-5xl font-bold vendor-heading mt-2">
+                {safeFormatCurrency(wallet.available_balance)}
+              </p>
+              <p className="text-sm text-white/50 mt-2 vendor-body">Ready to withdraw to your registered payout method</p>
+            </div>
+          </VendorCard>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <VendorBalanceTile title="Available" amount={wallet.available_balance} description="Ready to withdraw" icon={<Wallet className="h-5 w-5" />} variant="available" index={0} />
+            <VendorBalanceTile title="Pending" amount={wallet.pending_balance} description="Awaiting delivery" icon={<Clock className="h-5 w-5" />} variant="pending" index={1} />
+            <VendorBalanceTile title="Held" amount={wallet.held_balance} description="Under dispute" icon={<Lock className="h-5 w-5" />} variant="held" index={2} />
+            <VendorBalanceTile title="Lifetime Earnings" amount={wallet.lifetime_earnings} description="Total earned" icon={<TrendingUp className="h-5 w-5" />} variant="lifetime" index={3} />
           </div>
+        </>
+      )}
+
+      <VendorCard className="overflow-hidden">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 className="text-lg font-bold text-[var(--color-text-heading)] vendor-heading">Transaction History</h2>
+          <Select
+            value={transactionType}
+            onValueChange={(value) => {
+              setTransactionType(value);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-44 rounded-xl">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Transactions</SelectItem>
+              <SelectItem value="credit">Credits</SelectItem>
+              <SelectItem value="debit">Debits</SelectItem>
+              <SelectItem value="payout">Payouts</SelectItem>
+              <SelectItem value="refund">Refunds</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Balance Tiles */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {balanceTiles.map((tile, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              className={`bg-gradient-to-br ${tile.color} rounded-lg shadow-lg p-6 text-white`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-2 bg-white/20 rounded-lg">
-                  {tile.icon}
-                </div>
-              </div>
-              <h3 className="text-sm font-medium opacity-90 mb-1">{tile.title}</h3>
-              <p className="text-2xl font-bold mb-2">{formatCurrency(tile.amount)}</p>
-              <p className="text-xs opacity-75">{tile.description}</p>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Payout Request Modal */}
-        <Dialog open={payoutModalOpen} onOpenChange={setPayoutModalOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Request Payout</DialogTitle>
-              <DialogDescription>
-                Withdraw your available balance
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              {/* Amount */}
-              <div>
-                <label className="block text-sm font-medium text-slate-900 mb-2">
-                  Amount (TZS)
-                </label>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    placeholder="Enter amount"
-                    value={payoutAmount}
-                    onChange={(e) => {
-                      setPayoutAmount(e.target.value);
-                      setPayoutEstimate(null);
-                    }}
-                    min="10000"
-                    max={wallet.available_balance}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setPayoutAmount(wallet.available_balance.toString())}
-                  >
-                    Max
-                  </Button>
-                </div>
-                <p className="text-xs text-slate-500 mt-1">
-                  Available: {formatCurrency(wallet.available_balance)}
-                </p>
-              </div>
-
-              {/* Payment Method */}
-              <div>
-                <label className="block text-sm font-medium text-slate-900 mb-2">
-                  Payment Method
-                </label>
-                <Select value={paymentMethod} onValueChange={(value) => {
-                  setPaymentMethod(value);
-                  setPayoutEstimate(null);
-                }}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="mpesa">M-Pesa</SelectItem>
-                    <SelectItem value="airtel_money">Airtel Money</SelectItem>
-                    <SelectItem value="mixx_by_yas">Mixx by Yas</SelectItem>
-                    <SelectItem value="halopesa">HaloPesa</SelectItem>
-                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Payment Details - Mobile Money */}
-              {['mpesa', 'airtel_money', 'mixx_by_yas', 'halopesa'].includes(paymentMethod) && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-900 mb-2">
-                    Phone Number
-                  </label>
-                  <Input
-                    placeholder="07XX XXX XXX or +2557XX XXX XXX"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                  />
-                </div>
-              )}
-
-              {/* Payment Details - Bank Transfer */}
-              {paymentMethod === 'bank_transfer' && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-900 mb-2">
-                      Bank Name
-                    </label>
-                    <Input
-                      placeholder="e.g., CRDB Bank"
-                      value={bankName}
-                      onChange={(e) => setBankName(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-900 mb-2">
-                      Account Number
-                    </label>
-                    <Input
-                      placeholder="Enter account number"
-                      value={accountNumber}
-                      onChange={(e) => setAccountNumber(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-900 mb-2">
-                      Account Holder Name
-                    </label>
-                    <Input
-                      placeholder="Full name"
-                      value={accountHolder}
-                      onChange={(e) => setAccountHolder(e.target.value)}
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* Estimate */}
-              {!payoutEstimate && payoutAmount && (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleEstimatePayout}
-                  disabled={calculatingEstimate}
-                >
-                  {calculatingEstimate ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Calculating...
-                    </>
-                  ) : (
-                    'Estimate Fees'
-                  )}
-                </Button>
-              )}
-
-              {/* Estimated Breakdown */}
-              {payoutEstimate && (
-                <div className="bg-slate-50 rounded-lg p-4 space-y-2">
-                  <h3 className="font-semibold text-slate-900 text-sm mb-3">Fee Breakdown</h3>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Amount:</span>
-                    <span className="font-medium text-slate-900">
-                      {formatCurrency(payoutEstimate.amount)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Fee:</span>
-                    <span className="font-medium text-slate-900">
-                      {formatCurrency(payoutEstimate.fee)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm border-t border-slate-200 pt-2 mt-2">
-                    <span className="text-slate-900 font-semibold">You'll Receive:</span>
-                    <span className="font-bold text-slate-900">
-                      {formatCurrency(payoutEstimate.net_amount)}
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-600 mt-2">
-                    Processing time: {payoutEstimate.processing_time}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setPayoutModalOpen(false)}
-                disabled={submittingPayout}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleRequestPayout}
-                disabled={submittingPayout || !payoutEstimate || !payoutAmount}
-                className="gap-2"
-              >
-                {submittingPayout ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Requesting...
-                  </>
-                ) : (
-                  'Request Payout'
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Transactions */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-slate-900">Recent Transactions</h2>
-            <Select value={transactionType} onValueChange={setTransactionType}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Transactions</SelectItem>
-                <SelectItem value="credit">Credits</SelectItem>
-                <SelectItem value="debit">Debits</SelectItem>
-                <SelectItem value="payout">Payouts</SelectItem>
-                <SelectItem value="refund">Refunds</SelectItem>
-              </SelectContent>
-            </Select>
+        {loading ? (
+          <VendorTableSkeleton />
+        ) : transactions.length === 0 ? (
+          <div className="p-8">
+            <VendorEmptyState
+              variant="no-transactions"
+              title="No transactions yet"
+              description="Wallet activity will appear here as you earn from sales and request payouts."
+              actionLabel="View Products"
+              actionHref="/vendor/dashboard/products"
+            />
           </div>
-
-          {transactions.length === 0 ? (
-            <div className="text-center p-12">
-              <div className="text-slate-600 text-lg">No transactions yet</div>
-            </div>
-          ) : (
+        ) : (
+          <>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700">Type</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700">Description</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700">Amount</th>
-                    <th className="text-left px-6 py-4 text-sm font-semibold text-slate-700">Date</th>
+                  <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-card)]/50">
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Type</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Description</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Amount</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Date</th>
                   </tr>
                 </thead>
                 <tbody>
                   {transactions.map((transaction) => {
                     const isCredit = ['credit', 'refund'].includes(transaction.transaction_type);
                     return (
-                      <tr key={transaction.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
-                        <td className="px-6 py-4 text-sm">
-                          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${isCredit ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            {isCredit ? (
-                              <ArrowDownLeft className="h-3 w-3" />
-                            ) : (
-                              <ArrowUpRight className="h-3 w-3" />
-                            )}
-                            {transaction.transaction_type.replace('_', ' ')}
-                          </div>
+                      <tr key={transaction.id} className="border-b border-[var(--color-border)]/50 hover:bg-[var(--color-bg-card)]/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${isCredit ? 'bg-[var(--vendor-accent-success-bg)] text-[var(--vendor-accent-success)]' : 'bg-red-50 text-red-600'}`}>
+                            {isCredit ? <ArrowDownLeft className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
+                            {transaction.transaction_type.replace(/_/g, ' ')}
+                          </span>
                         </td>
-                        <td className="px-6 py-4 text-sm text-slate-600">
-                          {transaction.description}
+                        <td className="px-6 py-4 text-sm text-[var(--color-text-body)] vendor-body">{transaction.description}</td>
+                        <td className={`px-6 py-4 text-sm font-bold ${isCredit ? 'text-[var(--vendor-accent-success)]' : 'text-red-600'}`}>
+                          {isCredit ? '+' : '-'}{safeFormatCurrency(Math.abs(transaction.amount))}
                         </td>
-                        <td className={`px-6 py-4 text-sm font-semibold ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
-                          {isCredit ? '+' : '-'}{formatCurrency(Math.abs(transaction.amount))}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-slate-600">
+                        <td className="px-6 py-4 text-sm text-[var(--color-text-muted)]">
                           {new Date(transaction.created_at).toLocaleDateString()}
                         </td>
                       </tr>
@@ -526,28 +293,100 @@ export function VendorWalletPage() {
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
-function AlertIcon(props: React.ComponentProps<'svg'>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="8" x2="12" y2="12" />
-      <line x1="12" y1="16" x2="12.01" y2="16" />
-    </svg>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-[var(--color-border)]">
+                <p className="text-sm text-[var(--color-text-muted)]">
+                  Page {page} of {totalPages} · {totalTransactions} total
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="rounded-xl">
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="rounded-xl">
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </VendorCard>
+
+      <Dialog open={payoutModalOpen} onOpenChange={setPayoutModalOpen}>
+        <DialogContent className="max-w-md rounded-[24px]">
+          <DialogHeader>
+            <DialogTitle className="vendor-heading">Request Payout</DialogTitle>
+            <DialogDescription>Withdraw from your available balance</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Amount (TZS)</label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder="Enter amount"
+                  value={payoutAmount}
+                  onChange={(e) => {
+                    setPayoutAmount(e.target.value);
+                    setPayoutEstimate(null);
+                  }}
+                  min={MIN_PAYOUT_AMOUNT}
+                  max={wallet?.available_balance}
+                  className="rounded-xl"
+                />
+                <Button variant="outline" size="sm" className="rounded-xl" onClick={() => wallet && setPayoutAmount(String(wallet.available_balance))}>
+                  Max
+                </Button>
+              </div>
+              <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                Available: {safeFormatCurrency(wallet?.available_balance)} · Min: {MIN_PAYOUT_AMOUNT.toLocaleString()} TZS
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Estimate with method</label>
+              <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); setPayoutEstimate(null); }}>
+                <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mpesa">M-Pesa</SelectItem>
+                  <SelectItem value="airtel_money">Airtel Money</SelectItem>
+                  <SelectItem value="mixx_by_yas">Mixx by Yas</SelectItem>
+                  <SelectItem value="halopesa">HaloPesa</SelectItem>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {!payoutEstimate && payoutAmount && (
+              <Button variant="outline" className="w-full rounded-xl" onClick={handleEstimatePayout} disabled={calculatingEstimate}>
+                {calculatingEstimate ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Calculating...</> : 'Estimate Fees'}
+              </Button>
+            )}
+
+            {payoutEstimate && (
+              <div className="rounded-[16px] bg-[var(--color-bg-card)] p-4 space-y-2">
+                <div className="flex justify-between text-sm"><span>Amount</span><span className="font-medium">{safeFormatCurrency(payoutEstimate.amount)}</span></div>
+                <div className="flex justify-between text-sm"><span>Fee</span><span className="font-medium">{safeFormatCurrency(payoutEstimate.fee)}</span></div>
+                <div className="flex justify-between text-sm border-t pt-2 font-bold"><span>You'll receive</span><span>{safeFormatCurrency(payoutEstimate.net_amount)}</span></div>
+                <p className="text-xs text-[var(--color-text-muted)]">Processing: {payoutEstimate.processing_time}</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayoutModalOpen(false)} disabled={submittingPayout} className="rounded-xl">Cancel</Button>
+            <Button
+              onClick={handleRequestPayout}
+              disabled={submittingPayout || !payoutAmount}
+              className="rounded-xl bg-[var(--vendor-accent-action)] hover:bg-[#6d28d9]"
+            >
+              {submittingPayout ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Requesting...</> : 'Confirm Payout'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

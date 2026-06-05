@@ -10,7 +10,7 @@ import {
   Trash2,
   Video,
 } from 'lucide-react';
-import { Card, CardContent } from '../../components/ui/card';
+import { CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
@@ -26,7 +26,16 @@ import {
   fetchVendorProducts,
   updateVendorProductStatus,
 } from '../../services/vendorProductService';
-import { formatCurrency } from '../../utils/currency';
+import { safeFormatCurrency } from '../../utils/currency';
+import {
+  VendorCard,
+  VendorEmptyState,
+  VendorPageHeader,
+  VendorProductsSkeleton,
+  VendorStatTile,
+} from '../../components/vendor';
+import { motion } from 'motion/react';
+import { DollarSign, FileText, PackageX } from 'lucide-react';
 import { getProductPath } from '../../utils/products';
 import { getVendorStorefrontPath } from '../../utils/storefront';
 
@@ -204,52 +213,33 @@ export function VendorProducts() {
     }
   }
 
+  if (isLoading && products.length === 0) {
+    return <VendorProductsSkeleton />;
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text-heading)]">Products</h1>
-          <p className="text-[var(--color-text-muted)]">Upload new products, edit listings, and control what goes live in your storefront and video commerce flow.</p>
-        </div>
-        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-          {hasStorefront && (
-            <Button
-              variant="outline"
-              className="text-[var(--color-primary)] border-[var(--color-primary)] w-full sm:w-auto"
-              onClick={() => navigate(storefrontPath)}
-            >
-              View Storefront
-            </Button>
-          )}
+      <VendorPageHeader
+        title="Products"
+        description="Manage your catalog, pricing, and inventory."
+        actions={
           <Button
-            className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white gap-2 w-full sm:w-auto"
+            className="bg-[var(--vendor-accent-action)] hover:bg-[#6d28d9] text-white gap-2 rounded-xl"
             onClick={() => navigate('/vendor/dashboard/products/add')}
           >
             <Plus className="w-4 h-4" />
             Add Product
           </Button>
-        </div>
+        }
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <VendorStatTile title="Published" value={visibleCounts.published} subtitle="Live in storefront" icon={DollarSign} accent="success" />
+        <VendorStatTile title="Draft" value={visibleCounts.draft} subtitle="Being prepared" icon={FileText} accent="neutral" />
+        <VendorStatTile title="Out of Stock" value={visibleCounts.outOfStock} subtitle="Need inventory" icon={PackageX} accent="warning" />
       </div>
 
-      <Card className="border-[var(--color-border)] shadow-sm">
-        <CardContent className="p-4 sm:p-6 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-[18px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.3px] text-[var(--color-text-muted)]">Published</p>
-              <p className="text-2xl font-bold text-[var(--color-text-heading)] mt-1">{visibleCounts.published}</p>
-              <p className="text-sm text-[var(--color-text-muted)] mt-1">Products currently live in your storefront.</p>
-            </div>
-            <div className="rounded-[18px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.3px] text-[var(--color-text-muted)]">Draft</p>
-              <p className="text-2xl font-bold text-[var(--color-text-heading)] mt-1">{visibleCounts.draft}</p>
-              <p className="text-sm text-[var(--color-text-muted)] mt-1">Products still being prepared before publication.</p>
-            </div>
-            <div className="rounded-[18px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.3px] text-[var(--color-text-muted)]">Out of Stock</p>
-              <p className="text-2xl font-bold text-[var(--color-text-heading)] mt-1">{visibleCounts.outOfStock}</p>
-              <p className="text-sm text-[var(--color-text-muted)] mt-1">Listings that need inventory before they can sell again.</p>
-            </div>
-          </div>
+      <VendorCard className="p-4 sm:p-6 space-y-4">
 
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
             <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
@@ -312,10 +302,16 @@ export function VendorProducts() {
 
           {viewMode === 'table' ? (
             <div className="rounded-md border border-[var(--color-border)] overflow-hidden">
-              {isLoading ? (
-                <div className="p-8 text-center text-sm text-[var(--color-text-muted)]">Loading your vendor products...</div>
-              ) : products.length === 0 ? (
-                <div className="p-8 text-center text-sm text-[var(--color-text-muted)]">No products match the current filters yet.</div>
+              {products.length === 0 ? (
+                <div className="p-4">
+                  <VendorEmptyState
+                    variant="no-products"
+                    title={searchTerm || filterStatus !== 'all' ? 'No matching products' : 'No products yet'}
+                    description={searchTerm || filterStatus !== 'all' ? 'Try adjusting your filters.' : 'Add your first product to start selling.'}
+                    actionLabel="Add Product"
+                    actionOnClick={() => navigate('/vendor/dashboard/products/add')}
+                  />
+                </div>
               ) : (
                 <Table>
                   <TableHeader className="bg-[var(--color-bg-card)]">
@@ -354,7 +350,7 @@ export function VendorProducts() {
                           </div>
                         </TableCell>
                         <TableCell className="text-sm text-[var(--color-text-body)]">{product.category?.name || 'Uncategorized'}</TableCell>
-                        <TableCell className="font-medium text-sm">{formatCurrency(product.effective_price)}</TableCell>
+                        <TableCell className="font-medium text-sm">{safeFormatCurrency(product.effective_price)}</TableCell>
                         <TableCell>
                           <span className={`text-sm font-medium ${product.stock > 10 ? 'text-[var(--color-success)]' : product.stock > 0 ? 'text-[var(--color-warning)]' : 'text-[var(--color-error)]'}`}>
                             {product.stock} in stock
@@ -413,13 +409,20 @@ export function VendorProducts() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {isLoading ? (
-                <div className="col-span-full p-8 text-center text-sm text-[var(--color-text-muted)]">Loading your vendor products...</div>
-              ) : products.length === 0 ? (
-                <div className="col-span-full p-8 text-center text-sm text-[var(--color-text-muted)]">No products match the current filters yet.</div>
+              {products.length === 0 ? (
+                <div className="col-span-full">
+                  <VendorEmptyState
+                    variant="no-products"
+                    title={searchTerm || filterStatus !== 'all' ? 'No matching products' : 'No products yet'}
+                    description={searchTerm || filterStatus !== 'all' ? 'Try adjusting your filters.' : 'Add your first product to start selling.'}
+                    actionLabel="Add Product"
+                    actionOnClick={() => navigate('/vendor/dashboard/products/add')}
+                  />
+                </div>
               ) : (
                 products.map((product) => (
-                  <Card key={product.id} className="overflow-hidden border-[var(--color-border)] shadow-sm hover:shadow-[var(--shadow-level-2)] transition-shadow">
+                  <motion.div key={product.id} whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }}>
+                  <VendorCard className="overflow-hidden p-0">
                     <div className="aspect-[4/3] w-full relative group bg-[var(--color-bg-card)]">
                       <img
                         src={product.images[0]?.image_path || 'https://via.placeholder.com/600x450?text=Product'}
@@ -463,7 +466,7 @@ export function VendorProducts() {
                         <p className="text-xs text-[var(--color-text-muted)]">{product.category?.name || 'Uncategorized'}</p>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <p className="font-bold text-[16px] text-[var(--color-text-heading)]">{formatCurrency(product.effective_price)}</p>
+                        <p className="font-bold text-[16px] text-[var(--color-text-heading)]">{safeFormatCurrency(product.effective_price)}</p>
                         <p className={`text-xs font-semibold ${product.stock > 10 ? 'text-[var(--color-success)]' : product.stock > 0 ? 'text-[var(--color-warning)]' : 'text-[var(--color-error)]'}`}>
                           {product.stock} in stock
                         </p>
@@ -483,13 +486,13 @@ export function VendorProducts() {
                         )}
                       </div>
                     </CardContent>
-                  </Card>
+                  </VendorCard>
+                  </motion.div>
                 ))
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+      </VendorCard>
     </div>
   );
 }

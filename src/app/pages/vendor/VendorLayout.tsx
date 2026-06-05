@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router';
+import { motion, AnimatePresence } from 'motion/react';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Button } from '../../components/ui/button';
 import {
   BarChart3,
+  ChevronLeft,
+  ChevronRight,
   CreditCard,
   Globe2,
   LayoutDashboard,
@@ -19,30 +22,88 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../providers/AuthProvider';
 import { getVendorStorefrontPath } from '../../utils/storefront';
+import { cn } from '../../components/ui/utils';
+
+const SIDEBAR_KEY = 'vendor-sidebar-collapsed';
+
+const navItems = [
+  { name: 'Dashboard', path: '/vendor/dashboard', icon: LayoutDashboard },
+  { name: 'Products', path: '/vendor/dashboard/products', icon: Package },
+  { name: 'Analytics', path: '/vendor/dashboard/analytics', icon: BarChart3 },
+  { name: 'Dropoffs', path: '/vendor/dashboard/dropoffs', icon: Truck },
+  { name: 'Plan', path: '/vendor/dashboard/subscription', icon: ShieldCheck },
+  { name: 'Wallet', path: '/vendor/dashboard/wallet', icon: Wallet },
+  { name: 'Payouts', path: '/vendor/dashboard/payouts', icon: CreditCard },
+  { name: 'Settings', path: '/vendor/dashboard/settings', icon: Settings },
+];
+
+const mobilePrimaryNav = [
+  { name: 'Home', path: '/vendor/dashboard', icon: LayoutDashboard },
+  { name: 'Products', path: '/vendor/dashboard/products', icon: Package },
+  { name: 'Wallet', path: '/vendor/dashboard/wallet', icon: Wallet },
+];
+
+const mobileDrawerGroups = [
+  {
+    label: 'Commerce',
+    items: [
+      { name: 'Analytics', path: '/vendor/dashboard/analytics', icon: BarChart3 },
+      { name: 'Dropoffs', path: '/vendor/dashboard/dropoffs', icon: Truck },
+    ],
+  },
+  {
+    label: 'Account',
+    items: [
+      { name: 'Plan', path: '/vendor/dashboard/subscription', icon: ShieldCheck },
+      { name: 'Payouts', path: '/vendor/dashboard/payouts', icon: CreditCard },
+      { name: 'Settings', path: '/vendor/dashboard/settings', icon: Settings },
+    ],
+  },
+];
+
+function NavItemLink({
+  item,
+  collapsed,
+  onNavigate,
+}: {
+  item: (typeof navItems)[0];
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
+  return (
+    <NavLink
+      to={item.path}
+      end={item.path === '/vendor/dashboard'}
+      onClick={onNavigate}
+      title={collapsed ? item.name : undefined}
+      className={({ isActive }) =>
+        cn(
+          'group flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200',
+          collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5',
+          isActive
+            ? 'bg-white/10 text-white shadow-[inset_3px_0_0_0_var(--vendor-accent-action)]'
+            : 'text-[var(--vendor-text-muted-on-dark)] hover:bg-white/5 hover:text-white',
+        )
+      }
+    >
+      <item.icon className="w-5 h-5 shrink-0 group-hover:scale-110 transition-transform" />
+      {!collapsed && <span className="flex-1 truncate">{item.name}</span>}
+    </NavLink>
+  );
+}
 
 export function VendorLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user } = useAuth();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-
-  const navItems = [
-    { name: 'Dashboard', path: '/vendor/dashboard', icon: LayoutDashboard },
-    { name: 'Products', path: '/vendor/dashboard/products', icon: Package },
-    { name: 'Analytics', path: '/vendor/dashboard/analytics', icon: BarChart3 },
-    { name: 'Dropoffs', path: '/vendor/dashboard/dropoffs', icon: Truck },
-    { name: 'Plan', path: '/vendor/dashboard/subscription', icon: ShieldCheck },
-    { name: 'Wallet', path: '/vendor/dashboard/wallet', icon: Wallet },
-    { name: 'Payouts', path: '/vendor/dashboard/payouts', icon: CreditCard },
-    { name: 'Settings', path: '/vendor/dashboard/settings', icon: Settings },
-  ];
-
-  const mobilePrimaryNav = [
-    { name: 'Home', path: '/vendor/dashboard', icon: LayoutDashboard },
-    { name: 'Products', path: '/vendor/dashboard/products', icon: Package },
-    { name: 'Dropoffs', path: '/vendor/dashboard/dropoffs', icon: Truck },
-    { name: 'Plan', path: '/vendor/dashboard/subscription', icon: ShieldCheck },
-  ];
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   const displayName = user?.vendor?.shop_name || user?.name || 'Vendor Account';
   const displayImage = user?.vendor?.logo || user?.profile_photo || undefined;
@@ -52,269 +113,282 @@ export function VendorLayout() {
     .map((part) => part[0]?.toUpperCase() || '')
     .join('');
   const workspaceLabel = user?.vendor?.has_premium_verification
-    ? 'Premium vendor store'
+    ? 'Premium vendor'
     : user?.vendor?.has_kyc_verification
       ? 'Approved vendor'
       : 'Vendor workspace';
   const storefrontPath = getVendorStorefrontPath(user?.vendor);
   const hasStorefront = Boolean(user?.vendor?.shop_slug || user?.vendor?.id);
   const sidebarLinks = [
-    { name: 'Marketplace Home', path: '/', icon: Globe2 },
-    ...(hasStorefront ? [{ name: 'Your Storefront', path: storefrontPath, icon: Store }] : []),
+    { name: 'Marketplace', path: '/', icon: Globe2 },
+    ...(hasStorefront ? [{ name: 'Storefront', path: storefrontPath, icon: Store }] : []),
   ];
 
   useEffect(() => {
     setIsMobileNavOpen(false);
   }, [location.pathname, location.search]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_KEY, String(collapsed));
+    } catch {
+      /* ignore */
+    }
+  }, [collapsed]);
+
   const handleLogout = async () => {
     await logout();
     navigate('/', { replace: true });
   };
 
+  const sidebarWidth = collapsed ? 'md:ml-[72px]' : 'md:ml-60';
+
   return (
-    <div className="min-h-screen flex bg-[var(--color-bg-page)] text-[var(--color-text-body)]">
-      <aside className="hidden md:flex flex-col w-64 bg-[var(--color-primary-darker)] text-white fixed h-full z-10 shadow-[var(--shadow-level-3)]">
-        <div className="p-6 pb-2 border-b border-white/10 flex items-center justify-between">
-          <div className="font-bold text-xl tracking-tight text-white flex gap-2 items-center">
-            <Store className="w-6 h-6 text-[var(--color-accent)]" />
-            <span>Nataka Hii</span>
-          </div>
+    <div className="vendor-command-center min-h-screen flex bg-[var(--vendor-bg)] text-[var(--color-text-body)]">
+      {/* Desktop sidebar */}
+      <aside
+        className={cn(
+          'hidden md:flex flex-col fixed h-full z-20 transition-all duration-300 ease-out',
+          'bg-[var(--vendor-bg)] border-r border-[var(--vendor-border)] shadow-2xl',
+          collapsed ? 'w-[72px]' : 'w-60',
+        )}
+      >
+        <div
+          className={cn(
+            'border-b border-[var(--vendor-border)] flex items-center',
+            collapsed ? 'p-4 justify-center' : 'p-5 justify-between',
+          )}
+        >
+          {!collapsed && (
+            <div className="font-bold text-lg tracking-tight text-white flex gap-2 items-center vendor-heading">
+              <Store className="w-5 h-5 text-[var(--vendor-accent-action)]" />
+              <span>Nataka Hii</span>
+            </div>
+          )}
+          {collapsed && <Store className="w-6 h-6 text-[var(--vendor-accent-action)]" />}
+          <button
+            type="button"
+            onClick={() => setCollapsed((c) => !c)}
+            className={cn(
+              'p-1.5 rounded-lg text-[var(--vendor-text-muted-on-dark)] hover:bg-white/10 hover:text-white transition-colors',
+              collapsed && 'mt-0',
+            )}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         </div>
 
-        <div className="p-6 border-b border-white/10 flex items-center gap-3">
-          <Avatar className="h-12 w-12 border-2 border-[var(--color-accent)] rounded-lg">
-            <AvatarImage src={displayImage} />
-            <AvatarFallback className="rounded-lg">{displayInitials}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 overflow-hidden">
-            <h3 className="font-semibold text-white truncate">{displayName}</h3>
-            <p className="text-xs text-[var(--color-text-muted)] truncate flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-[var(--color-success)] inline-block"></span>
-              {workspaceLabel}
-            </p>
+        {!collapsed && (
+          <div className="p-4 border-b border-[var(--vendor-border)] flex items-center gap-3">
+            <Avatar className="h-10 w-10 border-2 border-[var(--vendor-accent-action)]/50 rounded-xl">
+              <AvatarImage src={displayImage} />
+              <AvatarFallback className="rounded-xl text-xs">{displayInitials}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 overflow-hidden">
+              <h3 className="font-semibold text-white text-sm truncate vendor-heading">{displayName}</h3>
+              <p className="text-[11px] text-[var(--vendor-text-muted-on-dark)] truncate flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--vendor-accent-success)]" />
+                {workspaceLabel}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
-        <nav className="flex-1 overflow-y-auto py-4 space-y-1 px-3 custom-scrollbar">
+        <nav className="flex-1 overflow-y-auto py-4 space-y-1 px-2 custom-scrollbar">
           {navItems.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.path}
-              end={item.path === '/vendor/dashboard'}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-[var(--color-primary)] text-white'
-                    : 'text-[var(--color-text-muted)] hover:bg-white/5 hover:text-white'
-                }`
-              }
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="flex-1">{item.name}</span>
-            </NavLink>
+            <NavItemLink key={item.name} item={item} collapsed={collapsed} />
           ))}
         </nav>
 
-        <div className="p-4 border-t border-white/10 space-y-2">
-          <p className="px-3 text-[11px] font-black uppercase tracking-[0.24em] text-white/50">Quick Links</p>
+        <div className="p-3 border-t border-[var(--vendor-border)] space-y-1">
+          {!collapsed && (
+            <p className="px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 mb-2">Quick</p>
+          )}
           {sidebarLinks.map((item) => (
             <Link
               key={item.name}
               to={item.path}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:bg-white/5 hover:text-white"
+              title={collapsed ? item.name : undefined}
+              className={cn(
+                'flex items-center gap-3 rounded-xl text-sm font-medium text-[var(--vendor-text-muted-on-dark)] hover:bg-white/5 hover:text-white transition-colors',
+                collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5',
+              )}
             >
-              <item.icon className="w-5 h-5" />
-              <span className="flex-1">{item.name}</span>
+              <item.icon className="w-5 h-5 shrink-0" />
+              {!collapsed && <span>{item.name}</span>}
             </Link>
           ))}
-
-          <Button
-            variant="ghost"
-            className="w-full flex justify-start gap-3 text-[var(--color-text-muted)] hover:text-white hover:bg-white/5 h-10 px-3"
+          <button
+            type="button"
             onClick={handleLogout}
+            title={collapsed ? 'Sign Out' : undefined}
+            className={cn(
+              'w-full flex items-center gap-3 rounded-xl text-sm font-medium text-[var(--vendor-text-muted-on-dark)] hover:bg-white/5 hover:text-white transition-colors',
+              collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5',
+            )}
           >
-            <LogOut className="w-5 h-5" />
-            Sign Out
-          </Button>
+            <LogOut className="w-5 h-5 shrink-0" />
+            {!collapsed && <span>Sign Out</span>}
+          </button>
         </div>
       </aside>
 
-      <main className="flex-1 md:ml-64 flex flex-col min-h-screen w-full relative">
-        <header className="md:hidden sticky top-0 z-30 border-b border-white/10 bg-[rgba(9,22,57,0.96)] text-white backdrop-blur">
-          <div className="flex items-center justify-between gap-3 p-4 pb-3">
+      <main className={cn('flex-1 flex flex-col min-h-screen w-full relative transition-all duration-300', sidebarWidth)}>
+        {/* Mobile header */}
+        <header className="md:hidden sticky top-0 z-30 border-b border-[var(--vendor-border)] bg-[var(--vendor-bg)]/95 text-white backdrop-blur-md">
+          <div className="flex items-center justify-between gap-3 p-4">
             <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/55">{workspaceLabel}</p>
-              <div className="mt-1 font-bold flex gap-2 items-center min-w-0">
-                <Store className="w-5 h-5 shrink-0 text-[var(--color-accent)]" />
-                <span className="truncate">{displayName}</span>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">{workspaceLabel}</p>
+              <div className="mt-0.5 font-bold flex gap-2 items-center min-w-0 vendor-heading">
+                <Store className="w-5 h-5 shrink-0 text-[var(--vendor-accent-action)]" />
+                <span className="truncate text-white">{displayName}</span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-white/10"
-                onClick={() => navigate('/')}
-              >
-                <Globe2 className="w-5 h-5" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-white/10"
-                onClick={() => setIsMobileNavOpen((currentState) => !currentState)}
-              >
-                {isMobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </Button>
-            </div>
-          </div>
-
-          <div className="px-4 pb-4 flex gap-2 overflow-x-auto hide-scrollbar">
-            {hasStorefront && (
-              <Button
-                type="button"
-                variant="outline"
-                className="h-9 shrink-0 border-white/15 bg-white/5 text-white hover:bg-white/10"
-                onClick={() => navigate(storefrontPath)}
-              >
-                View Storefront
-              </Button>
-            )}
             <Button
               type="button"
-              variant="outline"
-              className="h-9 shrink-0 border-white/15 bg-white/5 text-white hover:bg-white/10"
-              onClick={() => navigate('/vendor/dashboard/subscription')}
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/10"
+              onClick={() => setIsMobileNavOpen(true)}
             >
-              Plan & Badge
+              <Menu className="w-5 h-5" />
             </Button>
           </div>
         </header>
 
-        {isMobileNavOpen && (
-          <div className="md:hidden fixed inset-0 z-40">
-            <button
-              type="button"
-              className="absolute inset-0 bg-slate-950/55"
-              aria-label="Close vendor navigation"
-              onClick={() => setIsMobileNavOpen(false)}
-            />
-            <aside className="absolute right-0 top-0 flex h-full w-[88vw] max-w-sm flex-col bg-[var(--color-primary-darker)] text-white shadow-[var(--shadow-level-3)]">
-              <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/55">Vendor Navigation</p>
-                  <p className="mt-1 text-base font-bold">{displayName}</p>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="text-white hover:bg-white/10"
-                  onClick={() => setIsMobileNavOpen(false)}
-                >
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
-
-              <div className="border-b border-white/10 px-5 py-4">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12 border-2 border-[var(--color-accent)] rounded-lg">
-                    <AvatarImage src={displayImage} />
-                    <AvatarFallback className="rounded-lg">{displayInitials}</AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <h3 className="truncate font-semibold text-white">{displayName}</h3>
-                    <p className="truncate text-xs text-[var(--color-text-muted)]">{workspaceLabel}</p>
-                  </div>
-                </div>
-              </div>
-
-              <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1 custom-scrollbar">
-                {navItems.map((item) => (
-                  <NavLink
-                    key={item.name}
-                    to={item.path}
-                    end={item.path === '/vendor/dashboard'}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-[var(--color-primary)] text-white'
-                          : 'text-[var(--color-text-muted)] hover:bg-white/5 hover:text-white'
-                      }`
-                    }
+        {/* Mobile drawer */}
+        <AnimatePresence>
+          {isMobileNavOpen && (
+            <div className="md:hidden fixed inset-0 z-40">
+              <motion.button
+                type="button"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/60"
+                aria-label="Close navigation"
+                onClick={() => setIsMobileNavOpen(false)}
+              />
+              <motion.aside
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+                className="absolute right-0 top-0 flex h-full w-[88vw] max-w-sm flex-col bg-[var(--vendor-bg)] text-white shadow-2xl"
+              >
+                <div className="flex items-center justify-between border-b border-[var(--vendor-border)] px-5 py-4">
+                  <p className="font-bold vendor-heading">{displayName}</p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-white hover:bg-white/10"
+                    onClick={() => setIsMobileNavOpen(false)}
                   >
-                    <item.icon className="w-5 h-5" />
-                    <span className="flex-1">{item.name}</span>
-                  </NavLink>
-                ))}
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
 
-                <div className="pt-4">
-                  <p className="px-3 text-[11px] font-black uppercase tracking-[0.24em] text-white/50">Go To</p>
-                  <div className="mt-2 space-y-1">
+                <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
+                  {mobilePrimaryNav.map((item) => (
+                    <NavItemLink
+                      key={item.name}
+                      item={item}
+                      collapsed={false}
+                      onNavigate={() => setIsMobileNavOpen(false)}
+                    />
+                  ))}
+
+                  {mobileDrawerGroups.map((group) => (
+                    <div key={group.label} className="pt-4">
+                      <p className="px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 mb-2">
+                        {group.label}
+                      </p>
+                      {group.items.map((item) => (
+                        <NavItemLink
+                          key={item.name}
+                          item={item}
+                          collapsed={false}
+                          onNavigate={() => setIsMobileNavOpen(false)}
+                        />
+                      ))}
+                    </div>
+                  ))}
+
+                  <div className="pt-4 border-t border-[var(--vendor-border)] mt-4">
                     {sidebarLinks.map((item) => (
                       <Link
                         key={item.name}
                         to={item.path}
-                        className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:bg-white/5 hover:text-white"
+                        onClick={() => setIsMobileNavOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[var(--vendor-text-muted-on-dark)] hover:bg-white/5 hover:text-white"
                       >
                         <item.icon className="w-5 h-5" />
-                        <span className="flex-1">{item.name}</span>
+                        {item.name}
                       </Link>
                     ))}
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[var(--vendor-text-muted-on-dark)] hover:bg-white/5 hover:text-white"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      Sign Out
+                    </button>
                   </div>
-                </div>
-              </nav>
+                </nav>
+              </motion.aside>
+            </div>
+          )}
+        </AnimatePresence>
 
-              <div className="border-t border-white/10 p-4">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3 px-3 text-[var(--color-text-muted)] hover:bg-white/5 hover:text-white"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="w-5 h-5" />
-                  Sign Out
-                </Button>
-              </div>
-            </aside>
-          </div>
-        )}
-
-        <div className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 md:pb-8 max-w-[1400px] mx-auto w-full">
-          <Outlet />
+        <div className="flex-1 vendor-page-bg p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 max-w-[1400px] mx-auto w-full">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </div>
 
-        <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-[var(--color-border)] flex items-center justify-around px-2 z-20 shadow-[var(--shadow-level-3)]">
+        {/* Mobile bottom nav */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-[var(--color-border)] flex items-center justify-around px-2 z-20 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
           {mobilePrimaryNav.map((item) => (
             <NavLink
               key={item.name}
               to={item.path}
               end={item.path === '/vendor/dashboard'}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center w-full h-full space-y-1 ${
-                  isActive ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'
-                }`
+                cn(
+                  'flex flex-col items-center justify-center w-full h-full space-y-0.5 transition-colors',
+                  isActive ? 'text-[var(--vendor-accent-action)]' : 'text-[var(--color-text-muted)]',
+                )
               }
             >
               {({ isActive }) => (
                 <>
-                  <item.icon className={`w-6 h-6 ${isActive ? 'fill-[var(--color-primary-bg)]' : ''}`} />
-                  <span className="text-[10px] font-medium">{item.name}</span>
+                  <item.icon className={cn('w-6 h-6', isActive && 'scale-110')} />
+                  <span className="text-[10px] font-semibold">{item.name}</span>
                 </>
               )}
             </NavLink>
           ))}
           <button
             type="button"
-            className={`flex h-full w-full flex-col items-center justify-center space-y-1 ${
-              isMobileNavOpen ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'
-            }`}
+            className={cn(
+              'flex h-full w-full flex-col items-center justify-center space-y-0.5',
+              isMobileNavOpen ? 'text-[var(--vendor-accent-action)]' : 'text-[var(--color-text-muted)]',
+            )}
             onClick={() => setIsMobileNavOpen(true)}
           >
-            <Menu className={`w-6 h-6 ${isMobileNavOpen ? 'fill-[var(--color-primary-bg)]' : ''}`} />
-            <span className="text-[10px] font-medium">More</span>
+            <Menu className="w-6 h-6" />
+            <span className="text-[10px] font-semibold">More</span>
           </button>
         </div>
       </main>

@@ -29,6 +29,16 @@ export function formatCurrency(value: number, currencyCode = DEFAULT_CURRENCY_CO
   return sanitizeCurrencyOutput(getCurrencyFormatter(currencyCode).format(value));
 }
 
+export function safeFormatCurrency(
+  value: unknown,
+  currencyCode = DEFAULT_CURRENCY_CODE,
+  fallback = 0,
+): string {
+  const numeric =
+    typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : Number(value);
+  return formatCurrency(Number.isFinite(numeric) ? numeric : fallback, currencyCode);
+}
+
 export function formatCompactCurrency(value: number, currencyCode = DEFAULT_CURRENCY_CODE) {
   return sanitizeCurrencyOutput(getCurrencyFormatter(currencyCode, true).format(value));
 }

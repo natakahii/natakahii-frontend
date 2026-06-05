@@ -1,516 +1,221 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { AlertTriangle, ArrowUpRight, DollarSign, Globe2, Package, ShoppingBag, Store, Truck } from 'lucide-react';
+import { motion } from 'motion/react';
+import { DollarSign, Package, ShoppingBag, Truck } from 'lucide-react';
 import { Badge, VendorVerificationBadge } from '../../components/ui/badge';
-import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { EmptyState } from '../../components/ui/empty-state';
 import { Skeleton } from '../../components/ui/skeleton';
-import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { useAuth } from '../../providers/AuthProvider';
-import { AuthSubscriptionPlan } from '../../services/authService';
-import { fetchVendorOverview, VendorOverviewResponse } from '../../services/analyticsService';
-import { formatCompactCurrency, formatCurrency } from '../../utils/currency';
-import { getVendorStorefrontPath } from '../../utils/storefront';
-import { getVendorVerificationDescriptor, isPremiumVerifiedVendor } from '../../utils/vendorVerification';
-
-function formatDateLabel(value?: string) {
-  if (!value) {
-    return 'Recently';
-  }
-
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(value));
-}
-
-function getOrderStatusClasses(status: string) {
-  const normalizedStatus = status.toLowerCase();
-
-  if (['delivered', 'paid'].includes(normalizedStatus)) {
-    return 'border-[var(--color-success)] text-[var(--color-success)] bg-[var(--color-success-bg)]';
-  }
-
-  if (['processing', 'shipped', 'in_transit'].includes(normalizedStatus)) {
-    return 'border-[var(--color-info)] text-[var(--color-info)] bg-[var(--color-info-bg)]';
-  }
-
-  if (['cancelled', 'failed'].includes(normalizedStatus)) {
-    return 'border-[var(--color-error)] text-[var(--color-error)] bg-[var(--color-error-bg)]';
-  }
-
-  return 'border-[var(--color-warning)] text-[var(--color-warning)] bg-[var(--color-warning-bg)]';
-}
-
-function formatPlanPrice(plan?: AuthSubscriptionPlan | null) {
-  if (!plan) {
-    return 'No plan assigned';
-  }
-
-  if (plan.is_free) {
-    return 'Free plan';
-  }
-
-  const billingLabel = plan.billing_cycle === 'yearly' ? 'year' : 'month';
-
-  return `${formatCurrency(Number(plan.price ?? 0))} / ${billingLabel}`;
-}
+import { useVendorOverview } from '../../hooks/useVendorOverview';
+import { safeFormatCurrency } from '../../utils/currency';
+import { isPremiumVerifiedVendor } from '../../utils/vendorVerification';
+import {
+  VendorAreaChart,
+  VendorCard,
+  VendorDashboardSkeleton,
+  VendorEmptyState,
+  VendorInlineError,
+  VendorPageHeader,
+  VendorPulseFeed,
+  VendorStatTile,
+  staggerContainer,
+  staggerItem,
+} from '../../components/vendor';
 
 export function VendorDashboardHome() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [overview, setOverview] = useState<VendorOverviewResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    setIsLoading(true);
-    setError(null);
-
-    fetchVendorOverview()
-      .then((response) => {
-        if (!isMounted) return;
-        setOverview(response);
-      })
-      .catch((nextError: any) => {
-        if (!isMounted) return;
-        setOverview(null);
-        setError(nextError?.message || 'Unable to load your vendor dashboard right now.');
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const { overview, isLoading, error, refresh } = useVendorOverview();
 
   const analytics = overview?.analytics;
   const hasProducts = (analytics?.total_products ?? 0) > 0;
+  const hasSales = (analytics?.total_orders ?? 0) > 0;
+
   const allRevenueIsZero = useMemo(
     () => (overview?.daily_metrics ?? []).every((entry) => entry.revenue === 0),
     [overview?.daily_metrics],
   );
+
   const vendorStatus = user?.vendor?.status ? String(user.vendor.status).replace(/_/g, ' ') : null;
-  const storefrontPath = getVendorStorefrontPath(user?.vendor);
-  const hasStorefront = Boolean(user?.vendor?.shop_slug || user?.vendor?.id);
-  const currentPlan = user?.vendor?.subscription_plan ?? null;
-  const verification = useMemo(() => getVendorVerificationDescriptor(user?.vendor), [user?.vendor]);
-  const productLimit = user?.vendor?.product_limit ?? currentPlan?.product_limit ?? null;
-  const totalProducts = analytics?.total_products ?? 0;
-  const hasReachedProductLimit = Boolean(productLimit && totalProducts >= productLimit);
-  const canUpgradePlan = Boolean(user?.vendor?.can_upgrade_subscription);
-  const vendorStatusTitle = vendorStatus
-    ? vendorStatus.replace(/\b\w/g, (character) => character.toUpperCase())
-    : 'Active';
+
+  if (isLoading && !overview) {
+    return <VendorDashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text-heading)]">
-              {user?.vendor?.shop_name || 'Vendor Dashboard'}
-            </h1>
+      <VendorPageHeader
+        title={user?.vendor?.shop_name || 'Command Center'}
+        description="Real-time insights into your store performance."
+        badge={
+          <>
+            {isPremiumVerifiedVendor(user?.vendor) && (
+              <VendorVerificationBadge tone="hero" label="Verified" />
+            )}
             {vendorStatus && (
-              <Badge className="bg-[var(--color-primary-bg)] text-[var(--color-primary)] hover:bg-[var(--color-primary-bg)] capitalize">
+              <Badge className="bg-[var(--vendor-accent-action-bg)] text-[var(--vendor-accent-action)] capitalize border-0">
                 {vendorStatus}
               </Badge>
             )}
-          </div>
-          <p className="text-[var(--color-text-muted)] mt-1">
-            Track the real activity in your store, from listed products to order and fulfillment progress.
-          </p>
-        </div>
-        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
-          {hasStorefront && (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full text-[var(--color-primary)] border-[var(--color-primary)] sm:w-auto"
-              onClick={() => navigate(storefrontPath)}
-            >
-              View Storefront
-            </Button>
-          )}
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full text-[var(--color-primary)] border-[var(--color-primary)] sm:w-auto"
-            onClick={() => navigate('/')}
-          >
-            Open Marketplace
-            <Globe2 className="w-4 h-4 ml-2" />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full text-[var(--color-primary)] border-[var(--color-primary)] sm:w-auto"
-            onClick={() => navigate('/vendor/dashboard/subscription')}
-          >
-            {canUpgradePlan ? 'Upgrade Plan' : 'Manage Plan'}
-          </Button>
-          <Button
-            type="button"
-            className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white sm:w-auto"
-            onClick={() => navigate('/vendor/dashboard/products/add')}
-          >
-            Add Product
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      {error && !isLoading && (
-        <Card className="border-[var(--color-error)] bg-[var(--color-error-bg)] shadow-sm">
-          <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="font-bold text-[var(--color-text-heading)]">Dashboard data unavailable</h2>
-              <p className="text-sm text-[var(--color-text-body)]">{error}</p>
-            </div>
-            <Button type="button" variant="outline" onClick={() => window.location.reload()}>
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
+      {error && (
+        <VendorInlineError message={error} onRetry={refresh} />
       )}
 
-      <Card className="border-[var(--color-border)] shadow-[var(--shadow-level-1)] overflow-hidden">
-        <CardContent className="p-5 sm:p-6 lg:p-7 space-y-5">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-3">
-                {isPremiumVerifiedVendor(user?.vendor) && (
-                  <VendorVerificationBadge tone="hero" label="Verified vendor" />
-                )}
-                {hasReachedProductLimit && (
-                  <Badge className="bg-[var(--color-warning-bg)] text-[var(--color-warning)] hover:bg-[var(--color-warning-bg)]">
-                    Plan limit reached
-                  </Badge>
-                )}
-              </div>
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"
+      >
+        <motion.div variants={staggerItem}>
+          <VendorStatTile
+            title="Total Revenue"
+            value={analytics?.total_revenue ?? null}
+            subtitle="Revenue from your order items"
+            icon={DollarSign}
+            accent="success"
+            isLoading={isLoading}
+            isCurrency
+          />
+        </motion.div>
+        <motion.div variants={staggerItem}>
+          <VendorStatTile
+            title="Total Orders"
+            value={analytics?.total_orders ?? null}
+            subtitle="Orders containing your products"
+            icon={ShoppingBag}
+            accent="action"
+            isLoading={isLoading}
+          />
+        </motion.div>
+        <motion.div variants={staggerItem}>
+          <VendorStatTile
+            title="Products Listed"
+            value={analytics?.total_products ?? null}
+            subtitle={
+              analytics
+                ? `${analytics.active_products} active · ${analytics.draft_products} draft`
+                : undefined
+            }
+            icon={Package}
+            accent="neutral"
+            isLoading={isLoading}
+          />
+        </motion.div>
+        <motion.div variants={staggerItem}>
+          <VendorStatTile
+            title="Pending Dropoffs"
+            value={analytics?.pending_dropoffs ?? null}
+            subtitle={
+              analytics
+                ? `${analytics.low_stock_count} low stock items`
+                : undefined
+            }
+            icon={Truck}
+            accent="warning"
+            isLoading={isLoading}
+          />
+        </motion.div>
+      </motion.div>
 
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--color-primary)]">Verification Level</p>
-                <h2 className="text-xl sm:text-2xl font-bold text-[var(--color-text-heading)] mt-2">{verification.headline}</h2>
-                <p className="text-sm text-[var(--color-text-muted)] mt-2 max-w-2xl">{verification.detail}</p>
-              </div>
-            </div>
+      {!isLoading && !hasProducts && (
+        <VendorEmptyState
+          variant="no-products"
+          title="Your store is ready for its first product"
+          description="Add your first product to start seeing revenue, orders, and inventory insights here."
+          actionLabel="List Your First Product"
+          actionOnClick={() => navigate('/vendor/dashboard/products/add')}
+        />
+      )}
 
-            <div className="rounded-[24px] border border-[var(--color-primary)]/15 bg-[linear-gradient(135deg,rgba(20,36,144,0.04),rgba(255,105,49,0.05))] p-4 sm:p-5 xl:max-w-[320px]">
-              <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--color-primary)]">Plan Momentum</p>
-              <p className="mt-3 text-base font-bold text-[var(--color-text-heading)]">
-                {canUpgradePlan
-                  ? 'Move to a paid plan when you want the verification tick and more catalog headroom.'
-                  : 'Your current plan is already supporting premium storefront trust across Nataka Hii.'}
-              </p>
-              <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-                {hasReachedProductLimit
-                  ? 'You have reached your current catalog allowance. Upgrading will make room for more products.'
-                  : 'Keep this view close to monitor store status, plan benefits, and selling capacity at a glance.'}
-              </p>
-              <Button
-                type="button"
-                className="mt-4 w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white"
-                onClick={() => navigate('/vendor/dashboard/subscription')}
-              >
-                {canUpgradePlan ? 'Upgrade Seller Plan' : 'Open Plan Settings'}
-                <ArrowUpRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="rounded-[20px] border border-[var(--color-border)] bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Current Plan</p>
-              <p className="text-lg font-bold text-[var(--color-text-heading)] mt-2">{currentPlan?.name || 'No plan assigned'}</p>
-              <p className="text-xs text-[var(--color-text-muted)] mt-1">{formatPlanPrice(currentPlan)}</p>
-            </div>
-
-            <div className="rounded-[20px] border border-[var(--color-border)] bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Verification</p>
-              <p className="text-lg font-bold text-[var(--color-text-heading)] mt-2">
-                {isPremiumVerifiedVendor(user?.vendor) ? 'Verification Badge' : 'No badge'}
-              </p>
-              <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                {isPremiumVerifiedVendor(user?.vendor)
-                  ? 'Shown as a blue verification tick across marketplace surfaces.'
-                  : 'KYC approval does not show a public badge.'}
-              </p>
-            </div>
-
-            <div className="rounded-[20px] border border-[var(--color-border)] bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Catalog</p>
-              <p className="text-lg font-bold text-[var(--color-text-heading)] mt-2">
-                {productLimit ? `${totalProducts}/${productLimit}` : 'Unlimited'}
-              </p>
-              <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                {productLimit ? 'Products currently listed versus your allowance.' : 'Your current plan does not cap the catalog.'}
-              </p>
-            </div>
-
-            <div className="rounded-[20px] border border-[var(--color-border)] bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)]">Store Status</p>
-              <p className="text-lg font-bold text-[var(--color-text-heading)] mt-2">{vendorStatusTitle}</p>
-              <p className="text-xs text-[var(--color-text-muted)] mt-1">Current seller account state on the marketplace.</p>
-            </div>
-          </div>
-
-          {canUpgradePlan && (
-            <div className="rounded-[20px] border border-[var(--color-primary)]/15 bg-[linear-gradient(135deg,rgba(20,36,144,0.04),rgba(255,105,49,0.05))] p-4">
-              <p className="text-sm font-semibold text-[var(--color-text-heading)]">
-                Free-plan sellers keep approved-vendor status with no public badge, while paid plans unlock the storefront verification tick shoppers see across Nataka Hii.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {[
-          {
-            title: 'Total Revenue',
-            value: analytics ? formatCurrency(analytics.total_revenue) : null,
-            subtitle: 'Revenue captured from this vendor’s order items.',
-            icon: DollarSign,
-            iconBg: 'bg-[var(--color-primary-bg)]',
-            iconColor: 'text-[var(--color-primary)]',
-          },
-          {
-            title: 'Total Orders',
-            value: analytics ? analytics.total_orders.toLocaleString() : null,
-            subtitle: 'Distinct orders that include your products.',
-            icon: ShoppingBag,
-            iconBg: 'bg-[var(--color-accent-bg)]',
-            iconColor: 'text-[var(--color-accent)]',
-          },
-          {
-            title: 'Products Listed',
-            value: analytics ? analytics.total_products.toLocaleString() : null,
-            subtitle: analytics
-              ? `${analytics.active_products} active • ${analytics.draft_products} draft`
-              : 'Active and draft catalog totals.',
-            icon: Package,
-            iconBg: 'bg-[var(--color-info-bg)]',
-            iconColor: 'text-[var(--color-info)]',
-          },
-          {
-            title: 'Pending Dropoffs',
-            value: analytics ? analytics.pending_dropoffs.toLocaleString() : null,
-            subtitle: analytics
-              ? `${analytics.low_stock_count} low stock products need attention`
-              : 'Fulfillment tasks still awaiting action.',
-            icon: Truck,
-            iconBg: 'bg-[var(--color-warning-bg)]',
-            iconColor: 'text-[var(--color-warning)]',
-          },
-        ].map((card) => (
-          <Card key={card.title} className="border-[var(--color-border)] shadow-[var(--shadow-level-1)]">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-[var(--color-text-muted)]">{card.title}</p>
-                  {isLoading ? (
-                    <Skeleton className="h-8 w-28" />
-                  ) : (
-                    <p className="text-2xl font-bold text-[var(--color-text-heading)]">{card.value}</p>
-                  )}
-                </div>
-                <div className={`w-10 h-10 rounded-full ${card.iconBg} flex items-center justify-center`}>
-                  <card.icon className={`w-5 h-5 ${card.iconColor}`} />
-                </div>
-              </div>
-              {isLoading ? (
-                <Skeleton className="h-4 w-full mt-4" />
-              ) : (
-                <p className="mt-4 text-sm text-[var(--color-text-muted)]">{card.subtitle}</p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {!isLoading && !error && !hasProducts && (
-        <Card className="border-[var(--color-border)] shadow-sm">
-          <CardContent className="p-0">
-            <EmptyState
-              variant="products"
-              title="Your store is ready for its first product"
-              description="The dashboard is now connected to live vendor data. Add your first product to start seeing revenue, orders, and inventory insights here."
-              actionLabel="Add First Product"
-              actionOnClick={() => navigate('/vendor/dashboard/products/add')}
-            />
-          </CardContent>
-        </Card>
+      {!isLoading && hasProducts && !hasSales && (
+        <VendorEmptyState
+          variant="no-sales"
+          title="No sales yet — let's get you selling!"
+          description="Your products are live. Share your storefront and watch the Pulse feed come alive."
+          actionLabel="View Products"
+          actionOnClick={() => navigate('/vendor/dashboard/products')}
+        />
       )}
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <Card className="xl:col-span-2 border-[var(--color-border)] shadow-[var(--shadow-level-1)]">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg text-[var(--color-text-heading)]">Revenue Overview</CardTitle>
-              <CardDescription>Daily vendor revenue for the last 30 days.</CardDescription>
-            </div>
-            <Button type="button" variant="ghost" size="sm" className="text-[var(--color-primary)]" onClick={() => navigate('/vendor/dashboard/analytics')}>
-              Open Analytics
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px] w-full">
-              {isLoading ? (
-                <Skeleton className="w-full h-full rounded-xl" />
-              ) : allRevenueIsZero ? (
-                <div className="w-full h-full rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg-card)] flex items-center justify-center px-6 text-center text-sm text-[var(--color-text-muted)]">
-                  Revenue will appear here once orders for your products start coming in.
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={overview?.daily_metrics ?? []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="dashboardRevenueFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-                    <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-muted)' }} tickFormatter={(value) => formatCompactCurrency(value)} />
-                    <Tooltip
-                      formatter={(value: number) => [formatCurrency(value), 'Revenue']}
-                      labelFormatter={(label) => `Date: ${label}`}
-                      contentStyle={{ borderRadius: '8px', border: '1px solid var(--color-border)' }}
-                    />
-                    <Area type="monotone" dataKey="revenue" stroke="var(--color-accent)" strokeWidth={3} fillOpacity={1} fill="url(#dashboardRevenueFill)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-[var(--color-border)] shadow-[var(--shadow-level-1)]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg text-[var(--color-text-heading)]">Recent Orders</CardTitle>
-            <CardDescription>Latest orders that include your products.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <VendorCard glow className="xl:col-span-2 p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-bold text-[var(--color-text-heading)] vendor-heading">Revenue Pulse</h2>
+            <p className="text-sm text-[var(--color-text-muted)] vendor-body">Daily revenue · last 30 days</p>
+          </div>
+          <div className="h-[280px] w-full">
             {isLoading ? (
-              Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="border-b border-[var(--color-border)] pb-4 last:border-0 last:pb-0">
-                  <Skeleton className="h-4 w-40 mb-2" />
-                  <Skeleton className="h-3 w-28 mb-2" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
-              ))
-            ) : (overview?.recent_orders.length ?? 0) === 0 ? (
-              <div className="rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 text-center text-sm text-[var(--color-text-muted)]">
-                Orders will show up here once customers start buying your products.
+              <Skeleton className="w-full h-full rounded-[16px]" />
+            ) : allRevenueIsZero ? (
+              <div className="w-full h-full rounded-[16px] border border-dashed border-[var(--color-border)] flex items-center justify-center px-6 text-center text-sm text-[var(--color-text-muted)] vendor-body">
+                Revenue will appear here once orders start coming in.
               </div>
             ) : (
-              overview?.recent_orders.map((order) => (
-                <div key={order.id} className="border-b border-[var(--color-border)] pb-4 last:border-0 last:pb-0">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-sm text-[var(--color-text-heading)]">{order.customer_name}</p>
-                      <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                        {order.order_number} • {formatDateLabel(order.created_at)}
-                      </p>
-                    </div>
-                    <Badge variant="outline" className={`text-[10px] uppercase ${getOrderStatusClasses(order.status)}`}>
-                      {String(order.status).replace(/_/g, ' ')}
-                    </Badge>
-                  </div>
-                  <div className="mt-3 flex items-start justify-between gap-3">
-                    <div className="text-xs text-[var(--color-text-body)]">
-                      {order.products.slice(0, 2).join(', ') || 'Products pending'}
-                      {order.products.length > 2 ? ` +${order.products.length - 2} more` : ''}
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-bold text-sm text-[var(--color-text-heading)]">{formatCurrency(order.vendor_total)}</p>
-                      <p className="text-xs text-[var(--color-text-muted)]">{order.item_count} items</p>
-                    </div>
-                  </div>
-                </div>
-              ))
+              <VendorAreaChart
+                data={overview?.daily_metrics ?? []}
+                gradientId="dashboardRevenueFill"
+                strokeColor="var(--vendor-accent-success)"
+                height={280}
+              />
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </VendorCard>
 
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-[var(--color-text-heading)] flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-[var(--color-warning)]" />
-            Low Stock Alerts
-          </h2>
-          <Button type="button" variant="link" className="text-[var(--color-primary)]" onClick={() => navigate('/vendor/dashboard/products')}>
-            View Inventory
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           {isLoading ? (
-            Array.from({ length: 3 }).map((_, index) => (
-              <Card key={index} className="border-[var(--color-border)] shadow-sm">
-                <CardContent className="p-4 flex gap-4 items-center">
-                  <Skeleton className="w-16 h-16 rounded-lg" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-24" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (overview?.low_stock_products.length ?? 0) === 0 ? (
-            <Card className="col-span-full border-[var(--color-border)] shadow-sm">
-              <CardContent className="p-8 text-center">
-                <div className="w-12 h-12 rounded-full bg-[var(--color-success-bg)] flex items-center justify-center mx-auto mb-4">
-                  <Package className="w-6 h-6 text-[var(--color-success)]" />
-                </div>
-                <h3 className="font-bold text-[var(--color-text-heading)]">Inventory looks healthy</h3>
-                <p className="text-sm text-[var(--color-text-muted)] mt-2">
-                  None of your active products are currently at low stock.
-                </p>
-              </CardContent>
-            </Card>
+            <Skeleton className="h-[360px] rounded-[24px]" />
           ) : (
-            overview?.low_stock_products.map((product) => (
-              <Card key={product.id} className="border border-[var(--color-warning)] shadow-sm hover:shadow-[var(--shadow-level-2)] transition-shadow">
-                <CardContent className="p-4 flex gap-4 items-center">
-                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-[var(--color-bg-card)] shrink-0">
-                    {product.image ? (
-                      <ImageWithFallback src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-[var(--color-primary-bg)] flex items-center justify-center">
-                        <Store className="w-6 h-6 text-[var(--color-primary)]" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm text-[var(--color-text-heading)] line-clamp-2">{product.name}</h3>
-                    <div className="flex items-center gap-2 mt-2 flex-wrap">
-                      <Badge variant="destructive" className="bg-[var(--color-error)] text-white text-[10px]">
-                        {product.stock} left
-                      </Badge>
-                      <Badge variant="outline" className="text-[10px] capitalize">
-                        {String(product.status).replace(/_/g, ' ')}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+            <VendorPulseFeed
+              orders={overview?.recent_orders ?? []}
+              lowStockProducts={overview?.low_stock_products ?? []}
+            />
           )}
-        </div>
+        </motion.div>
       </div>
+
+      {!isLoading && (overview?.low_stock_products.length ?? 0) > 0 && (
+        <VendorCard className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-bold text-[var(--color-text-heading)] vendor-heading">Low Stock Alerts</h2>
+              <p className="text-sm text-[var(--color-text-muted)]">{overview?.low_stock_products.length} products need attention</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/vendor/dashboard/products')}
+              className="text-sm font-semibold text-[var(--vendor-accent-action)] hover:underline"
+            >
+              View Inventory
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {overview?.low_stock_products.map((product) => (
+              <div
+                key={product.id}
+                className="rounded-[16px] border border-[var(--vendor-accent-warning)]/30 bg-[var(--vendor-accent-warning-bg)]/30 p-4"
+              >
+                <p className="font-semibold text-sm text-[var(--color-text-heading)] line-clamp-2">{product.name}</p>
+                <p className="text-xs text-[var(--vendor-accent-warning)] font-bold mt-2">{product.stock} units left</p>
+              </div>
+            ))}
+          </div>
+        </VendorCard>
+      )}
+
+      {!isLoading && analytics && analytics.total_revenue > 0 && (
+        <VendorCard className="p-5 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Today's snapshot</p>
+            <p className="text-xl font-bold text-[var(--color-text-heading)] vendor-heading mt-1">
+              {safeFormatCurrency(analytics.total_revenue)} lifetime revenue
+            </p>
+          </div>
+        </VendorCard>
+      )}
     </div>
   );
 }
