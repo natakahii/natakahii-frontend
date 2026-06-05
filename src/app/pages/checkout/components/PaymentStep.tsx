@@ -1,5 +1,5 @@
 import { 
-  CreditCard, Phone, CheckCircle, Info, Loader2, QrCode, 
+  CreditCard, Phone, Info, Loader2, QrCode, 
   ChevronLeft, ChevronRight 
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -94,89 +94,115 @@ export function PaymentStep({
             const selected = all.find(p => p.id === paymentMethod);
             if (!selected) return null;
             return (
-              <div className="flex items-center gap-4 bg-[var(--color-bg-page)] rounded-[16px] p-4 border border-[var(--color-border)]/50">
-                <div className="w-12 h-12 rounded-[10px] overflow-hidden bg-white shrink-0 border border-[var(--color-border)] flex items-center justify-center">
-                  {'logo' in selected && selected.logo ? (
-                    <img src={selected.logo} alt={selected.name} className="w-full h-full object-contain p-1" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white font-bold text-[14px]" style={{ backgroundColor: selected.color }}>
-                      {selected.name.substring(0, 2).toUpperCase()}
-                    </div>
-                  )}
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 bg-[var(--color-bg-page)] rounded-[16px] p-4 border border-[var(--color-border)]/50">
+                  <div className="w-12 h-12 rounded-[10px] overflow-hidden bg-white shrink-0 border border-[var(--color-border)] flex items-center justify-center">
+                    {'logo' in selected && selected.logo ? (
+                      <img src={selected.logo} alt={selected.name} className="w-full h-full object-contain p-1" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white font-bold text-[14px]" style={{ backgroundColor: selected.color }}>
+                        {selected.name.substring(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[14px] font-bold text-[var(--color-text-heading)]">{selected.name}</p>
+                    <p className="text-[12px] text-[var(--color-text-muted)]">
+                      {mobileProviders.some(p => p.id === paymentMethod) ? 'Mobile Payment' : 'Credit / Debit Card'}
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => setPaymentMethod('')}
+                    className="text-[12px] font-bold text-[var(--color-primary)] hover:underline"
+                  >
+                    Change
+                  </button>
                 </div>
-                <div className="flex-1">
-                  <p className="text-[14px] font-bold text-[var(--color-text-heading)]">{selected.name}</p>
-                  <p className="text-[12px] text-[var(--color-text-muted)]">
-                    {mobileProviders.some(p => p.id === paymentMethod) ? 'Mobile Payment' : 'Credit / Debit Card'}
-                  </p>
+
+                {/* Mobile action button - embedded below selected method */}
+                <div className="sm:hidden mt-6 space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-[var(--color-bg-page)] rounded-[16px] border border-[var(--color-border)]/50">
+                    <span className="text-[13px] font-semibold text-[var(--color-text-muted)]">Pay Amount</span>
+                    <span className="text-[18px] font-bold text-[var(--color-accent)]">{formatCurrency(total)}</span>
+                  </div>
+                  <Button
+                    onClick={handleStartPaymentFlow}
+                    disabled={loading}
+                    variant="primary"
+                    size="xl"
+                    className="w-full shadow-[var(--shadow-level-2)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] h-14 text-[16px] font-bold"
+                  >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>PAY <ChevronRight className="w-5 h-5 ml-2" /></>}
+                  </Button>
                 </div>
-                <CheckCircle className="w-5 h-5 text-[var(--color-primary)]" />
               </div>
             );
           })()}
 
-          {/* Payment Categories */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button
-              onClick={() => { setPaymentDrawerCategory('mobile'); setPaymentDrawerOpen(true); }}
-              className="flex flex-col items-center gap-3 p-6 rounded-[16px] bg-[var(--color-bg-page)] hover:bg-[var(--color-primary-bg)] hover:shadow-sm transition-all text-left group"
-            >
-              <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                <Phone className="w-7 h-7 text-[var(--color-primary)]" />
-              </div>
-              <div className="text-center">
-                <p className="text-[15px] font-bold text-[var(--color-text-heading)]">Mobile Payment</p>
-                <p className="text-[12px] text-[var(--color-text-muted)] mt-0.5">M-Pesa, Airtel, etc.</p>
-              </div>
-            </button>
-            <button
-              onClick={() => { setPaymentMethod('card'); handleStartPaymentFlow(); }}
-              className="flex flex-col items-center gap-3 p-6 rounded-[16px] bg-[var(--color-bg-page)] hover:bg-[var(--color-accent-bg)] hover:shadow-sm transition-all text-left group"
-            >
-              <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                <CreditCard className="w-7 h-7 text-[var(--color-accent)]" />
-              </div>
-              <div className="text-center">
-                <p className="text-[15px] font-bold text-[var(--color-text-heading)]">Card / Bank</p>
-                <p className="text-[12px] text-[var(--color-text-muted)] mt-0.5">Secure card payment</p>
-              </div>
-            </button>
-          </div>
-
-          {/* Mobile action button - embedded below payment categories */}
-          <div className="sm:hidden mt-6 space-y-4">
-            <div className="flex items-center justify-between p-4 bg-[var(--color-bg-page)] rounded-[16px] border border-[var(--color-border)]/50">
-              <span className="text-[13px] font-semibold text-[var(--color-text-muted)]">Pay Amount</span>
-              <span className="text-[18px] font-bold text-[var(--color-accent)]">{formatCurrency(total)}</span>
+          {/* Payment Categories - Hidden if a method is already selected */}
+          {!paymentMethod && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                onClick={() => { setPaymentDrawerCategory('mobile'); setPaymentDrawerOpen(true); }}
+                className="flex flex-col items-center gap-3 p-6 rounded-[16px] bg-[var(--color-bg-page)] hover:bg-[var(--color-primary-bg)] hover:shadow-sm transition-all text-left group"
+              >
+                <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                  <Phone className="w-7 h-7 text-[var(--color-primary)]" />
+                </div>
+                <div className="text-center">
+                  <p className="text-[15px] font-bold text-[var(--color-text-heading)]">Mobile Payment</p>
+                  <p className="text-[12px] text-[var(--color-text-muted)] mt-0.5">M-Pesa, Airtel, etc.</p>
+                </div>
+              </button>
+              <button
+                onClick={() => { setPaymentMethod('card'); handleStartPaymentFlow(); }}
+                className="flex flex-col items-center gap-3 p-6 rounded-[16px] bg-[var(--color-bg-page)] hover:bg-[var(--color-accent-bg)] hover:shadow-sm transition-all text-left group"
+              >
+                <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                  <CreditCard className="w-7 h-7 text-[var(--color-accent)]" />
+                </div>
+                <div className="text-center">
+                  <p className="text-[15px] font-bold text-[var(--color-text-heading)]">Card / Bank</p>
+                  <p className="text-[12px] text-[var(--color-text-muted)] mt-0.5">Secure card payment</p>
+                </div>
+              </button>
             </div>
-            <Button
-              onClick={handleStartPaymentFlow}
-              disabled={loading}
-              variant="primary"
-              size="xl"
-              className="w-full shadow-[var(--shadow-level-2)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] h-14 text-[16px] font-bold"
-            >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>PAY <ChevronRight className="w-5 h-5 ml-2" /></>}
-            </Button>
-            <button 
-              onClick={handleBack}
-              className="w-full text-center py-2 text-[14px] font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
-            >
-              Back to Shipping
-            </button>
-          </div>
+          )}
 
-          {error && <div className="text-red-500 text-[14px] font-medium bg-red-50 rounded-[8px] p-3">{error}</div>}
+          {/* Mobile "Back" button when no method selected */}
+          {!paymentMethod && (
+            <div className="sm:hidden mt-4">
+              <button 
+                onClick={handleBack}
+                className="w-full text-center py-2 text-[14px] font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
+              >
+                Back to Shipping
+              </button>
+            </div>
+          )}
+
+          {error && <div className="text-red-500 text-[14px] font-medium bg-red-50 rounded-[8px] p-3 mt-4">{error}</div>}
 
           {/* Desktop Pay button */}
-          <div className="hidden sm:flex items-center justify-between gap-4 pt-6 border-t border-[var(--color-border)]">
-            <Button onClick={handleBack} variant="ghost" className="text-[var(--color-text-muted)] font-bold px-0 hover:bg-transparent hover:text-[var(--color-text-heading)]">
-              <ChevronLeft className="w-5 h-5 mr-1" /> Back
-            </Button>
-            <Button onClick={handleStartPaymentFlow} disabled={loading} variant="primary" size="xl" className="px-12 shadow-[var(--shadow-level-2)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]">
-              Pay {formatCurrency(total)}
-            </Button>
-          </div>
+          {paymentMethod && (
+            <div className="hidden sm:flex items-center justify-between gap-4 pt-6 border-t border-[var(--color-border)]">
+              <Button onClick={handleBack} variant="ghost" className="text-[var(--color-text-muted)] font-bold px-0 hover:bg-transparent hover:text-[var(--color-text-heading)]">
+                <ChevronLeft className="w-5 h-5 mr-1" /> Back
+              </Button>
+              <Button onClick={handleStartPaymentFlow} disabled={loading} variant="primary" size="xl" className="px-12 shadow-[var(--shadow-level-2)] bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]">
+                Pay {formatCurrency(total)}
+              </Button>
+            </div>
+          )}
+          
+          {/* Desktop Back button when no method selected */}
+          {!paymentMethod && (
+            <div className="hidden sm:flex justify-start pt-6 border-t border-[var(--color-border)]">
+              <Button onClick={handleBack} variant="ghost" className="text-[var(--color-text-muted)] font-bold px-0 hover:bg-transparent hover:text-[var(--color-text-heading)]">
+                <ChevronLeft className="w-5 h-5 mr-1" /> Back
+              </Button>
+            </div>
+          )}
         </>
       )}
 
