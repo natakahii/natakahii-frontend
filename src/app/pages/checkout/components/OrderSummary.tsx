@@ -4,6 +4,7 @@ import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
 interface OrderSummaryProps {
   items: any[];
   subtotal: number;
+  platformFee: number;
   shippingCost: number;
   total: number;
   shippingMethod: string;
@@ -14,6 +15,7 @@ interface OrderSummaryProps {
 export function OrderSummary({
   items,
   subtotal,
+  platformFee,
   shippingCost,
   total,
   shippingMethod,
@@ -65,6 +67,10 @@ export function OrderSummary({
         <div className="flex justify-between text-[14px] font-medium text-[var(--color-text-muted)]">
           <span>Subtotal</span>
           <span className="text-[var(--color-text-heading)]">{formatCurrency(subtotal)}</span>
+        </div>
+        <div className="flex justify-between text-[14px] font-medium text-[var(--color-text-muted)]">
+          <span>Service Fee (2%)</span>
+          <span className="text-[var(--color-text-heading)]">{formatCurrency(platformFee)}</span>
         </div>
         <div className="flex justify-between text-[14px] font-medium text-[var(--color-text-muted)]">
           <span>Shipping Fee</span>

@@ -9,6 +9,7 @@ import type { PickupStation } from '../../../services/locationService';
 interface DeliveryStepProps {
   items: any[];
   subtotal: number;
+  platformFee: number;
   shippingCost: number;
   total: number;
   shippingMethod: string;
@@ -33,6 +34,7 @@ interface DeliveryStepProps {
 export function DeliveryStep({
   items,
   subtotal,
+  platformFee,
   shippingCost,
   total,
   shippingMethod,
@@ -68,6 +70,7 @@ export function DeliveryStep({
       <OrderSummary 
         items={items}
         subtotal={subtotal}
+        platformFee={platformFee}
         shippingCost={shippingCost}
         total={total}
         shippingMethod={shippingMethod}

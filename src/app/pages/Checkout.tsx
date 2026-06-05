@@ -68,7 +68,7 @@ export function Checkout() {
   const [orderResult, setOrderResult] = useState<any>(null);
   const pollingAborted = useRef(false);
   const navigate = useNavigate();
-  const { items, totalAmount } = useCart();
+  const { items } = useCart();
   const [searchParams] = useSearchParams();
 
   /* ── Step 1: Address ── */
@@ -189,7 +189,7 @@ export function Checkout() {
       .catch(() => setAvailableStations([]));
   }, [selectedWard, selectedDistrict, selectedRegion]);
 
-  const subtotal = totalAmount || items.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
   const platformFee = Math.round(subtotal * 0.02);
   const shippingCost = shippingProviders.find(p => p.id === shippingMethod)?.price || 0;
   const total = subtotal + platformFee + shippingCost;
@@ -500,6 +500,7 @@ export function Checkout() {
                 key="step1"
                 items={items}
                 subtotal={subtotal}
+                platformFee={platformFee}
                 shippingCost={shippingCost}
                 total={total}
                 shippingMethod={shippingMethod}
