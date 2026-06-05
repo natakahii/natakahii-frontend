@@ -15,7 +15,7 @@ import {
   Zap,
   Dumbbell,
   Users,
-  Heart,
+ 
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -57,7 +57,7 @@ function getCategoryIcon(category: CatalogCategory): LucideIcon {
 
 const FEATURED = 'featured' as const;
 type ActiveKey = number | typeof FEATURED;
-type ActiveDropdown = 'categories' | 'findNear' | 'resourceCenter' | 'appMenu' | null;
+type ActiveDropdown = 'categories' | 'findNear' | 'resourceCenter' | 'appMenu' | 'topVendors' | null;
 
 const TANZANIA_REGIONS = [ALL_REGION, ...getRegions()];
 
@@ -293,7 +293,7 @@ export function MegaMenu() {
     }
 
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {spotlightVendors.map((vendor) => {
           const vendorTier = getVendorVerificationTier(vendor);
           const location = [vendor.street, vendor.region, vendor.city].filter(Boolean).join(', ');
@@ -303,39 +303,45 @@ export function MegaMenu() {
               key={vendor.id}
               to={getVendorStorefrontPath(vendor)}
               onClick={() => { setActiveDropdown(null); setMobileActiveSection(null); }}
-              className="group flex items-start gap-3 p-3 rounded-[12px] border border-[var(--color-border)] hover:border-[var(--color-primary)] hover:shadow-sm transition-all bg-white"
+              className="group flex flex-col items-center text-center p-6 rounded-[24px] bg-[var(--color-bg-page)] hover:bg-white hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-all duration-300 relative"
             >
-              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[var(--color-border)] shrink-0">
+              {vendorTier === 'premium' && (
+                <div className="absolute top-4 right-4">
+                  <VendorVerificationBadge tone="compact" label="" />
+                </div>
+              )}
+              
+              <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-sm mb-4 group-hover:scale-110 transition-transform duration-300">
                 <ImageWithFallback
                   src={vendor.logo || '/natakahii-logo.png'}
                   alt={vendor.shop_name}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="text-[13px] font-bold text-[var(--color-text-heading)] truncate">
-                    {vendor.shop_name}
-                  </span>
-                  {vendorTier === 'premium' && (
-                    <VendorVerificationBadge tone="compact" label="" className="shrink-0" />
-                  )}
+
+              <h4 className="text-[16px] font-bold text-[var(--color-text-heading)] mb-1 group-hover:text-[var(--color-primary)] transition-colors">
+                {vendor.shop_name}
+              </h4>
+
+              {location && (
+                <div className="flex items-center justify-center gap-1 text-[12px] text-[var(--color-text-muted)] mb-4">
+                  <MapPin className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate max-w-[180px]">{location}</span>
                 </div>
-                {location && (
-                  <div className="flex items-center gap-1 text-[11px] text-[var(--color-text-muted)] mb-1">
-                    <MapPin className="w-3 h-3 shrink-0" />
-                    <span className="truncate">{location}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-3 text-[11px] text-[var(--color-text-muted)]">
-                  <span className="flex items-center gap-1">
-                    <Users className="w-3 h-3" />
+              )}
+
+              <div className="flex items-center justify-center gap-6 pt-4 border-t border-[var(--color-border)] w-full">
+                <div className="flex flex-col items-center">
+                  <span className="text-[14px] font-bold text-[var(--color-text-heading)]">
                     {vendor.followers_count || 0}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Heart className="w-3 h-3" />
+                  <span className="text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">Followers</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-[14px] font-bold text-[var(--color-text-heading)]">
                     {vendor.totalLikes || 0}
                   </span>
+                  <span className="text-[11px] text-[var(--color-text-muted)] uppercase tracking-wider">Likes</span>
                 </div>
               </div>
             </Link>
@@ -383,9 +389,23 @@ export function MegaMenu() {
                 />
               </button>
 
-              <Link to="/explore" className={linkClass} onMouseEnter={closeNonCategory}>
+              <button
+                type="button"
+                onMouseEnter={() => openDropdown('topVendors')}
+                onClick={() => openDropdown('topVendors')}
+                className={cn(
+                  linkClass,
+                  'flex items-center gap-1 border-b-2',
+                  activeDropdown === 'topVendors'
+                    ? 'text-[var(--color-primary)] border-[var(--color-primary)]'
+                    : 'border-transparent hover:text-[var(--color-primary)]',
+                )}
+              >
                 Top Verified Seller/Vendor
-              </Link>
+                <ChevronDown
+                  className={cn('w-4 h-4 transition-transform', activeDropdown === 'topVendors' && 'rotate-180')}
+                />
+              </button>
               <button
                 type="button"
                 onMouseEnter={() => openDropdown('findNear')}
@@ -524,16 +544,7 @@ export function MegaMenu() {
                       </p>
                     )
                   ) : (
-                    <>
-                      {renderProductGrid(featuredProducts)}
-                      {/* Vendor Spotlight */}
-                      <div className="mt-6 pt-5 border-t border-[var(--color-border)]">
-                        <h4 className="text-[14px] font-bold text-[var(--color-text-heading)] mb-3">
-                          Top Verified Vendors
-                        </h4>
-                        {renderVendorCards()}
-                      </div>
-                    </>
+                    renderProductGrid(featuredProducts)
                   )
                 ) : isLoadingProducts || activeProducts === undefined ? (
                   renderLoadingGrid()
@@ -551,6 +562,34 @@ export function MegaMenu() {
                 ) : (
                   renderProductGrid(activeProducts)
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Top Verified Vendors Dropdown ─── */}
+        {activeDropdown === 'topVendors' && (
+          <div className="absolute left-0 right-0 top-full" onMouseEnter={cancelClose}>
+            <div className="bg-white border border-t-0 border-[var(--color-border)] shadow-[var(--shadow-level-3)] overflow-hidden">
+              <div className="container mx-auto px-4 py-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-[20px] font-bold text-[var(--color-text-heading)]">
+                      Top Verified Sellers & Vendors
+                    </h3>
+                    <p className="text-[14px] text-[var(--color-text-muted)] mt-1">
+                      Discover our most trusted partners based on performance and reliability.
+                    </p>
+                  </div>
+                  <Link
+                    to="/explore"
+                    onClick={() => setActiveDropdown(null)}
+                    className="px-6 py-2.5 rounded-full border border-[var(--color-primary)] text-[14px] font-bold text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-all"
+                  >
+                    View All Vendors
+                  </Link>
+                </div>
+                {renderVendorCards()}
               </div>
             </div>
           </div>
