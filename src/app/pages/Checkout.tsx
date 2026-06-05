@@ -62,7 +62,7 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
 export function Checkout() {
   const [step, setStep] = useState(1);
   const [shippingMethod] = useState(shippingProviders[0].id);
-  const [paymentMethod, setPaymentMethod] = useState('mpesa');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [orderResult, setOrderResult] = useState<any>(null);

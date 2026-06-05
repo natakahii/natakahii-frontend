@@ -119,9 +119,9 @@ export function PaymentStep({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <button
               onClick={() => { setPaymentDrawerCategory('mobile'); setPaymentDrawerOpen(true); }}
-              className="flex flex-col items-center gap-3 p-6 rounded-[16px] border-2 border-[var(--color-border)] bg-white hover:border-[var(--color-primary)] hover:shadow-sm transition-all text-left"
+              className="flex flex-col items-center gap-3 p-6 rounded-[16px] bg-[var(--color-bg-page)] hover:bg-[var(--color-primary-bg)] hover:shadow-sm transition-all text-left group"
             >
-              <div className="w-14 h-14 rounded-full bg-[var(--color-primary-bg)] flex items-center justify-center">
+              <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                 <Phone className="w-7 h-7 text-[var(--color-primary)]" />
               </div>
               <div className="text-center">
@@ -130,10 +130,10 @@ export function PaymentStep({
               </div>
             </button>
             <button
-              onClick={() => { setPaymentMethod('card'); setPaymentDrawerOpen(false); }}
-              className="flex flex-col items-center gap-3 p-6 rounded-[16px] border-2 border-[var(--color-border)] bg-white hover:border-[var(--color-primary)] hover:shadow-sm transition-all text-left"
+              onClick={() => { setPaymentMethod('card'); handleStartPaymentFlow(); }}
+              className="flex flex-col items-center gap-3 p-6 rounded-[16px] bg-[var(--color-bg-page)] hover:bg-[var(--color-accent-bg)] hover:shadow-sm transition-all text-left group"
             >
-              <div className="w-14 h-14 rounded-full bg-[var(--color-accent-bg)] flex items-center justify-center">
+              <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                 <CreditCard className="w-7 h-7 text-[var(--color-accent)]" />
               </div>
               <div className="text-center">
