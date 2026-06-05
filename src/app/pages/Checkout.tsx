@@ -62,7 +62,7 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
 export function Checkout() {
   const [step, setStep] = useState(1);
   const [shippingMethod] = useState(shippingProviders[0].id);
-  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('mpesa');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [orderResult, setOrderResult] = useState<any>(null);
@@ -246,21 +246,19 @@ export function Checkout() {
     setPaymentFlowStep('select');
   };
 
-  const handleStartPaymentFlow = (overrideMethod?: string) => {
-    const methodToUse = overrideMethod || paymentMethod;
-    if (!methodToUse) { setError('Please select a payment method'); return; }
+  const handleStartPaymentFlow = () => {
+    if (!paymentMethod) { setError('Please select a payment method'); return; }
     setError('');
-    const isMobile = ['mpesa', 'airtel_money', 'halopesa', 'mixx_by_yas'].includes(methodToUse);
-    if (isMobile) {
+    if (isMobileMoney) {
       if (mpesaPhone.trim()) {
-        const v = validateProviderPhone(methodToUse, mpesaPhone);
+        const v = validateProviderPhone(paymentMethod, mpesaPhone);
         if (v.valid) { setPaymentFlowStep('confirm'); } 
         else { setPaymentPhoneError(v.message); setPaymentFlowStep('request'); }
       } else {
         setPaymentFlowStep('request');
       }
     } else {
-      handlePlaceOrder(overrideMethod);
+      handlePlaceOrder();
     }
   };
 
@@ -288,11 +286,8 @@ export function Checkout() {
       });
   };
 
-  const handlePlaceOrder = async (overrideMethod?: string) => {
+  const handlePlaceOrder = async () => {
     if (items.length === 0) { setError('Your cart is empty'); return; }
-    const methodToUse = overrideMethod || paymentMethod;
-    if (!methodToUse) { setError('Please select a payment method'); return; }
-
     setError('');
     setLoading(true);
     setPaymentFlowStep('processing');
@@ -300,19 +295,18 @@ export function Checkout() {
     try {
       const cartItems = items.map(item => ({ product_id: item.product_id, quantity: item.quantity }));
       const deliveryAddress = { street: streetAddress, city: selectedWard, district: selectedDistrict, region: selectedRegion, pickup_station: pickupStation?.name || '' };
-      const isMobile = ['mpesa', 'airtel_money', 'halopesa', 'mixx_by_yas'].includes(methodToUse);
-      const phoneNumber = isMobile ? (mpesaPhone || mobileNumber) : mobileNumber;
+      const phoneNumber = isMobileMoney ? (mpesaPhone || mobileNumber) : mobileNumber;
 
       const result = await orderService.createOrder({
         items: cartItems,
         delivery_address: deliveryAddress,
         phone_number: phoneNumber,
-        payment_method: methodToUse,
+        payment_method: paymentMethod,
       });
 
       setOrderResult(result);
 
-      if (isMobile) {
+      if (isMobileMoney) {
         setPaymentFlowStep('awaiting');
         setPaymentStatusMessage('A payment prompt has been sent to your phone. Please enter your PIN on your mobile device.');
         setLoading(false);
