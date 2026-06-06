@@ -50,10 +50,10 @@ export const router = createBrowserRouter([
           { path: "product/:productIdentifier", Component: ProductDetail },
           { path: "shop/:shopSlug", Component: ShopStorefront },
           { path: "video", Component: VideoFeed },
+          { path: "cart", Component: Cart },
 
           // Auth required customer routes
           { path: "customer", element: <RequireAuth><CustomerHome /></RequireAuth> },
-          { path: "cart", element: <RequireAuth><Cart /></RequireAuth> },
           { path: "checkout", element: <RequireAuth><Checkout /></RequireAuth> },
           { path: "tracking", element: <RequireAuth><Tracking /></RequireAuth> },
           { path: "profile", element: <RequireAuth><Profile /></RequireAuth> },

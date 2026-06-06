@@ -1,11 +1,12 @@
 import { Home, Compass, PlaySquare, Bell, User } from 'lucide-react';
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { cn } from './ui/button';
 import { useAuth } from '../providers/AuthProvider';
 
 export function BottomNav() {
   const location = useLocation();
+  const navigate = useNavigate();
   const path = location.pathname;
   const { defaultRoute, isAuthenticated } = useAuth();
 
@@ -20,11 +21,7 @@ export function BottomNav() {
   const handleProfileClick = (e: React.MouseEvent, targetPath: string) => {
     if (!isAuthenticated && (targetPath === '/profile' || targetPath === '/notifications')) {
       e.preventDefault();
-      // We'll use window.dispatchEvent or a global state for the login popup if needed,
-      // but for now, navigating to /login is the standard behavior in this app.
-      // If the user specifically wants a "popup", we might need a global Login Modal.
-      // Given current architecture, let's redirect to login with a return path.
-      window.location.href = `/login?from=${encodeURIComponent(targetPath)}`;
+      navigate('/login', { state: { from: { pathname: targetPath } } });
     }
   };
 
