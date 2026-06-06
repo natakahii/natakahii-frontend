@@ -133,8 +133,8 @@ export function Profile() {
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-[var(--color-bg-card)]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-white">
           <div className="flex items-center gap-3 text-[var(--color-primary)] mb-3">
             <User className="w-5 h-5" />
             <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Identity</h3>
@@ -143,7 +143,7 @@ export function Profile() {
           <p className="text-[14px] text-[var(--color-text-body)] mt-2"><span className="font-semibold">Email:</span> {user.email}</p>
         </div>
 
-        <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-[var(--color-bg-card)]">
+        <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-white">
           <div className="flex items-center gap-3 text-[var(--color-primary)] mb-3">
             <Shield className="w-5 h-5" />
             <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Access</h3>
@@ -152,7 +152,7 @@ export function Profile() {
           <p className="text-[14px] text-[var(--color-text-body)] mt-2"><span className="font-semibold">Status:</span> {user.status || 'active'}</p>
         </div>
 
-        <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-[var(--color-bg-card)]">
+        <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-white">
           <div className="flex items-center gap-3 text-[var(--color-primary)] mb-3">
             <Phone className="w-5 h-5" />
             <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Contact</h3>
@@ -160,7 +160,7 @@ export function Profile() {
           <p className="text-[14px] text-[var(--color-text-body)]">{user.phone || 'Add your phone number in Settings so delivery teams can reach you quickly.'}</p>
         </div>
 
-        <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-[var(--color-bg-card)]">
+        <div className="rounded-[18px] border border-[var(--color-border)] p-5 bg-white">
           <div className="flex items-center gap-3 text-[var(--color-primary)] mb-3">
             <Store className="w-5 h-5" />
             <h3 className="font-bold text-[16px] text-[var(--color-text-heading)]">Seller Tools</h3>
@@ -193,7 +193,7 @@ export function Profile() {
         ) : wishlist.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {wishlist.map((product) => (
-              <div key={product.id} className="group relative bg-white rounded-[16px] border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-all">
+              <div key={product.id} className="group relative bg-white rounded-[16px] border border-[var(--color-border)] overflow-hidden transition-all">
                 <Link to={getProductPath(product)} className="block aspect-square">
                   <ImageWithFallback src={getProductPrimaryImage(product)} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 </Link>
@@ -246,7 +246,7 @@ export function Profile() {
         </div>
         <div className="space-y-1.5">
           <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Email Address</label>
-          <input type="email" value={user.email} disabled className="w-full rounded-[8px] border-2 border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-3 text-[14px] text-[var(--color-text-muted)] focus:outline-none transition-shadow" />
+          <input type="email" value={user.email} disabled className="w-full rounded-[8px] border-2 border-[var(--color-border)] bg-gray-50 px-4 py-3 text-[14px] text-[var(--color-text-muted)] focus:outline-none transition-shadow" />
         </div>
         <div className="space-y-1.5">
           <label className="text-[13px] font-semibold text-[var(--color-text-heading)] ml-1">Phone Number</label>
@@ -282,13 +282,13 @@ export function Profile() {
   };
 
   return (
-    <div className="bg-[var(--color-bg-page)] min-h-[calc(100vh-72px)] py-8 lg:py-12">
+    <div className="bg-white min-h-[calc(100vh-72px)] py-8 lg:py-12">
       <div className="container mx-auto px-4 max-w-6xl">
-        <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-sm border border-[var(--color-border)]/50 mb-8">
+        <div className="bg-white rounded-[24px] p-6 sm:p-8 border border-[var(--color-border)] mb-8">
 
           <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-10">
             <div className="relative shrink-0">
-              <div className="w-28 h-28 rounded-full overflow-hidden bg-[var(--color-bg-card)] border-4 border-white shadow-[var(--shadow-level-2)]">
+              <div className="w-28 h-28 rounded-full overflow-hidden bg-white border-2 border-[var(--color-border)]">
                 <ImageWithFallback src={profileImage} alt={user.name} className="w-full h-full object-cover" />
               </div>
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleUploadPhoto} />
@@ -296,7 +296,7 @@ export function Profile() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploadingPhoto}
-                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shadow-md border-2 border-white hover:bg-[var(--color-primary-darker)] transition-colors disabled:opacity-50"
+                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center border-2 border-white hover:bg-[var(--color-primary-darker)] transition-colors disabled:opacity-50"
               >
                 <Camera className="w-4 h-4" />
               </button>
