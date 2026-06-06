@@ -25,6 +25,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated } = useAuth();
 
+  // Load guest cart from local storage
+  const [guestItems, setGuestItems] = useState<CartItem[]>([]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      try {
+        const stored = localStorage.getItem('natakahii_guest_cart');
+        if (stored) {
+          setGuestItems(JSON.parse(stored));
+        }
+      } catch (e) {
+        console.error('Failed to load guest cart', e);
+      }
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      localStorage.setItem('natakahii_guest_cart', JSON.stringify(guestItems));
+    }
+  }, [guestItems, isAuthenticated]);
+
   // Fetch cart when user authenticates
   useEffect(() => {
     if (!isAuthenticated) {
@@ -36,6 +58,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       try {
         setIsLoading(true);
         setError(null);
+
+        // If there were guest items, we might want to sync them here
+        // For now, just fetch the existing server cart
         const data = await getCart();
         setCart(data);
       } catch (err) {
@@ -79,12 +104,45 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const addToCart = async (productId: number, quantity: number = 1, variantId?: number) => {
-    if (!isAuthenticated) {
-      throw new Error('Must be authenticated to add items to cart');
-    }
-
     if (quantity < 1) {
       throw new Error('Quantity must be at least 1');
+    }
+
+    if (!isAuthenticated) {
+      // Handle guest add to cart
+      try {
+        const { fetchProduct } = await import('../services/productService');
+        const { product } = await fetchProduct(productId);
+        
+        setGuestItems(prev => {
+          const existingIndex = prev.findIndex(item => item.product_id === productId && item.variant_id === variantId);
+          if (existingIndex > -1) {
+            const next = [...prev];
+            next[existingIndex] = { ...next[existingIndex], quantity: next[existingIndex].quantity + quantity };
+            return next;
+          }
+          
+          const newItem: CartItem = {
+            id: Date.now(), // temporary id for UI
+            product_id: productId,
+            variant_id: variantId,
+            quantity,
+            product: {
+              id: product.id,
+              name: product.name,
+              price: product.price,
+              effective_price: product.effective_price,
+              stock: product.stock,
+              images: product.images.map(img => ({ image_path: img.image_path }))
+            }
+          };
+          return [...prev, newItem];
+        });
+        return;
+      } catch (e) {
+        console.error('Failed to add to guest cart', e);
+        throw new Error('Failed to add to cart');
+      }
     }
 
     try {
@@ -99,12 +157,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateQuantity = async (itemId: number, quantity: number) => {
-    if (!isAuthenticated) {
-      throw new Error('Must be authenticated to update cart');
-    }
-
     if (quantity < 1) {
       throw new Error('Quantity must be at least 1');
+    }
+
+    if (!isAuthenticated) {
+      setGuestItems(prev => prev.map(item => item.id === itemId ? { ...item, quantity } : item));
+      return;
     }
 
     const item = cart?.items.find(i => i.id === itemId);
@@ -130,7 +189,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const removeItem = async (itemId: number) => {
     if (!isAuthenticated) {
-      throw new Error('Must be authenticated to remove cart items');
+      setGuestItems(prev => prev.filter(item => item.id !== itemId));
+      return;
     }
 
     try {
@@ -146,7 +206,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = async () => {
     if (!isAuthenticated) {
-      throw new Error('Must be authenticated to clear cart');
+      setGuestItems([]);
+      return;
     }
 
     try {
@@ -161,16 +222,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const getItemMaxQuantity = (itemId: number): number => {
-    const item = cart?.items.find(i => i.id === itemId);
+    const itemsList = isAuthenticated ? cart?.items : guestItems;
+    const item = itemsList?.find(i => i.id === itemId);
     if (!item) return 0;
     return getMaxQuantity(item);
   };
 
+  const items = useMemo(() => isAuthenticated ? (cart?.items || []) : guestItems, [isAuthenticated, cart, guestItems]);
+  const totalItems = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
+  const totalAmount = useMemo(() => items.reduce((sum, item) => {
+    const price = item.product?.effective_price ?? item.product?.price ?? 0;
+    return sum + price * item.quantity;
+  }, 0), [items]);
+
   const value = useMemo<CartContextValue>(() => ({
     cart,
-    items: cart?.items || [],
-    totalItems: cart?.total_items || 0,
-    totalAmount: cart?.total_amount || 0,
+    items,
+    totalItems,
+    totalAmount,
     isLoading,
     error,
     refreshCart,
@@ -179,7 +248,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     removeItem,
     clearCart,
     getItemMaxQuantity,
-  }), [cart, isLoading, error]);
+  }), [cart, items, totalItems, totalAmount, isLoading, error]);
 
   return (
     <CartContext.Provider value={value}>

@@ -19,7 +19,6 @@ export function Navbar() {
   const { defaultRoute, hasRole, isAuthenticated, logout, user } = useAuth();
   const { totalItems } = useCart();
 
-  const homePath = isAuthenticated ? '/customer' : '/';
   const profileTarget = '/profile';
   const displayName = user?.name || 'Your account';
   const profilePhoto = user?.profile_photo || undefined;
@@ -40,7 +39,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full bg-white shadow-[var(--shadow-level-1)]">
       <div className="container mx-auto px-4 h-[72px] flex items-center justify-between gap-4 lg:gap-8">
         {/* Logo */}
-        <Link to={homePath} className="flex items-center flex-shrink-0">
+        <Link to={defaultRoute} className="flex items-center flex-shrink-0">
           <img
             src={headerLogo}
             alt="Nataka Hii"
@@ -182,7 +181,21 @@ export function Navbar() {
               <nav className="mb-6 space-y-1 border-b border-[var(--color-border)] pb-4">
                 <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className="block text-[15px] font-medium text-[var(--color-text-body)] py-2">Browse All Products</Link>
                 <Link to="/explore" onClick={() => setIsMobileMenuOpen(false)} className="block text-[15px] font-medium text-[var(--color-text-body)] py-2">Top Verified Seller/Vendor</Link>
-                <Link to="/vendor/apply" onClick={() => setIsMobileMenuOpen(false)} className="block text-[15px] font-semibold text-[var(--color-accent)] py-2">Sell on natakahii</Link>
+                <Link 
+                  to="/vendor/apply" 
+                  onClick={(e) => {
+                    if (!isAuthenticated) {
+                      e.preventDefault();
+                      setIsMobileMenuOpen(false);
+                      navigate('/login', { state: { from: { pathname: '/vendor/apply' } } });
+                    } else {
+                      setIsMobileMenuOpen(false);
+                    }
+                  }} 
+                  className="block text-[15px] font-semibold text-[var(--color-accent)] py-2"
+                >
+                  Sell on natakahii
+                </Link>
               </nav>
               {!isAuthenticated ? (
                 <div className="space-y-4">

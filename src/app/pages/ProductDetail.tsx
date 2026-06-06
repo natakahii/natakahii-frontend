@@ -303,7 +303,11 @@ export function ProductDetail() {
     if (!product) return;
     try {
       await addToCartContext(product.id, qty, selectedVariant?.id);
-      navigate('/cart');
+      if (!isAuthenticated) {
+        navigate('/login', { state: { from: { pathname: '/cart' } } });
+      } else {
+        navigate('/cart');
+      }
     } catch (err: any) {
       toast({ type: 'error', title: err?.message || 'Failed to add to cart' });
     }

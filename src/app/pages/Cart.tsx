@@ -120,8 +120,17 @@ export function Cart() {
   }, [clearCart]);
 
   useEffect(() => {
-    if (!isAuthenticated) navigate('/', { replace: true });
+    // Guest user can view cart but not checkout
+    // if (!isAuthenticated) navigate('/', { replace: true });
   }, [isAuthenticated, navigate]);
+
+  const handleBuyNowClick = () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: { pathname: '/cart' } } });
+      return;
+    }
+    setDrawerOpen(true);
+  };
 
   /* fetch full product details when drawer opens */
   useEffect(() => {
@@ -329,7 +338,7 @@ export function Cart() {
           <Button variant="secondary" size="xl" className="flex-1" onClick={() => navigate('/customer')}>
             <ArrowLeft className="w-5 h-5 mr-2" /> Back to Shopping
           </Button>
-          <Button variant="primary" size="xl" className="flex-1 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] shadow-[var(--shadow-level-2)]" onClick={() => setDrawerOpen(true)}>
+          <Button variant="primary" size="xl" className="flex-1 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] shadow-[var(--shadow-level-2)]" onClick={handleBuyNowClick}>
             Buy Now <ChevronRight className="w-5 h-5 ml-2" />
           </Button>
         </div>
@@ -340,7 +349,7 @@ export function Cart() {
         <Button variant="secondary" size="l" className="flex-1" onClick={() => navigate('/customer')}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Back
         </Button>
-        <Button variant="primary" size="l" className="flex-1 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]" onClick={() => setDrawerOpen(true)}>
+        <Button variant="primary" size="l" className="flex-1 bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)]" onClick={handleBuyNowClick}>
           Buy Now
         </Button>
       </div>
