@@ -101,6 +101,16 @@ export function ProductDetail() {
 
         setProduct(response.product);
         setRecentReviews(response.recent_reviews);
+
+        // Track browsing history
+        try {
+          const history = JSON.parse(localStorage.getItem('natakahii_browsing_history') || '[]');
+          const updatedHistory = [response.product.id, ...history.filter((id: number) => id !== response.product.id)].slice(0, 10);
+          localStorage.setItem('natakahii_browsing_history', JSON.stringify(updatedHistory));
+        } catch (e) {
+          console.warn('Failed to save browsing history', e);
+        }
+
         setActiveImage(getProductPrimaryImage(response.product));
         setQty(1);
         setActiveTab('Description');

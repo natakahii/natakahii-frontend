@@ -197,6 +197,7 @@ export function VendorProductForm() {
   const [price, setPrice] = useState('');
   const [discountPrice, setDiscountPrice] = useState('');
   const [stock, setStock] = useState('');
+  const [condition, setCondition] = useState<'new' | 'used'>('new');
   const [currentStatus, setCurrentStatus] = useState<VendorProductStatus>('draft');
   const [currentProductId, setCurrentProductId] = useState<number | null>(null);
   const [currentProductSlug, setCurrentProductSlug] = useState<string | null>(null);
@@ -267,6 +268,7 @@ export function VendorProductForm() {
           setPrice(String(productResponse.product.price));
           setDiscountPrice(productResponse.product.discount_price != null ? String(productResponse.product.discount_price) : '');
           setStock(String(productResponse.product.stock));
+          setCondition(productResponse.product.condition || 'new');
           setCurrentStatus((productResponse.product.status as VendorProductStatus) || 'draft');
           setExistingImages(productResponse.product.images);
           setSocialVideos(productResponse.social_media.filter((media) => media.type === 'video'));
@@ -616,6 +618,7 @@ export function VendorProductForm() {
         discount_price: discountPrice ? Number(discountPrice) : null,
         stock: Number(stock),
         status: nextStatus,
+        condition: condition,
         images: newImages.map((image) => image.file),
         keep_image_ids: existingImages.map((image) => image.id),
         variants: normalizedVariants,
@@ -852,7 +855,23 @@ export function VendorProductForm() {
                   error={Boolean(fieldErrors.stock)}
                 />
                 {fieldErrors.stock && <p className="text-[12px] font-bold text-[var(--color-error)]">{fieldErrors.stock}</p>}
-            </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="product-condition">Product Condition</Label>
+                <Select
+                  value={condition}
+                  onValueChange={(value: 'new' | 'used') => setCondition(value)}
+                >
+                  <SelectTrigger id="product-condition">
+                    <SelectValue placeholder="Select condition" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="used">Used</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
           </FormSection>
 
           <FormSection title="Gallery" hint={`Up to ${MAX_PRODUCT_IMAGES} images · JPG, PNG, WebP · 5 MB max`}>

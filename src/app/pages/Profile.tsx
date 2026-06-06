@@ -4,9 +4,13 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { useToast } from '../components/ui/toast';
-import { Camera, CheckCircle2, ChevronRight, Lock, LogOut, Mail, Phone, Settings, Shield, Store, User } from 'lucide-react';
+import { Camera, CheckCircle2, ChevronRight, Lock, LogOut, Mail, Phone, Settings, Shield, Store, User, Heart, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../providers/AuthProvider';
 import { updateProfile, updateProfilePhoto } from '../services/profileService';
+import { fetchWishlist, CatalogProduct, getProductPrimaryImage, getProductPrice } from '../services/productService';
+import { formatCurrency } from '../utils/currency';
+import { getProductPath } from '../utils/products';
+import { useCart } from '../providers/CartProvider';
 
 const tabs = [
   { id: 'overview', label: 'Overview', icon: User },
@@ -26,15 +30,32 @@ export function Profile() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [wishlist, setWishlist] = useState<CatalogProduct[]>([]);
+  const [isWishlistLoading, setIsWishlistLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { hasRole, logout, roleNames, updateUser, user } = useAuth();
+  const { addToCart } = useCart();
 
   useEffect(() => {
     setName(user?.name || '');
     setPhone(user?.phone || '');
-  }, [user?.name, user?.phone]);
+
+    if (user) {
+      setIsWishlistLoading(true);
+      fetchWishlist()
+        .then((response) => {
+          setWishlist(response.wishlists.map(w => w.product));
+        })
+        .catch((err) => {
+          console.error('Failed to fetch wishlist', err);
+        })
+        .finally(() => {
+          setIsWishlistLoading(false);
+        });
+    }
+  }, [user]);
 
   if (!user) {
     return null;
@@ -150,6 +171,66 @@ export function Profile() {
               : 'Vendor onboarding is available once you\u2019re ready to start selling.'}
           </p>
         </div>
+      </div>
+
+      {/* MY WISHLIST SECTION */}
+      <div className="pt-6 border-t border-[var(--color-border)]">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-[18px] text-[var(--color-text-heading)] flex items-center gap-2">
+            <Heart className="w-5 h-5 text-[var(--color-accent)]" /> My Wishlist
+          </h3>
+          <Link to="/explore" className="text-[13px] font-semibold text-[var(--color-primary)] hover:underline">
+            Explore more products
+          </Link>
+        </div>
+
+        {isWishlistLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] rounded-[16px] bg-gray-100 animate-pulse" />
+            ))}
+          </div>
+        ) : wishlist.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {wishlist.map((product) => (
+              <div key={product.id} className="group relative bg-white rounded-[16px] border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-all">
+                <Link to={getProductPath(product)} className="block aspect-square">
+                  <ImageWithFallback src={getProductPrimaryImage(product)} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                </Link>
+                <div className="p-3">
+                  <h4 className="text-[13px] font-bold text-[var(--color-text-heading)] line-clamp-1 mb-1">{product.name}</h4>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[14px] font-bold text-[var(--color-accent)]">{formatCurrency(getProductPrice(product))}</p>
+                    <Button 
+                      variant="ghost" 
+                      size="xs" 
+                      className="w-8 h-8 rounded-full p-0 hover:bg-[var(--color-primary-bg)] hover:text-[var(--color-primary)]"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        try {
+                          await addToCart(product.id, 1);
+                          toast({ type: 'success', title: 'Added to cart' });
+                        } catch (err: any) {
+                          toast({ type: 'error', title: 'Failed to add to cart', message: err?.message });
+                        }
+                      }}
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-12 text-center bg-gray-50 rounded-[20px] border border-dashed border-[var(--color-border)]">
+            <Heart className="w-10 h-10 text-[var(--color-text-muted)] mx-auto mb-3 opacity-20" />
+            <p className="text-[14px] text-[var(--color-text-muted)]">Your wishlist is empty</p>
+            <Link to="/explore">
+              <Button variant="outline" size="sm" className="mt-4 rounded-full">Start shopping</Button>
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

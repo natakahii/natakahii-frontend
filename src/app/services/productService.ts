@@ -12,6 +12,9 @@ export interface ProductFilterParams {
   sortDir?: 'asc' | 'desc';
   page?: number;
   region?: string;
+  condition?: 'new' | 'used';
+  ids?: string;
+  maintain_order?: boolean;
 }
 
 export interface CatalogCategory {
@@ -135,11 +138,13 @@ export interface CatalogProduct {
   effective_price: number;
   stock: number;
   status?: string;
+  condition?: 'new' | 'used';
   vendor?: CatalogVendor;
   category?: CatalogCategory;
   images: CatalogProductImage[];
   variants: CatalogProductVariant[];
   reviews_count?: number;
+  wishlists_count?: number;
   reviews_avg_rating?: number | null;
   video_count?: number;
   likes_count?: number;
@@ -315,11 +320,13 @@ export function normalizeProduct(product: any): CatalogProduct {
     effective_price: effectivePrice,
     stock: toNumber(product?.stock),
     status: product?.status || 'active',
+    condition: product?.condition || 'new',
     vendor: normalizeVendor(product?.vendor),
     category: product?.category ? normalizeCategory(product.category) : undefined,
     images: extractResourceArray<any>(product?.images).map(normalizeProductImage),
     variants: extractResourceArray<any>(product?.variants).map(normalizeProductVariant),
     reviews_count: product?.reviews_count == null ? undefined : toNumber(product.reviews_count),
+    wishlists_count: product?.wishlists_count == null ? undefined : toNumber(product.wishlists_count),
     reviews_avg_rating: product?.reviews_avg_rating == null ? null : toNumber(product.reviews_avg_rating),
     video_count: product?.video_count == null ? undefined : toNumber(product.video_count),
     likes_count: product?.likes_count == null ? undefined : toNumber(product.likes_count),
@@ -382,6 +389,9 @@ export async function fetchProducts(params: ProductFilterParams = {}): Promise<P
   if (params.sortDir) query.set('sort_dir', params.sortDir);
   if (params.page) query.set('page', String(params.page));
   if (params.region) query.set('region', params.region);
+  if (params.condition) query.set('condition', params.condition);
+  if (params.ids) query.set('ids', params.ids);
+  if (params.maintain_order) query.set('maintain_order', '1');
 
   const queryString = query.toString();
   const response = await apiClient.get<any>(`/products${queryString ? `?${queryString}` : ''}`);
@@ -425,4 +435,33 @@ export interface WishlistToggleResponse {
 
 export async function toggleWishlist(productId: number): Promise<WishlistToggleResponse> {
   return apiClient.post<WishlistToggleResponse>('/wishlists/toggle', JSON.stringify({ product_id: productId }));
+}
+
+export interface WishlistListResponse {
+  wishlists: {
+    id: number;
+    product: CatalogProduct;
+  }[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+}
+
+export async function fetchWishlist(page = 1): Promise<WishlistListResponse> {
+  const response = await apiClient.get<any>(`/wishlists?page=${page}`);
+  return {
+    wishlists: extractResourceArray<any>(response?.wishlists).map((item) => ({
+      id: toNumber(item.id),
+      product: normalizeProduct(item.product),
+    })),
+    meta: {
+      current_page: toNumber(response?.meta?.current_page, 1),
+      last_page: toNumber(response?.meta?.last_page, 1),
+      per_page: toNumber(response?.meta?.per_page, 15),
+      total: toNumber(response?.meta?.total, 0),
+    },
+  };
 }

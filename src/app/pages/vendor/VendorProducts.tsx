@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Edit,
+  ExternalLink,
+  Heart,
   LayoutGrid,
   List,
   MoreHorizontal,
@@ -223,13 +225,25 @@ export function VendorProducts() {
         title="Products"
         description="Manage your catalog, pricing, and inventory."
         actions={
-          <Button
-            className="bg-[var(--vendor-accent-action)] hover:bg-[#6d28d9] text-white gap-2 rounded-xl"
-            onClick={() => navigate('/vendor/dashboard/products/add')}
-          >
-            <Plus className="w-4 h-4" />
-            Add Product
-          </Button>
+          <div className="flex items-center gap-3">
+            {hasStorefront && (
+              <Button
+                variant="outline"
+                className="gap-2 rounded-xl"
+                onClick={() => window.open(storefrontPath, '_blank')}
+              >
+                <ExternalLink className="w-4 h-4" />
+                View Storefront
+              </Button>
+            )}
+            <Button
+              className="bg-[var(--vendor-accent-action)] hover:bg-[#6d28d9] text-white gap-2 rounded-xl"
+              onClick={() => navigate('/vendor/dashboard/products/add')}
+            >
+              <Plus className="w-4 h-4" />
+              Add Product
+            </Button>
+          </div>
         }
       />
 
@@ -320,8 +334,9 @@ export function VendorProducts() {
                       <TableHead>Product</TableHead>
                       <TableHead>Category</TableHead>
                       <TableHead>Price</TableHead>
-                      <TableHead>Stock</TableHead>
-                      <TableHead>Status</TableHead>
+                <TableHead>Stock</TableHead>
+                <TableHead>Wishlists</TableHead>
+                <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -355,6 +370,12 @@ export function VendorProducts() {
                           <span className={`text-sm font-medium ${product.stock > 10 ? 'text-[var(--color-success)]' : product.stock > 0 ? 'text-[var(--color-warning)]' : 'text-[var(--color-error)]'}`}>
                             {product.stock} in stock
                           </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-[var(--color-text-muted)]">
+                            <Heart className="w-3.5 h-3.5 text-[var(--color-accent)]" />
+                            <span className="text-[13px]">{product.wishlists_count || 0}</span>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={`capitalize ${getStatusBadgeClasses(product.status)}`}>

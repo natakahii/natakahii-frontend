@@ -70,6 +70,7 @@ export interface VendorProductPayload {
   discount_price?: number | null;
   stock: number;
   status: VendorProductStatus;
+  condition: 'new' | 'used';
   images?: File[];
   keep_image_ids?: number[];
   variants?: VendorProductVariantPayload[];
@@ -168,6 +169,7 @@ function buildVendorProductFormData(payload: VendorProductPayload, methodOverrid
   formData.append('price', String(payload.price));
   formData.append('stock', String(payload.stock));
   formData.append('status', payload.status);
+  formData.append('condition', payload.condition);
 
   if (payload.discount_price != null && payload.discount_price !== 0) {
     formData.append('discount_price', String(payload.discount_price));
