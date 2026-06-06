@@ -238,9 +238,9 @@ export function Cart() {
   }
 
   return (
-    <div className="bg-[var(--color-bg-page)] min-h-[calc(100vh-72px)] pb-28 sm:pb-12">
+    <div className="bg-[var(--color-bg-page)] min-h-[calc(100vh-72px)] pb-28 lg:pb-12">
       {/* Header */}
-      <div className="container mx-auto px-4 pt-8 pb-4">
+      <div className="container mx-auto max-w-5xl px-4 pt-8 pb-4">
         <div className="flex items-center gap-3 mb-2">
           <button onClick={() => navigate('/customer')} className="w-10 h-10 rounded-full bg-white border border-[var(--color-border)] flex items-center justify-center hover:bg-[var(--color-bg-card)] transition-colors">
             <ArrowLeft className="w-5 h-5 text-[var(--color-text-heading)]" />
@@ -260,7 +260,7 @@ export function Cart() {
       </div>
 
       {/* Item list */}
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto max-w-5xl px-4">
         <div className="flex flex-col gap-3">
           {items.map((item) => {
             const price = item.product?.price || 0;
@@ -347,7 +347,7 @@ export function Cart() {
 
       {/* ─── Variant Review Drawer ─── */}
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <DrawerContent className="bg-white max-h-[85vh]">
+        <DrawerContent className="bg-white max-h-[85vh] lg:max-w-2xl lg:mx-auto lg:rounded-t-[24px]">
           <DrawerHeader className="border-b border-[var(--color-border)] pb-4">
             <DrawerTitle className="flex items-center gap-2 text-[18px] text-[var(--color-text-heading)]">
               <Package className="w-5 h-5 text-[var(--color-primary)]" />

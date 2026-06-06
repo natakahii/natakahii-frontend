@@ -6,6 +6,9 @@ interface CheckoutProgressProps {
 }
 
 export function CheckoutProgress({ step, className }: CheckoutProgressProps) {
+  // Steps are hidden for all screen sizes as per request
+  return null;
+
   const steps = [
     { id: 1, label: 'Checkout' },
     { id: 2, label: 'Payment' },

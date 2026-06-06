@@ -200,6 +200,39 @@ export function Checkout() {
   const isMobileMoney = ['mpesa', 'airtel_money', 'halopesa', 'mixx_by_yas'].includes(paymentMethod);
   const isCardPayment = paymentMethod === 'card';
 
+  function validateTanzaniaPhone(phone: string): { valid: boolean; message: string } {
+    const digits = phone.replace(/\D/g, '');
+    const normalized = digits.startsWith('255') ? digits.slice(3) : digits;
+    
+    if (!normalized) return { valid: false, message: 'Phone number is required' };
+    
+    if (normalized.length !== 9 && normalized.length !== 10) {
+      return { valid: false, message: 'Phone number must be 10 digits (e.g. 07XX XXX XXX)' };
+    }
+
+    const prefix = normalized.startsWith('0') ? normalized.slice(1, 4) : normalized.slice(0, 3);
+    
+    // Comprehensive list of all valid Tanzanian mobile prefixes (3 digits)
+    const allValidPrefixes = [
+      // Vodacom
+      '741','742','743','744','745','746','747','748','749','751','752','753','754','755','756','757','758','759','761','762','763','764','765','766','767','768','769','771','772','773','774','775','776','777','778','779','781','782','783','784','785','786','787','788','789','795', '713', '797',
+      // Airtel
+      '683', '684', '685', '686', '687', '688', '689', '783', '784', '785', '786', '787', '788', '789', '693', '694',
+      // Halotel
+      '620', '621', '622', '623', '624', '625', '626', '627', '628', '629', '640', '641', '642', '643', '644', '645', '646', '647', '648', '649',
+      // Tigo / Zantel / Mixx
+      '650', '651', '652', '653', '654', '655', '656', '657', '658', '659', '710', '711', '712', '713', '714', '715', '716', '717', '718', '719', '670', '671', '672', '673', '674', '675', '676', '677', '678', '679', '770', '771', '772', '773', '774', '775', '776', '777', '778', '779',
+      // TTCL & Others
+      '730', '731', '732', '733', '734', '735', '736', '737', '738', '739', '610', '611', '612', '613', '614', '615', '616', '617', '618', '619'
+    ];
+
+    if (!allValidPrefixes.includes(prefix)) {
+      return { valid: false, message: 'Please enter a valid Tanzanian mobile number' };
+    }
+
+    return { valid: true, message: '' };
+  }
+
   function validateProviderPhone(providerId: string, phone: string): { valid: boolean; message: string } {
     const digits = phone.replace(/\D/g, '');
     const normalized = digits.startsWith('255') ? digits.slice(3) : digits;
@@ -209,7 +242,7 @@ export function Checkout() {
     }
     const prefix = normalized.startsWith('0') ? normalized.slice(1, 4) : normalized.slice(0, 3);
     const providerPrefixes: Record<string, string[]> = {
-      mpesa: ['741','742','743','744','745','746','747','748','749','751','752','753','754','755','756','757','758','759','761','762','763','764','765','766','767','768','769','771','772','773','774','775','776','777','778','779','781','782','783','784','785','786','787','788','789','795', '713'],
+      mpesa: ['741','742','743','744','745','746','747','748','749','751','752','753','754','755','756','757','758','759','761','762','763','764','765','766','767','768','769','771','772','773','774','775','776','777','778','779','781','782','783','784','785','786','787','788','789','795', '713', '797'],
       airtel_money: ['683', '684', '685', '686', '687', '688', '689', '783', '784', '785', '786', '787', '788', '789', '693', '694'],
       halopesa: ['620', '621', '622', '623', '624', '625', '626', '627', '628', '629', '640', '641', '642', '643', '644', '645', '646', '647', '648', '649'],
       mixx_by_yas: ['650', '651', '652', '653', '654', '655', '656', '657', '658', '659', '710', '711', '712', '713', '714', '715', '716', '717', '718', '719'],
@@ -267,10 +300,22 @@ export function Checkout() {
 
   const handleSaveAddress = () => {
     if (!fullName.trim()) { setError('Full name is required'); return; }
-    if (!mobileNumber.trim()) { setError('Mobile number is required'); return; }
+    if (fullName.trim().length < 3) { setError('Please enter a valid full name'); return; }
+    
+    const phoneValid = validateTanzaniaPhone(mobileNumber);
+    if (!phoneValid.valid) { setError(phoneValid.message); return; }
+
+    if (altMobileNumber.trim()) {
+      const altPhoneValid = validateTanzaniaPhone(altMobileNumber);
+      if (!altPhoneValid.valid) { setError(`Alternative Phone: ${altPhoneValid.message}`); return; }
+    }
+
     if (!streetAddress.trim()) { setError('Street address is required'); return; }
+    if (streetAddress.trim().length < 5) { setError('Please provide a more detailed street address'); return; }
+    
     if (!selectedRegion || !selectedDistrict || !selectedWard) { setError('Please select Region, District and Ward'); return; }
     if (!pickupStation) { setError('Please select a pickup station'); return; }
+    
     setError('');
     setSavedAddress(true);
     setAddressDrawerOpen(false);
@@ -462,7 +507,7 @@ export function Checkout() {
 
   if (step === 3) {
     return (
-      <div className="bg-black/50 fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto p-4 sm:p-6 backdrop-blur-sm">
+      <div className="bg-black/50 fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto p-4 lg:p-12 backdrop-blur-sm">
         <div className="w-full max-w-6xl relative z-10 my-auto">
           <CheckoutProgress step={3} />
           <SuccessStep 
@@ -492,7 +537,7 @@ export function Checkout() {
   }
 
   return (
-    <div className="bg-black/50 fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto p-4 sm:p-6 backdrop-blur-sm">
+    <div className="bg-black/50 fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto p-4 lg:p-12 backdrop-blur-sm">
       <div className="w-full max-w-[720px] relative z-10 my-auto">
         <CheckoutProgress step={step} />
 
