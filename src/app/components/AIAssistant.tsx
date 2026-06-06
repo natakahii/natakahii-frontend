@@ -33,6 +33,11 @@ export function AIAssistant() {
   ]);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Drag and Drop state
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const constraintsRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -65,19 +70,44 @@ export function AIAssistant() {
   };
 
   return (
-    <div className="fixed bottom-20 lg:bottom-8 right-4 lg:right-8 z-[100]">
+    <div className="fixed inset-0 pointer-events-none z-[100]" ref={constraintsRef}>
       <AnimatePresence>
         {!isOpen && (
           <motion.div
+            drag
+            dragConstraints={constraintsRef}
+            dragElastic={0.1}
+            dragMomentum={false}
+            onDragStart={() => setIsDragging(true)}
+            onDragEnd={(_, info) => {
+              // Save the final position so it persists when the chat is closed
+              setPosition({ x: info.offset.x, y: info.offset.y });
+              // Add a small timeout to prevent click trigger after drag
+              setTimeout(() => setIsDragging(false), 50);
+            }}
             initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            animate={{ 
+              scale: 1, 
+              opacity: 1,
+              x: position.x,
+              y: position.y
+            }}
             exit={{ scale: 0, opacity: 0 }}
+            style={{ 
+              position: 'absolute',
+              bottom: '5rem', 
+              right: '1rem',
+              pointerEvents: 'auto',
+              cursor: isDragging ? 'grabbing' : 'grab'
+            }}
             className="group flex flex-row-reverse items-center gap-3"
           >
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setIsOpen(true)}
+              onClick={() => {
+                if (!isDragging) setIsOpen(true);
+              }}
               className="relative flex items-center justify-center w-14 h-14 bg-gradient-to-br from-[#F05A28] to-[#C44718] rounded-full shadow-[var(--shadow-level-3)] text-white overflow-hidden"
             >
               {/* Pulse glow animation */}
@@ -91,11 +121,6 @@ export function AIAssistant() {
                 <Sparkles className="w-6 h-6 relative z-10" fill="currentColor" />
               </motion.div>
             </motion.button>
-            
-            {/* Hover Expand Label */}
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white text-[var(--color-primary-darker)] px-4 py-2 rounded-full shadow-lg font-bold text-sm translate-x-4 group-hover:translate-x-0 duration-300">
-              Chat with AI
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -108,7 +133,7 @@ export function AIAssistant() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+              className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 pointer-events-auto"
               onClick={() => setIsOpen(false)}
             />
 
@@ -117,6 +142,7 @@ export function AIAssistant() {
               animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
               exit={{ opacity: 0, x: 20, y: 20, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              style={{ pointerEvents: 'auto' }}
               className="fixed lg:absolute top-0 left-0 lg:top-auto lg:left-auto lg:bottom-0 lg:right-0 w-full h-full lg:w-[400px] lg:h-[600px] bg-white lg:rounded-2xl shadow-[var(--shadow-level-4)] overflow-hidden flex flex-col z-50 border-0 lg:border border-[var(--color-border)]"
             >
               {/* Header */}
