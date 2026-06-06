@@ -1,4 +1,3 @@
-import { Truck } from 'lucide-react';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
 
 interface OrderSummaryProps {
@@ -18,12 +17,8 @@ export function OrderSummary({
   platformFee,
   shippingCost,
   total,
-  shippingMethod,
-  shippingProviders,
   formatCurrency,
 }: OrderSummaryProps) {
-  const currentProvider = shippingProviders.find(p => p.id === shippingMethod);
-
   return (
     <div className="space-y-8">
       <div className="space-y-4">
@@ -49,17 +44,6 @@ export function OrderSummary({
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Delivery Estimate */}
-      <div className="bg-blue-50 border border-blue-100 rounded-[12px] p-4 flex items-start gap-3">
-        <Truck className="w-5 h-5 text-[var(--color-primary)] shrink-0 mt-0.5" />
-        <div>
-          <h4 className="font-bold text-[13px] text-[var(--color-primary-darker)]">Delivery Estimate</h4>
-          <p className="text-[12px] text-[var(--color-primary)]/80 mt-0.5">
-            {currentProvider?.days || '1-2 Days'} via {currentProvider?.name || 'Standard'}
-          </p>
-        </div>
       </div>
 
       {/* Pricing Breakdown */}
