@@ -35,12 +35,14 @@ import { VendorOrders } from "./pages/vendor/VendorOrders";
 
 // Error/404 Page
 import { NotFound } from "./pages/NotFound";
+import { ErrorBoundary } from "./pages/ErrorBoundary";
 import { RootLayout } from "./RootLayout";
 import { RedirectIfAuthenticated, RequireAuth, RequireMissingRole, RequireRole } from "./components/auth/AuthGuards";
 
 export const router = createBrowserRouter([
   {
     element: <RootLayout />,
+    errorElement: <ErrorBoundary />,
     children: [
       {
         path: "/",

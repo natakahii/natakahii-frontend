@@ -1,10 +1,9 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import {
   ArrowRight,
   Building,
   CheckCircle2,
-  ChevronRight,
   Clock,
   FileText,
   Mail,
@@ -16,10 +15,11 @@ import {
   UploadCloud,
   User,
   XCircle,
+  ArrowLeft,
 } from 'lucide-react';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { FormField } from '../../components/ui/form-field';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -255,13 +255,6 @@ export function VendorApply() {
       if (!latestApplication) {
         setForm((currentForm) => (hasStartedForm(currentForm) ? currentForm : buildInitialForm(user)));
         setView('form');
-        if (options.silent) {
-          toast({
-            type: 'info',
-            title: 'Application Status',
-            message: 'No application found.',
-          });
-        }
         return;
       }
 
@@ -274,14 +267,6 @@ export function VendorApply() {
       setForm(buildInitialForm(user, latestApplication));
       setStep(1);
       setView(latestApplication.status === 'pending' ? 'pending' : 'rejected');
-
-      if (options.silent) {
-        toast({
-          type: latestApplication.status === 'rejected' ? 'error' : 'info',
-          title: 'Application Status',
-          message: `Current status: ${latestApplication.status}`,
-        });
-      }
     } catch (error: any) {
       setPageError(error?.message || 'Unable to load your vendor application right now.');
       setForm((currentForm) => (hasStartedForm(currentForm) ? currentForm : buildInitialForm(user)));
@@ -642,332 +627,344 @@ export function VendorApply() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-page)] py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-1 space-y-8">
-          <div>
-            <h2 className="text-3xl font-bold text-[var(--color-primary-darker)] mb-2">Sell on Nataka Hii</h2>
-            <p className="text-[var(--color-text-body)]">
-              Start your vendor enrollment so we can review your business and unlock your seller workspace.
+    <div className="min-h-screen bg-[var(--color-bg-page)] py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto mb-10">
+        <Link to="/" className="inline-flex items-center gap-2 text-sm font-black text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] transition-colors group">
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          Back to Home
+        </Link>
+      </div>
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-5 gap-12">
+        {/* Left Column: Benefits & Context */}
+        <div className="lg:col-span-2 space-y-12">
+          <div className="space-y-4">
+            <div className="w-16 h-1 w-24 bg-[var(--color-accent)] rounded-full" />
+            <h1 className="text-4xl sm:text-5xl font-black text-[var(--color-text-heading)] tracking-tight leading-[1.1]">
+              Professional <br />
+              <span className="text-[var(--color-primary)]">Vendor Enrollment</span>
+            </h1>
+            <p className="text-lg text-[var(--color-text-body)] font-medium max-w-md">
+              Join our exclusive marketplace of verified East African sellers. Complete these steps to activate your workspace.
             </p>
           </div>
 
-          <div className="space-y-6">
+          <div className="grid gap-6">
             {[
               {
-                title: 'Verified Seller Trust',
-                description: 'Every application is reviewed with a government-issued identity document before a vendor can publish products on the marketplace.',
+                title: 'Identity Verification',
+                description: 'We verify every seller with government-issued IDs to maintain marketplace integrity.',
                 icon: ShieldCheck,
+                color: 'text-blue-600',
+                bg: 'bg-blue-50',
               },
               {
-                title: 'Fast Store Activation',
-                description: 'Approved vendors can move straight into the dashboard and begin managing inventory.',
+                title: 'Instant Fulfillment',
+                description: 'Once approved, your store is instantly ready to manage inventory and shipments.',
                 icon: Store,
+                color: 'text-purple-600',
+                bg: 'bg-purple-50',
               },
               {
-                title: 'Location-Ready Fulfillment',
-                description: 'We collect your business address early so shipping and dropoff flows can build on it later.',
+                title: 'East Africa Reach',
+                description: 'Connect with buyers across the region through our integrated logistics network.',
                 icon: MapPin,
+                color: 'text-emerald-600',
+                bg: 'bg-emerald-50',
               },
-              {
-                title: 'Real Seller Workspace',
-                description: 'This is now a live application flow backed by the Nataka Hii API, not a demo wizard.',
-                icon: CheckCircle2,
-              },
-            ].map((benefit) => (
-              <div key={benefit.title} className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-[var(--color-primary-bg)] flex items-center justify-center shrink-0">
-                  <benefit.icon className="w-5 h-5 text-[var(--color-primary)]" />
+            ].map((benefit, idx) => (
+              <div 
+                key={benefit.title} 
+                className="flex gap-5 p-6 rounded-[32px] bg-white border border-[var(--color-border)]/50 hover:border-[var(--color-accent)]/30 transition-all duration-500 group"
+                style={{ transitionDelay: `${idx * 100}ms` }}
+              >
+                <div className={`w-14 h-14 rounded-2xl ${benefit.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500`}>
+                  <benefit.icon className={`w-7 h-7 ${benefit.color}`} />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-[var(--color-text-heading)]">{benefit.title}</h3>
-                  <p className="text-sm text-[var(--color-text-body)]">{benefit.description}</p>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-black text-[var(--color-text-heading)]">{benefit.title}</h3>
+                  <p className="text-[14px] leading-relaxed text-[var(--color-text-body)] font-medium">{benefit.description}</p>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Integration Badge */}
+          <div className="p-6 rounded-[32px] bg-[var(--color-text-heading)] text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-10">
+              <RefreshCw className="w-24 h-24 animate-spin-slow" />
+            </div>
+            <div className="relative z-10 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-[var(--color-accent)]" />
+              </div>
+              <p className="text-sm font-bold tracking-wide">Live Nataka Hii API Integration</p>
+            </div>
+          </div>
         </div>
 
-        <div className="md:col-span-2">
-          <Card className="border-[var(--color-border)] shadow-[var(--shadow-level-2)]">
-            <CardHeader>
-              <div className="flex items-center gap-2 mb-4">
-                {[1, 2, 3].map((stepNumber) => (
-                  <div key={stepNumber} className="flex items-center">
-                    <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                        stepNumber === step
-                          ? 'bg-[var(--color-accent)] text-white'
-                          : stepNumber < step
-                            ? 'bg-[var(--color-primary)] text-white'
-                            : 'bg-[var(--color-primary-bg)] text-[var(--color-text-muted)]'
+        {/* Right Column: Multi-step Form */}
+        <div className="lg:col-span-3">
+          <Card className="border-none bg-white rounded-[48px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] overflow-hidden">
+            <div className="h-2 w-full bg-[var(--color-bg-page)]">
+              <div 
+                className="h-full bg-[var(--color-accent)] transition-all duration-700 ease-in-out" 
+                style={{ width: `${(step / 3) * 100}%` }}
+              />
+            </div>
+            
+            <CardHeader className="px-8 pt-10 pb-6 sm:px-12">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  {[1, 2, 3].map((num) => (
+                    <div 
+                      key={num}
+                      className={`w-3 h-3 rounded-full transition-all duration-500 ${
+                        num === step ? 'w-10 bg-[var(--color-accent)]' : num < step ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]'
                       }`}
-                    >
-                      {stepNumber < step ? <CheckCircle2 className="w-5 h-5" /> : stepNumber}
-                    </div>
-                    {stepNumber < 3 && (
-                      <div
-                        className={`w-10 sm:w-16 h-1 mx-2 rounded ${
-                          stepNumber < step ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]'
-                        }`}
-                      />
-                    )}
-                  </div>
-                ))}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+                  Step {step} of 3
+                </span>
               </div>
-              <CardTitle className="text-2xl text-[var(--color-text-heading)]">{stepLabels[step]}</CardTitle>
-              <CardDescription>
-                {step === 1 && 'Tell us who will manage the business account.'}
-                {step === 2 && 'Share the business location details we need for seller verification.'}
-                {step === 3 && 'Choose your seller plan, add one verification document, and review everything before sending it for approval.'}
+              
+              <CardTitle className="text-3xl sm:text-4xl font-black text-[var(--color-text-heading)] tracking-tight">
+                {stepLabels[step]}
+              </CardTitle>
+              <CardDescription className="text-base font-medium text-[var(--color-text-body)] mt-2">
+                {step === 1 && 'Basic information to set up your seller identity.'}
+                {step === 2 && 'Location details for logistics and verification.'}
+                {step === 3 && 'Final review and verification documents.'}
               </CardDescription>
             </CardHeader>
 
-            <form onSubmit={handleSubmit}>
-              <CardContent className="space-y-5">
+            <form onSubmit={handleSubmit} className="px-8 pb-10 sm:px-12">
+              <CardContent className="p-0 space-y-8">
                 {application?.status === 'rejected' && (
-                  <div className="rounded-[18px] border border-[var(--color-warning)] bg-[var(--color-warning-bg)] px-4 py-3 text-[13px] text-[var(--color-text-heading)]">
-                    <span className="font-bold">Previous feedback:</span> {application.rejection_reason || 'Please review your business details before reapplying.'}
+                  <div className="rounded-[24px] border border-orange-200 bg-orange-50 p-6 flex gap-4 items-start">
+                    <XCircle className="w-6 h-6 text-orange-500 shrink-0" />
+                    <div className="space-y-1">
+                      <p className="font-black text-orange-900 text-sm uppercase tracking-wider">Review Feedback</p>
+                      <p className="text-orange-800 text-sm font-medium leading-relaxed">{application.rejection_reason}</p>
+                    </div>
                   </div>
                 )}
 
                 {pageError && (
-                  <div className="rounded-[18px] border border-[var(--color-error)] bg-[var(--color-error-bg)] px-4 py-3 text-[13px] font-medium text-[var(--color-error)]">
-                    {pageError}
+                  <div className="rounded-[24px] border border-red-200 bg-red-50 p-6 flex gap-4 items-start">
+                    <XCircle className="w-6 h-6 text-red-500 shrink-0" />
+                    <p className="text-red-800 text-sm font-bold">{pageError}</p>
                   </div>
                 )}
 
-                {step === 1 && (
-                  <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4">
-                    <FormField label="Shop Display Name" required error={fieldErrors.business_name}>
-                      <Input
-                        value={form.business_name}
-                        onChange={(event) => updateField('business_name', event.target.value)}
-                        placeholder="e.g. Mambo Jambo Store"
-                        error={Boolean(fieldErrors.business_name)}
-                      />
-                    </FormField>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label="Contact Person" required error={fieldErrors.full_name}>
+                <div className="transition-all duration-500">
+                  {step === 1 && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+                      <FormField label="Shop Name" required error={fieldErrors.business_name}>
                         <Input
-                          value={form.full_name}
-                          onChange={(event) => updateField('full_name', event.target.value)}
-                          placeholder="Full name"
-                          error={Boolean(fieldErrors.full_name)}
+                          value={form.business_name}
+                          onChange={(event) => updateField('business_name', event.target.value)}
+                          placeholder="e.g. Serengeti Boutique"
+                          className="h-14 rounded-2xl border-2 focus:border-[var(--color-accent)] transition-all font-bold"
+                          error={Boolean(fieldErrors.business_name)}
                         />
                       </FormField>
-                      <FormField label="Business Email" required error={fieldErrors.business_email}>
-                        <Input
-                          type="email"
-                          value={form.business_email}
-                          onChange={(event) => updateField('business_email', event.target.value)}
-                          placeholder="contact@example.com"
-                          error={Boolean(fieldErrors.business_email)}
-                        />
-                      </FormField>
-                    </div>
 
-                    <FormField label="Phone Number" required error={fieldErrors.phone}>
-                      <Input
-                        type="tel"
-                        value={form.phone}
-                        onChange={(event) => updateField('phone', event.target.value)}
-                        placeholder="+255 700 000 000"
-                        error={Boolean(fieldErrors.phone)}
-                      />
-                    </FormField>
-                  </div>
-                )}
-
-                {step === 2 && (
-                  <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label="Region" required error={fieldErrors.region}>
-                        <Input
-                          value={form.region}
-                          onChange={(event) => updateField('region', event.target.value)}
-                          placeholder="Dar es Salaam"
-                          error={Boolean(fieldErrors.region)}
-                        />
-                      </FormField>
-                      <FormField label="City / Town" error={fieldErrors.city}>
-                        <Input
-                          value={form.city}
-                          onChange={(event) => updateField('city', event.target.value)}
-                          placeholder="Dar es Salaam"
-                          error={Boolean(fieldErrors.city)}
-                        />
-                      </FormField>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label="Ward / Area" required error={fieldErrors.ward}>
-                        <Input
-                          value={form.ward}
-                          onChange={(event) => updateField('ward', event.target.value)}
-                          placeholder="Mikocheni"
-                          error={Boolean(fieldErrors.ward)}
-                        />
-                      </FormField>
-                      <FormField label="Street" required error={fieldErrors.street}>
-                        <Input
-                          value={form.street}
-                          onChange={(event) => updateField('street', event.target.value)}
-                          placeholder="Sam Nujoma Road"
-                          error={Boolean(fieldErrors.street)}
-                        />
-                      </FormField>
-                    </div>
-
-                    <FormField label="Physical Address" required error={fieldErrors.address}>
-                      <Textarea
-                        value={form.address}
-                        onChange={(event) => updateField('address', event.target.value)}
-                        placeholder="Building, floor, nearest landmark"
-                        className="min-h-[120px]"
-                        aria-invalid={Boolean(fieldErrors.address)}
-                      />
-                    </FormField>
-                  </div>
-                )}
-
-                {step === 3 && (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-                    <VendorSubscriptionPlan
-                      plans={plans}
-                      selectedPlan={form.subscription_plan}
-                      onSelectPlan={(plan) => updateField('subscription_plan', plan)}
-                      isLoading={isLoadingPlans}
-                      error={plansError}
-                    />
-
-                    {fieldErrors.subscription_plan && (
-                      <p className="text-sm font-medium text-[var(--color-error)]">{fieldErrors.subscription_plan}</p>
-                    )}
-
-                    {plansError && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => void loadPlans()}
-                        isLoading={isLoadingPlans}
-                      >
-                        Reload Plans
-                      </Button>
-                    )}
-
-                    <FormField label="Business Description" error={fieldErrors.description}>
-                      <Textarea
-                        value={form.description}
-                        onChange={(event) => updateField('description', event.target.value)}
-                        placeholder="Tell us what you sell and how customers should recognize your business."
-                        className="min-h-[120px]"
-                        aria-invalid={Boolean(fieldErrors.description)}
-                      />
-                    </FormField>
-
-                    <div className="space-y-4">
-                      <FormField label="Verification Document Type" required error={fieldErrors.verification_document_type}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {vendorVerificationDocumentOptions.map((option) => {
-                            const isSelected = form.verification_document_type === option.value;
-
-                            return (
-                              <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => updateField('verification_document_type', option.value)}
-                                className={`rounded-[18px] border px-4 py-4 text-left transition-all ${
-                                  isSelected
-                                    ? 'border-[var(--color-primary)] bg-[var(--color-primary-bg)] shadow-sm'
-                                    : 'border-[var(--color-border)] bg-white hover:border-[var(--color-primary)] hover:bg-[var(--color-bg-card)]'
-                                }`}
-                              >
-                                <p className={`font-semibold ${isSelected ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-heading)]'}`}>
-                                  {option.label}
-                                </p>
-                                <p className="mt-1 text-sm text-[var(--color-text-body)]">
-                                  {option.description}
-                                </p>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </FormField>
-
-                      <FormField label="Upload Verification Document" required error={fieldErrors.verification_document}>
-                        <label className="block rounded-[20px] border-2 border-dashed border-[var(--color-primary)] bg-[var(--color-primary-bg)]/35 px-5 py-6 cursor-pointer hover:bg-[var(--color-primary-bg)]/55 transition-colors">
-                          <input
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                            className="hidden"
-                            onChange={handleVerificationDocumentChange}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField label="Manager Name" required error={fieldErrors.full_name}>
+                          <Input
+                            value={form.full_name}
+                            onChange={(event) => updateField('full_name', event.target.value)}
+                            placeholder="Full Name"
+                            className="h-14 rounded-2xl border-2 focus:border-[var(--color-accent)] transition-all font-bold"
+                            error={Boolean(fieldErrors.full_name)}
                           />
-                          <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-full bg-white border border-[var(--color-border)] flex items-center justify-center shrink-0">
-                              <UploadCloud className="w-6 h-6 text-[var(--color-primary)]" />
-                            </div>
-                            <div className="space-y-1">
-                              <p className="font-semibold text-[var(--color-text-heading)]">
-                                {form.verification_document ? form.verification_document.name : 'Choose a PDF, JPG, or PNG file'}
-                              </p>
-                              <p className="text-sm text-[var(--color-text-body)]">
-                                Upload one clear government-issued identity document. Maximum size: 5 MB.
-                              </p>
-                              {application?.status === 'rejected' && application?.has_verification_document && !form.verification_document && (
-                                <p className="text-xs text-[var(--color-text-muted)]">
-                                  Previous file: {application.verification_document_original_name}. Upload a fresh copy before you resubmit.
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </label>
+                        </FormField>
+                        <FormField label="Business Email" required error={fieldErrors.business_email}>
+                          <Input
+                            type="email"
+                            value={form.business_email}
+                            onChange={(event) => updateField('business_email', event.target.value)}
+                            placeholder="business@example.com"
+                            className="h-14 rounded-2xl border-2 focus:border-[var(--color-accent)] transition-all font-bold"
+                            error={Boolean(fieldErrors.business_email)}
+                          />
+                        </FormField>
+                      </div>
+
+                      <FormField label="Direct Phone" required error={fieldErrors.phone}>
+                        <Input
+                          type="tel"
+                          value={form.phone}
+                          onChange={(event) => updateField('phone', event.target.value)}
+                          placeholder="+255..."
+                          className="h-14 rounded-2xl border-2 focus:border-[var(--color-accent)] transition-all font-bold"
+                          error={Boolean(fieldErrors.phone)}
+                        />
                       </FormField>
                     </div>
+                  )}
 
-                    <div className="rounded-[20px] bg-[var(--color-bg-card)] p-5 space-y-4 border border-[var(--color-border)]">
-                      {reviewRows.map((row) => (
-                        <div key={row.label} className="flex items-start gap-3 text-sm">
-                          <div className="w-9 h-9 rounded-full bg-white border border-[var(--color-border)] flex items-center justify-center shrink-0">
-                            <row.icon className="w-4 h-4 text-[var(--color-primary)]" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-[var(--color-text-heading)]">{row.label}</p>
-                            <p className="text-[var(--color-text-body)]">{row.value}</p>
-                          </div>
-                        </div>
-                      ))}
+                  {step === 2 && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField label="Region" required error={fieldErrors.region}>
+                          <Input
+                            value={form.region}
+                            onChange={(event) => updateField('region', event.target.value)}
+                            placeholder="e.g. Dar es Salaam"
+                            className="h-14 rounded-2xl border-2 focus:border-[var(--color-accent)] transition-all font-bold"
+                            error={Boolean(fieldErrors.region)}
+                          />
+                        </FormField>
+                        <FormField label="City" error={fieldErrors.city}>
+                          <Input
+                            value={form.city}
+                            onChange={(event) => updateField('city', event.target.value)}
+                            placeholder="City/Town"
+                            className="h-14 rounded-2xl border-2 focus:border-[var(--color-accent)] transition-all font-bold"
+                            error={Boolean(fieldErrors.city)}
+                          />
+                        </FormField>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField label="Ward" required error={fieldErrors.ward}>
+                          <Input
+                            value={form.ward}
+                            onChange={(event) => updateField('ward', event.target.value)}
+                            placeholder="Ward Name"
+                            className="h-14 rounded-2xl border-2 focus:border-[var(--color-accent)] transition-all font-bold"
+                            error={Boolean(fieldErrors.ward)}
+                          />
+                        </FormField>
+                        <FormField label="Street" required error={fieldErrors.street}>
+                          <Input
+                            value={form.street}
+                            onChange={(event) => updateField('street', event.target.value)}
+                            placeholder="Street Name"
+                            className="h-14 rounded-2xl border-2 focus:border-[var(--color-accent)] transition-all font-bold"
+                            error={Boolean(fieldErrors.street)}
+                          />
+                        </FormField>
+                      </div>
+
+                      <FormField label="Precise Address" required error={fieldErrors.address}>
+                        <Textarea
+                          value={form.address}
+                          onChange={(event) => updateField('address', event.target.value)}
+                          placeholder="Building, Floor, Landmarks..."
+                          className="min-h-[140px] rounded-3xl border-2 focus:border-[var(--color-accent)] transition-all font-bold p-6"
+                          aria-invalid={Boolean(fieldErrors.address)}
+                        />
+                      </FormField>
                     </div>
+                  )}
 
-                    <p className="text-sm text-[var(--color-text-muted)]">
-                      By submitting this application, you confirm that the business information and verification document above are accurate and ready for review.
-                    </p>
-                  </div>
-                )}
+                  {step === 3 && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
+                      <VendorSubscriptionPlan
+                        plans={plans}
+                        selectedPlan={form.subscription_plan}
+                        onSelectPlan={(plan) => updateField('subscription_plan', plan)}
+                        isLoading={isLoadingPlans}
+                        error={plansError}
+                      />
+
+                      <div className="space-y-6">
+                        <FormField label="Identity Document Type" required error={fieldErrors.verification_document_type}>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {vendorVerificationDocumentOptions.map((option) => {
+                              const isSelected = form.verification_document_type === option.value;
+                              return (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onClick={() => updateField('verification_document_type', option.value)}
+                                  className={`p-6 rounded-[24px] text-left border-2 transition-all duration-300 ${
+                                    isSelected
+                                      ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/5 shadow-[0_8px_20px_-6px_rgba(var(--color-accent-rgb),0.2)]'
+                                      : 'border-[var(--color-border)] hover:border-[var(--color-accent)]/30'
+                                  }`}
+                                >
+                                  <p className={`font-black ${isSelected ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-heading)]'}`}>
+                                    {option.label}
+                                  </p>
+                                  <p className="text-sm text-[var(--color-text-body)] mt-1 font-medium">{option.description}</p>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </FormField>
+
+                        <FormField label="Upload ID Document" required error={fieldErrors.verification_document}>
+                          <label className="relative block group">
+                            <input
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              className="hidden"
+                              onChange={handleVerificationDocumentChange}
+                            />
+                            <div className={`p-10 rounded-[32px] border-2 border-dashed transition-all duration-500 flex flex-col items-center text-center cursor-pointer ${
+                              form.verification_document 
+                                ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5' 
+                                : 'border-[var(--color-border)] hover:border-[var(--color-accent)] bg-[var(--color-bg-page)]'
+                            }`}>
+                              <div className={`w-16 h-16 rounded-2xl mb-4 flex items-center justify-center transition-all duration-500 ${
+                                form.verification_document ? 'bg-[var(--color-primary)] text-white' : 'bg-white text-[var(--color-text-muted)] group-hover:text-[var(--color-accent)]'
+                              }`}>
+                                <UploadCloud className="w-8 h-8" />
+                              </div>
+                              <p className="text-lg font-black text-[var(--color-text-heading)]">
+                                {form.verification_document ? form.verification_document.name : 'Select ID Document'}
+                              </p>
+                              <p className="text-sm font-medium text-[var(--color-text-body)] mt-1 max-w-xs">
+                                Upload a clear PDF or image of your government-issued identity card.
+                              </p>
+                            </div>
+                          </label>
+                        </FormField>
+                      </div>
+
+                      <div className="p-8 rounded-[40px] bg-[var(--color-bg-page)] border border-[var(--color-border)]/50 space-y-6">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Application Summary</h4>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
+                          {reviewRows.filter(r => !['Description'].includes(r.label)).map((row) => (
+                            <div key={row.label} className="space-y-1">
+                              <p className="text-[11px] font-black text-[var(--color-primary)] uppercase tracking-wider">{row.label}</p>
+                              <p className="text-sm font-bold text-[var(--color-text-heading)] line-clamp-1">{row.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </CardContent>
 
-              <CardFooter className="flex justify-between border-t border-[var(--color-border)] pt-6 mt-6">
+              <div className="flex items-center justify-between pt-12">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   onClick={handleBack}
                   disabled={step === 1 || isSubmitting}
-                  className="text-[var(--color-primary)] border-[var(--color-primary)]"
+                  className="h-14 px-8 rounded-2xl font-black text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
                 >
-                  Back
+                  Previous
                 </Button>
 
                 <Button
                   type="submit"
-                  className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white gap-2"
+                  className="h-14 px-10 rounded-2xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white font-black text-lg shadow-xl shadow-[var(--color-accent)]/20 transition-all hover:scale-[1.02] active:scale-[0.98] gap-3"
                   isLoading={isSubmitting}
-                  disabled={step === 3 && (isLoadingPlans || plans.length === 0)}
                 >
-                  {step === 3 ? 'Submit Application' : 'Continue'}
-                  {step < 3 && <ChevronRight className="w-4 h-4" />}
+                  {step === 3 ? 'Submit Enrollment' : 'Continue Step'}
+                  {step < 3 && <ArrowRight className="w-5 h-5" />}
                 </Button>
-              </CardFooter>
+              </div>
             </form>
           </Card>
         </div>

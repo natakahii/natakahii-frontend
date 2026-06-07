@@ -117,9 +117,9 @@ export function VendorOrders() {
   };
 
   const stats = {
-    pending: orders.filter(o => o.status === 'pending').length,
-    processing: orders.filter(o => o.status === 'processing' || o.status === 'confirmed').length,
-    delivered: orders.filter(o => o.status === 'delivered').length,
+    pending: orders.filter(o => o?.status === 'pending').length,
+    processing: orders.filter(o => o?.status === 'processing' || o?.status === 'confirmed').length,
+    delivered: orders.filter(o => o?.status === 'delivered').length,
   };
 
   if (isLoading) {
@@ -190,20 +190,20 @@ export function VendorOrders() {
                 <TableRow key={item.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-page)] transition-colors">
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-black text-sm text-[var(--color-text-heading)] font-mono tracking-wider">#{item.order.order_number}</span>
-                      <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">{new Date(item.created_at).toLocaleDateString()}</span>
+                      <span className="font-black text-sm text-[var(--color-text-heading)] font-mono tracking-wider">#{item.order?.order_number || 'N/A'}</span>
+                      <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">{item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
                         <User className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
-                        <span className="font-bold text-sm text-[var(--color-text-heading)]">{item.order.customer.name}</span>
+                        <span className="font-bold text-sm text-[var(--color-text-heading)]">{item.order?.customer?.name || 'Unknown'}</span>
                       </div>
                       <div className="flex flex-col gap-0.5 mt-1">
                         <div className="flex items-center gap-1.5 text-[11px] text-[var(--color-text-muted)] font-medium">
                           <Mail className="w-3 h-3" />
-                          {item.order.customer.email}
+                          {item.order?.customer?.email || 'No email'}
                         </div>
                       </div>
                     </div>
@@ -300,10 +300,10 @@ export function VendorOrders() {
                     <DialogTitle className="text-4xl font-black tracking-tight">Order Details</DialogTitle>
                     <div className="flex items-center gap-2 mt-2">
                       <span className="text-[var(--color-text-muted)] font-mono text-xs bg-[var(--color-bg-page)] px-3 py-1 rounded-full border border-[var(--color-border)]">
-                        #{selectedOrder?.order.order_number}
+                        #{selectedOrder?.order?.order_number || 'N/A'}
                       </span>
                       <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">
-                        {selectedOrder && new Date(selectedOrder.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        {selectedOrder?.created_at && new Date(selectedOrder.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                       </span>
                     </div>
                   </div>
@@ -329,21 +329,21 @@ export function VendorOrders() {
                     
                     <div className="flex items-center gap-4">
                       <Avatar className="h-14 w-14 border-2 border-white shadow-xl">
-                        <AvatarImage src={getImageUrl(selectedOrder?.order.customer.profile_photo)} alt={selectedOrder?.order.customer.name} />
+                        <AvatarImage src={getImageUrl(selectedOrder?.order?.customer?.profile_photo)} alt={selectedOrder?.order?.customer?.name} />
                         <AvatarFallback className="bg-[var(--vendor-accent-action)] text-white font-black text-xl">
-                          {selectedOrder?.order.customer.name.charAt(0)}
+                          {selectedOrder?.order?.customer?.name?.charAt(0) || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="space-y-0.5">
-                        <p className="font-black text-xl leading-tight">{selectedOrder?.order.customer.name}</p>
+                        <p className="font-black text-xl leading-tight">{selectedOrder?.order?.customer?.name || 'Unknown'}</p>
                         <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] font-medium">
                           <Mail className="w-3 h-3" />
-                          {selectedOrder?.order.customer.email}
+                          {selectedOrder?.order?.customer?.email || 'No email'}
                         </div>
                       </div>
                     </div>
                     
-                    {selectedOrder?.order.customer.phone_number && (
+                    {selectedOrder?.order?.customer?.phone_number && (
                       <div className="mt-4 pt-4 border-t border-[var(--color-border)]/50">
                         <div className="flex items-center gap-2 text-sm font-bold text-[var(--vendor-accent-action)] bg-white w-fit px-4 py-2 rounded-2xl border border-[var(--vendor-accent-action)]/10">
                           <Phone className="w-3.5 h-3.5" />
@@ -371,7 +371,7 @@ export function VendorOrders() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <p className="font-black text-sm leading-snug line-clamp-2">{selectedOrder?.product?.name}</p>
+                        <p className="font-black text-sm leading-snug line-clamp-2">{selectedOrder?.product?.name || 'Unknown Product'}</p>
                         <div className="inline-flex items-center px-2 py-0.5 bg-white border border-[var(--color-border)] rounded-md">
                           <span className="text-[10px] font-black text-[var(--vendor-accent-action)] uppercase tracking-widest">Qty: {selectedOrder?.quantity}</span>
                         </div>
