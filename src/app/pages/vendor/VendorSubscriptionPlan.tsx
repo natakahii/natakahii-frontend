@@ -63,101 +63,117 @@ export function VendorSubscriptionPlan({
   onSelectPlan,
   isLoading = false,
   error = null,
-  title = 'Choose a subscription plan',
-  description = 'Plans are managed by the Nataka Hii team. Pick the option that fits your store today, and we will review it together with your vendor application.',
-  selectedLabel = 'Selected',
-  unselectedLabel = 'Select plan',
+  title = 'Pick Your Professional Growth Plan',
+  description = 'Choose a plan that scales with your business goals. Each plan unlocks unique marketplace benefits.',
+  selectedLabel = 'Current Plan',
+  unselectedLabel = 'Choose Plan',
 }: VendorSubscriptionPlanProps) {
   return (
-    <div className="space-y-4">
-      <div className="rounded-[24px] bg-white border border-[var(--color-border)] p-6 shadow-sm">
-        <h3 className="text-xl font-bold text-[var(--color-text-heading)] mb-2">{title}</h3>
-        <p className="text-sm text-[var(--color-text-muted)]">{description}</p>
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-[var(--vendor-bg)] to-[var(--vendor-bg-card)] rounded-[32px] p-8 border border-[var(--vendor-border)] shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--vendor-accent-action)]/5 rounded-full blur-3xl -mr-32 -mt-32" />
+        <div className="relative z-10">
+          <h3 className="text-3xl font-extrabold text-white mb-3 tracking-tight">{title}</h3>
+          <p className="text-[var(--vendor-text-muted-on-dark)] text-lg max-w-2xl leading-relaxed">{description}</p>
+        </div>
       </div>
 
       {isLoading && (
-        <div className="rounded-[24px] border border-[var(--color-border)] bg-white p-6 text-sm text-[var(--color-text-muted)]">
-          Loading available subscription plans...
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-[400px] rounded-[32px] bg-white/5 animate-pulse border border-white/10" />
+          ))}
         </div>
       )}
 
       {!isLoading && error && (
-        <div className="rounded-[24px] border border-[var(--color-error)] bg-[var(--color-error-bg)] p-5 text-sm text-[var(--color-error)]">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold">We could not load the subscription options.</p>
-              <p>{error}</p>
-            </div>
-          </div>
+        <div className="rounded-[32px] border border-red-500/20 bg-red-500/5 p-8 text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-lg font-bold text-white mb-2">Sync Error</p>
+          <p className="text-red-400/80">{error}</p>
         </div>
       )}
 
       {!isLoading && !error && plans.length === 0 && (
-        <div className="rounded-[24px] border border-[var(--color-border)] bg-white p-6 text-sm text-[var(--color-text-muted)]">
-          No subscription plans are available right now. Please try again shortly.
+        <div className="rounded-[32px] border border-white/10 bg-white/5 p-12 text-center">
+          <p className="text-[var(--vendor-text-muted-on-dark)] text-lg">No plans available at the moment.</p>
         </div>
       )}
 
       {!isLoading && !error && plans.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {plans.map((plan) => {
             const isSelected = selectedPlan === plan.slug;
             const planFeatures = getPlanFeatures(plan);
+            const isPremium = !plan.is_free;
 
             return (
               <button
                 key={plan.id}
                 type="button"
                 onClick={() => onSelectPlan(plan.slug)}
-                className={`group text-left rounded-[24px] border p-4 sm:p-5 transition-all duration-200 focus:outline-none ${
+                className={`group relative text-left rounded-[32px] border p-6 transition-all duration-500 hover:scale-[1.02] ${
                   isSelected
-                    ? 'border-[var(--color-accent)] bg-[var(--color-accent-bg)] shadow-[var(--shadow-level-2)]'
-                    : 'border-[var(--color-border)] bg-white hover:border-[var(--color-primary)] hover:bg-[var(--color-bg-page)]'
+                    ? 'border-[var(--vendor-accent-action)] bg-white shadow-2xl scale-[1.02] z-10'
+                    : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'
                 }`}
               >
-                <div className="flex items-center justify-between mb-4 gap-4">
-                  <div>
-                    <span className="block text-sm font-semibold text-[var(--color-primary)] uppercase tracking-[0.24em]">
-                      {plan.name}
-                    </span>
-                    <p className="mt-2 text-[22px] font-bold text-[var(--color-text-heading)]">{formatPlanPrice(plan)}</p>
+                {isPremium && (
+                  <div className="absolute -top-3 right-8 bg-gradient-to-r from-[var(--vendor-accent-action)] to-[#7c3aed] text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">
+                    Recommended
                   </div>
-                  <div className="rounded-full bg-[var(--color-primary-bg)] p-3">
+                )}
+
+                <div className="flex items-center justify-between mb-8">
+                  <div className={`rounded-2xl p-4 transition-colors duration-500 ${isSelected ? 'bg-[var(--vendor-accent-action-bg)] text-[var(--vendor-accent-action)]' : 'bg-white/10 text-white'}`}>
                     {getPlanIcon(plan)}
+                  </div>
+                  {isSelected && (
+                    <div className="bg-[var(--vendor-accent-success-bg)] text-[var(--vendor-accent-success)] p-1.5 rounded-full">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="mb-8">
+                  <h4 className={`text-sm font-black uppercase tracking-[0.2em] mb-2 ${isSelected ? 'text-[var(--vendor-accent-action)]' : 'text-white/40'}`}>
+                    {plan.name}
+                  </h4>
+                  <div className="flex items-baseline gap-1">
+                    <span className={`text-4xl font-black tracking-tight ${isSelected ? 'text-[var(--vendor-bg)]' : 'text-white'}`}>
+                      {formatPlanPrice(plan).split(' / ')[0]}
+                    </span>
+                    {!plan.is_free && (
+                      <span className={`text-sm font-medium ${isSelected ? 'text-[var(--vendor-bg)]/60' : 'text-white/40'}`}>
+                        /{plan.billing_cycle === 'yearly' ? 'year' : 'mo'}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {plan.is_free && (
-                  <span className="inline-flex items-center rounded-full bg-[var(--color-primary-bg)] px-3 py-1 text-xs font-semibold text-[var(--color-primary)] mb-4">
-                    Free starter option
-                  </span>
-                )}
-
-                <p className="text-sm text-[var(--color-text-muted)] mb-5">
-                  {plan.description || 'Seller plan managed by the Nataka Hii team.'}
+                <p className={`text-sm leading-relaxed mb-8 min-h-[48px] ${isSelected ? 'text-[var(--vendor-bg)]/70' : 'text-white/50'}`}>
+                  {plan.description || 'Professional seller tools to help you scale your business in our marketplace.'}
                 </p>
 
-                <ul className="space-y-3">
+                <div className={`space-y-4 mb-8 p-6 rounded-2xl ${isSelected ? 'bg-[var(--vendor-bg)]/5' : 'bg-white/5'}`}>
                   {planFeatures.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-sm text-[var(--color-text-body)]">
-                      <span className="text-[var(--color-primary)]">-</span>
-                      {feature}
-                    </li>
+                    <div key={feature} className="flex items-start gap-3">
+                      <div className={`mt-1 rounded-full p-0.5 ${isSelected ? 'bg-[var(--vendor-accent-action)] text-white' : 'bg-white/20 text-white/40'}`}>
+                        <CheckCircle2 className="w-3 h-3" />
+                      </div>
+                      <span className={`text-sm font-medium ${isSelected ? 'text-[var(--vendor-bg)]' : 'text-white/80'}`}>
+                        {feature}
+                      </span>
+                    </div>
                   ))}
-                </ul>
+                </div>
 
-                <div className="mt-6 pt-4 border-t border-[var(--color-border)] flex items-center justify-between gap-3">
-                  <span
-                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                      isSelected ? 'bg-[var(--color-accent)] text-white' : 'bg-[var(--color-border)] text-[var(--color-text-muted)]'
-                    }`}
-                  >
-                    {isSelected ? selectedLabel : unselectedLabel}
-                  </span>
-                  <span className="text-xs text-[var(--color-text-muted)]">
-                    {plan.product_limit ? `${plan.product_limit} products` : 'Unlimited catalog'}
-                  </span>
+                <div className={`w-full py-4 rounded-2xl font-bold text-center transition-all duration-300 ${
+                  isSelected 
+                    ? 'bg-[var(--vendor-accent-action)] text-white shadow-xl' 
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}>
+                  {isSelected ? selectedLabel : unselectedLabel}
                 </div>
               </button>
             );

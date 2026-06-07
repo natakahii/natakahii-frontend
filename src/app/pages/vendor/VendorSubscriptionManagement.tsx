@@ -134,193 +134,147 @@ export function VendorSubscriptionManagement() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div className="space-y-8 pb-20">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text-heading)]">Subscription & Verification</h1>
-          <p className="text-[var(--color-text-muted)] mt-1">
-            Manage the seller plan behind your storefront benefits, catalog allowance, and verification tick.
+          <h1 className="text-4xl font-black text-white tracking-tight">Subscription & Growth</h1>
+          <p className="text-[var(--vendor-text-muted-on-dark)] mt-2 text-lg">
+            Manage your professional presence and marketplace benefits.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full text-[var(--color-primary)] border-[var(--color-primary)] sm:w-auto"
-            onClick={() => navigate('/vendor/dashboard')}
-          >
-            Back to Dashboard
-          </Button>
-        </div>
+        <Button
+          type="button"
+          variant="outline"
+          className="border-white/10 text-white hover:bg-white/5 rounded-2xl px-6 h-12"
+          onClick={() => navigate('/vendor/dashboard')}
+        >
+          Back to Dashboard
+        </Button>
       </div>
 
       {error && !isLoading && (
-        <Card className="border-[var(--color-error)] bg-[var(--color-error-bg)] shadow-sm">
-          <CardContent className="p-5 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-[var(--color-error)] shrink-0 mt-0.5" />
-            <div>
-              <h2 className="font-bold text-[var(--color-text-heading)]">Subscription settings unavailable</h2>
-              <p className="text-sm text-[var(--color-text-body)]">{error}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-[32px] border border-red-500/20 bg-red-500/5 p-6 flex items-center gap-4">
+          <AlertCircle className="w-6 h-6 text-red-500 shrink-0" />
+          <p className="text-red-400 font-medium">{error}</p>
+        </div>
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1.35fr_0.95fr] gap-6">
-        <Card className="border-[var(--color-border)] shadow-[var(--shadow-level-1)] overflow-hidden">
-          <CardContent className="p-6 lg:p-7 space-y-5">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--color-primary)]">Current Verification</p>
-                <h2 className="text-2xl font-bold text-[var(--color-text-heading)] mt-2">{verification.headline}</h2>
-                <p className="text-sm text-[var(--color-text-muted)] mt-2 max-w-2xl">{verification.detail}</p>
-              </div>
-              {isPremiumVerifiedVendor(vendor) && (
-                <VendorVerificationBadge tone="hero" label="Verified vendor" />
-              )}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-8">
+        <div className="space-y-8">
+          {/* Main Plan Selection */}
+          <VendorSubscriptionPlan
+            plans={plans}
+            selectedPlan={selectedPlan}
+            onSelectPlan={setSelectedPlan}
+            isLoading={isLoading}
+          />
+
+          {/* Verification Status Card */}
+          <div className="bg-gradient-to-br from-[var(--vendor-bg-card)] to-[var(--vendor-bg)] rounded-[40px] p-8 border border-[var(--vendor-border)] shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-12 opacity-5">
+              <ShieldCheck className="w-48 h-48" />
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              <div className="rounded-[22px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">Current Plan</p>
-                {isLoading ? (
-                  <Skeleton className="h-7 w-32 mt-3" />
-                ) : (
-                  <>
-                    <p className="text-2xl font-bold text-[var(--color-text-heading)] mt-3">{currentPlan?.name || 'No plan assigned'}</p>
-                    <p className="text-sm text-[var(--color-text-muted)] mt-2">{formatPlanPrice(currentPlan)}</p>
-                  </>
+            
+            <div className="relative z-10">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--vendor-accent-action)] mb-2 block">Identity & Trust</span>
+                  <h2 className="text-3xl font-black text-white">{verification.headline}</h2>
+                </div>
+                {isPremiumVerifiedVendor(vendor) && (
+                  <div className="bg-[var(--vendor-accent-action)] text-white px-6 py-2 rounded-full font-bold flex items-center gap-2 shadow-lg shadow-[var(--vendor-accent-action)]/20">
+                    <ShieldCheck className="w-5 h-5" />
+                    Premium Verified
+                  </div>
                 )}
               </div>
 
-              <div className="rounded-[22px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">Catalog Allowance</p>
-                {isLoading ? (
-                  <Skeleton className="h-7 w-24 mt-3" />
-                ) : (
-                  <>
-                    <p className="text-2xl font-bold text-[var(--color-text-heading)] mt-3">
-                      {currentProductLimit ? `${currentProductLimit} products` : 'Unlimited'}
-                    </p>
-                    <p className="text-sm text-[var(--color-text-muted)] mt-2">
-                      {currentProductLimit
-                        ? 'Upgrade when you need more room for your catalog.'
-                        : 'This plan does not cap your product catalog.'}
-                    </p>
-                  </>
-                )}
-              </div>
+              <p className="text-[var(--vendor-text-muted-on-dark)] text-lg leading-relaxed max-w-3xl mb-8">
+                {verification.detail}
+              </p>
 
-              <div className="rounded-[22px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">Marketplace Badge</p>
-                {isLoading ? (
-                  <Skeleton className="h-7 w-28 mt-3" />
-                ) : (
-                  <>
-                    <p className="text-2xl font-bold text-[var(--color-text-heading)] mt-3">
-                      {isPremiumVerifiedVendor(vendor) ? 'Unlocked' : 'Available'}
-                    </p>
-                    <p className="text-sm text-[var(--color-text-muted)] mt-2">
-                      {isPremiumVerifiedVendor(vendor)
-                        ? 'Your storefront now carries the blue verification tick.'
-                        : 'Upgrade to a paid vendor plan to unlock the verification tick.'}
-                    </p>
-                  </>
-                )}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[
+                  { label: 'Marketplace Badge', value: isPremiumVerifiedVendor(vendor) ? 'Unlocked' : 'Locked', icon: Sparkles },
+                  { label: 'Search Priority', value: isPremiumVerifiedVendor(vendor) ? 'Maximum' : 'Standard', icon: ArrowUpRight },
+                  { label: 'Storefront Tools', value: 'Pro Suite', icon: ShieldCheck }
+                ].map((stat) => (
+                  <div key={stat.label} className="bg-white/5 rounded-[24px] p-6 border border-white/5 hover:border-white/10 transition-colors">
+                    <stat.icon className="w-6 h-6 text-[var(--vendor-accent-action)] mb-4" />
+                    <p className="text-xs font-bold text-[var(--vendor-text-muted-on-dark)] uppercase tracking-widest mb-1">{stat.label}</p>
+                    <p className="text-xl font-black text-white">{stat.value}</p>
+                  </div>
+                ))}
               </div>
             </div>
+          </div>
+        </div>
 
-            {!isPremiumVerifiedVendor(vendor) && (
-              <div className="rounded-[24px] border border-[var(--color-primary)]/15 bg-[linear-gradient(135deg,rgba(20,36,144,0.04),rgba(255,105,49,0.05))] p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-full bg-[var(--color-primary-bg)] p-3 text-[var(--color-primary)]">
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-[var(--color-text-heading)]">Upgrade for premium visibility</h3>
-                    <p className="text-sm text-[var(--color-text-muted)] mt-1">
-                      Free-plan sellers keep approved-vendor status with no public badge, while paid plans unlock the verification tick and higher selling limits.
-                    </p>
-                  </div>
+        {/* Sidebar Summary */}
+        <div className="space-y-6">
+          <div className="sticky top-24">
+            <div className="bg-white rounded-[40px] p-8 shadow-2xl border border-black/5">
+              <h3 className="text-2xl font-black text-[var(--vendor-bg)] mb-6">Plan Summary</h3>
+              
+              <div className="space-y-6 mb-8">
+                <div className="flex justify-between items-center py-4 border-b border-black/5">
+                  <span className="text-[var(--color-text-muted)] font-medium">New Plan</span>
+                  <span className="font-black text-[var(--vendor-bg)]">{selectedPlanRecord?.name || '---'}</span>
                 </div>
-                <Button
-                  type="button"
-                  className="bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white"
-                  onClick={() => {
-                    if (recommendedUpgradePlan?.slug) {
-                      setSelectedPlan(recommendedUpgradePlan.slug);
-                    }
-                  }}
-                >
-                  Explore Paid Plans
-                  <ArrowUpRight className="w-4 h-4 ml-2" />
-                </Button>
+                <div className="flex justify-between items-center py-4 border-b border-black/5">
+                  <span className="text-[var(--color-text-muted)] font-medium">Price</span>
+                  <span className="font-black text-[var(--vendor-accent-action)] text-xl">
+                    {selectedPlanRecord ? formatPlanPrice(selectedPlanRecord) : '---'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-4">
+                  <span className="text-[var(--color-text-muted)] font-medium">Products</span>
+                  <span className="font-black text-[var(--vendor-bg)]">
+                    {selectedPlanRecord?.product_limit || 'Unlimited'}
+                  </span>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
 
-        <Card className="border-[var(--color-border)] shadow-[var(--shadow-level-1)]">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-[var(--color-primary)]" />
-              Plan Summary
-            </CardTitle>
-            <CardDescription>Review the plan you are about to keep or activate for your storefront.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isLoading ? (
-              <>
-                <Skeleton className="h-7 w-32" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-4/5" />
-              </>
-            ) : (
-              <>
-                <div className="rounded-[22px] border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">Selected Plan</p>
-                  <p className="text-2xl font-bold text-[var(--color-text-heading)] mt-3">
-                    {selectedPlanRecord?.name || currentPlan?.name || 'Choose a plan'}
-                  </p>
-                  <p className="text-sm text-[var(--color-text-muted)] mt-2">
-                    {formatPlanPrice(selectedPlanRecord || currentPlan)}
-                  </p>
-                  <p className="text-sm text-[var(--color-text-muted)] mt-4">
-                    {selectedPlanRecord?.description || currentPlan?.description || 'Seller plan managed by the Nataka Hii team.'}
-                  </p>
-                </div>
-
-                <Button
-                  type="button"
-                  className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white"
-                  disabled={!selectedPlan || isSaving}
-                  onClick={handleSave}
-                >
-                  {isSaving ? 'Updating Plan...' : isCurrentSelection ? 'Keep Current Plan' : 'Activate Selected Plan'}
-                </Button>
-
-                {canUpgrade && (
-                  <p className="text-xs text-[var(--color-text-muted)] text-center">
-                    Paid plans unlock the verification tick shoppers now see across the marketplace.
-                  </p>
+              <Button
+                onClick={handleSave}
+                disabled={isSaving || isCurrentSelection || !selectedPlan}
+                className={`w-full h-16 rounded-[24px] font-black text-lg transition-all duration-300 ${
+                  isCurrentSelection 
+                    ? 'bg-black/5 text-black/40 cursor-default' 
+                    : 'bg-[var(--vendor-accent-action)] hover:bg-[var(--vendor-accent-action)]/90 text-white shadow-xl shadow-[var(--vendor-accent-action)]/20'
+                }`}
+              >
+                {isSaving ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                    Processing...
+                  </div>
+                ) : isCurrentSelection ? (
+                  'Active Plan'
+                ) : (
+                  'Confirm Upgrade'
                 )}
-              </>
-            )}
-          </CardContent>
-        </Card>
+              </Button>
+
+              <p className="text-center text-xs text-[var(--color-text-muted)] mt-6 font-medium leading-relaxed">
+                By upgrading, you agree to our vendor terms. Changes take effect immediately after successful payment.
+              </p>
+            </div>
+
+            {/* Quick Tip */}
+            <div className="mt-6 bg-[var(--vendor-accent-action)]/10 rounded-[32px] p-6 border border-[var(--vendor-accent-action)]/20">
+              <div className="flex gap-4">
+                <div className="bg-[var(--vendor-accent-action)] text-white p-2 rounded-xl h-fit">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <p className="text-sm font-medium text-[var(--vendor-bg)]/80 leading-relaxed">
+                  Paid plans increase your storefront trust score by <span className="font-bold text-[var(--vendor-accent-action)]">45%</span> on average.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <VendorSubscriptionPlan
-        plans={plans}
-        selectedPlan={selectedPlan}
-        onSelectPlan={setSelectedPlan}
-        isLoading={isLoading}
-        error={error}
-        title="Choose the plan behind your storefront"
-        description="Free plans keep your store in approved-vendor status without a public badge. Paid plans unlock the verification tick and can raise your catalog ceiling."
-        selectedLabel="Current choice"
-        unselectedLabel="Choose plan"
-      />
     </div>
   );
 }

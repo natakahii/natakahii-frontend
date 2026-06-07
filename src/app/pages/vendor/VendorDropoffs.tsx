@@ -37,130 +37,162 @@ export function VendorDropoffs() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-8 pb-20">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-text-heading)]">Dropoffs</h1>
-          <p className="text-[var(--color-text-muted)]">Manage your physical product dropoffs to our fulfillment centers.</p>
+          <h1 className="text-4xl font-black text-white tracking-tight">Dropoffs & Fulfillment</h1>
+          <p className="text-[var(--vendor-text-muted-on-dark)] mt-2 text-lg leading-relaxed">
+            Manage your physical product handovers to our fulfillment centers efficiently.
+          </p>
         </div>
       </div>
 
       <Tabs defaultValue="list" className="w-full">
-        <div className="flex justify-between items-center bg-[var(--color-bg-card)] p-1 rounded-lg border border-[var(--color-border)] max-w-sm mb-6">
-          <TabsList className="grid w-full grid-cols-2 bg-transparent h-10">
-            <TabsTrigger value="list" className="rounded-md data-[state=active]:bg-white data-[state=active]:shadow-sm">History</TabsTrigger>
-            <TabsTrigger value="create" className="rounded-md data-[state=active]:bg-[var(--color-accent)] data-[state=active]:text-white">Create New</TabsTrigger>
+        <div className="flex justify-center mb-10">
+          <TabsList className="bg-white/5 border border-white/10 p-1.5 rounded-[20px] h-14">
+            <TabsTrigger 
+              value="list" 
+              className="rounded-[16px] px-8 h-full data-[state=active]:bg-white data-[state=active]:text-[var(--vendor-bg)] data-[state=active]:shadow-xl font-bold text-white/60 transition-all"
+            >
+              Fulfillment History
+            </TabsTrigger>
+            <TabsTrigger 
+              value="create" 
+              className="rounded-[16px] px-8 h-full data-[state=active]:bg-[var(--vendor-accent-action)] data-[state=active]:text-white data-[state=active]:shadow-xl font-bold text-white/60 transition-all"
+            >
+              Create Dropoff
+            </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="list" className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-          <div className="flex gap-4 items-center">
-            <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
-              <Input placeholder="Search dropoff ID..." className="pl-9" />
+        <TabsContent value="list" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="relative flex-1 w-full">
+              <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-[var(--vendor-text-muted-on-dark)]" />
+              <Input 
+                placeholder="Search dropoff ID or fulfillment center..." 
+                className="pl-12 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus:ring-[var(--vendor-accent-action)]/20" 
+              />
             </div>
-            <Button variant="outline" className="border-[var(--color-primary)] text-[var(--color-primary)]">Filter</Button>
+            <Button variant="outline" className="h-14 px-8 border-white/10 text-white hover:bg-white/5 rounded-2xl font-bold">
+              Filter Records
+            </Button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {isLoading ? (
-              <div className="col-span-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] p-8">
-                <p className="text-sm text-[var(--color-text-muted)]">Loading dropoff history...</p>
-              </div>
+              [1, 2, 3, 4].map(i => (
+                <div key={i} className="h-48 rounded-[32px] bg-white/5 animate-pulse border border-white/10" />
+              ))
             ) : dropoffs.length === 0 ? (
-              <div className="col-span-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] p-8 text-center">
-                <p className="text-sm text-[var(--color-text-muted)]">No dropoff records found yet.</p>
+              <div className="col-span-full py-20 text-center bg-white/5 rounded-[40px] border border-dashed border-white/10">
+                <MapPin className="w-16 h-16 text-white/10 mx-auto mb-4" />
+                <p className="text-xl font-bold text-white mb-2">No Dropoff Records</p>
+                <p className="text-[var(--vendor-text-muted-on-dark)]">Start your first fulfillment dropoff to see history here.</p>
               </div>
             ) : (
               dropoffs.map((dropoff) => {
-                const centerName = dropoff.fulfillment_center?.name || dropoff.fulfillmentCenter?.name || 'Unknown Center';
+                const centerName = dropoff.fulfillment_center?.name || dropoff.fulfillmentCenter?.name || 'Main Hub Dar';
                 const orderCount = dropoff.orders?.length ?? dropoff.order_count ?? 0;
                 const status = dropoff.status || 'Pending';
-                const dateLabel = new Date(dropoff.created_at || dropoff.createdAt || Date.now()).toLocaleString();
+                const dateLabel = new Date(dropoff.created_at || dropoff.createdAt || Date.now()).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                });
 
                 return (
-                  <Card key={dropoff.id} className="border-[var(--color-border)] shadow-sm overflow-hidden">
-                    <div className={`h-1 w-full ${status === 'Processed' ? 'bg-[var(--color-success)]' : 'bg-[var(--color-warning)]'}`} />
-                    <CardHeader className="pb-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-lg font-bold font-mono text-[var(--color-text-heading)]">{dropoff.id}</CardTitle>
-                          <CardDescription className="flex items-center gap-1 mt-1">
-                            <Clock className="w-3 h-3" /> {dateLabel}
-                          </CardDescription>
-                        </div>
-                        <Badge variant="outline" className={
-                          `${status === 'Processed' ? 'text-[var(--color-success)] border-[var(--color-success)] bg-[var(--color-success-bg)]' : 
-                            'text-[var(--color-warning)] border-[var(--color-warning)] bg-[var(--color-warning-bg)]'}
-                        `}>
-                          {status}
-                        </Badge>
+                  <div key={dropoff.id} className="group bg-white/5 border border-white/10 rounded-[32px] p-6 hover:bg-white/10 hover:border-white/20 transition-all duration-300 relative overflow-hidden">
+                    <div className={`absolute top-0 right-0 w-24 h-24 blur-3xl opacity-10 -mr-12 -mt-12 ${status === 'Processed' ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                    
+                    <div className="flex justify-between items-start mb-8 relative z-10">
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Dropoff Reference</span>
+                        <h3 className="text-2xl font-black text-white font-mono">{dropoff.id.substring(0, 8)}</h3>
                       </div>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      <div className="flex justify-between items-center bg-[var(--color-bg-page)] p-3 rounded-lg border border-[var(--color-border)]">
-                        <div className="flex gap-3 items-center">
-                          <div className="w-10 h-10 rounded-full bg-[var(--color-primary-bg)] flex items-center justify-center text-[var(--color-primary)]">
-                            <MapPin className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-sm text-[var(--color-text-heading)]">{centerName}</p>
-                            <p className="text-xs text-[var(--color-text-muted)]">{orderCount} orders included</p>
-                          </div>
-                        </div>
-                        {status === 'Pending' && (
-                          <Button variant="outline" size="icon" className="h-10 w-10 border-[var(--color-primary)] text-[var(--color-primary)]">
-                            <QrCode className="w-5 h-5" />
-                          </Button>
-                        )}
+                      <Badge 
+                        variant="outline" 
+                        className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                          status === 'Processed' 
+                            ? 'bg-green-500/10 text-green-500 border-green-500/20' 
+                            : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+                        }`}
+                      >
+                        {status}
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-8 relative z-10">
+                      <div className="bg-black/20 rounded-2xl p-4 border border-white/5">
+                        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Center</p>
+                        <p className="text-sm font-bold text-white truncate">{centerName}</p>
                       </div>
-                    </CardContent>
-                    {status === 'Pending' && (
-                      <CardFooter className="pt-0 pb-4 border-t border-[var(--color-border)] mt-4 p-4">
-                        <Button className="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white gap-2">
-                          <QrCode className="w-4 h-4" /> Show Dropoff QR Code
+                      <div className="bg-black/20 rounded-2xl p-4 border border-white/5">
+                        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Items</p>
+                        <p className="text-sm font-bold text-white">{orderCount} Orders</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between relative z-10">
+                      <div className="flex items-center gap-2 text-white/40">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span className="text-xs font-medium">{dateLabel}</span>
+                      </div>
+                      {status === 'Pending' && (
+                        <Button className="bg-[var(--vendor-accent-action)] hover:bg-[var(--vendor-accent-action)]/90 text-white rounded-xl px-6 font-bold shadow-lg shadow-[var(--vendor-accent-action)]/20">
+                          <QrCode className="w-4 h-4 mr-2" />
+                          Show QR
                         </Button>
-                      </CardFooter>
-                    )}
-                  </Card>
+                      )}
+                    </div>
+                  </div>
                 );
               })
             )}
           </div>
         </TabsContent>
 
-        <TabsContent value="create" className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <div className="lg:col-span-2 space-y-6">
-              <Card className="border-[var(--color-border)] shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">1. Select Fulfillment Center</CardTitle>
-                  <CardDescription>Choose where you want to drop off your products.</CardDescription>
+        <TabsContent value="create" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-8">
+            <div className="space-y-8">
+              {/* Step 1: Center */}
+              <Card className="bg-white/5 border border-white/10 rounded-[40px] p-8 overflow-hidden">
+                <CardHeader className="p-0 mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-[var(--vendor-accent-action)]/10 text-[var(--vendor-accent-action)] flex items-center justify-center font-black text-xl">1</div>
+                    <div>
+                      <CardTitle className="text-2xl font-black text-white">Select Fulfillment Center</CardTitle>
+                      <CardDescription className="text-[var(--vendor-text-muted-on-dark)] text-base">Where will you be dropping off your items?</CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent>
+
+                <CardContent className="p-0">
                   {fulfillmentCenters.length === 0 ? (
-                    <div className="text-sm text-[var(--color-text-muted)]">No fulfillment centers are currently configured. Please check back later.</div>
+                    <div className="bg-black/20 rounded-3xl p-10 text-center border border-dashed border-white/10">
+                      <p className="text-white/40 font-medium italic">Scanning for active centers in your region...</p>
+                    </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {fulfillmentCenters.map((fc) => (
                         <div
                           key={fc.id}
-                          className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
+                          className={`group cursor-pointer rounded-3xl border-2 p-6 transition-all duration-300 ${
                             selectedCenter === fc.id
-                              ? 'border-[var(--color-accent)] bg-[var(--color-accent-bg)]'
-                              : 'border-[var(--color-border)] hover:border-[var(--color-primary)] bg-white'
+                              ? 'border-[var(--vendor-accent-action)] bg-white shadow-2xl'
+                              : 'border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/20'
                           }`}
                           onClick={() => setSelectedCenter(fc.id)}
                         >
-                          <div className="flex justify-between items-start mb-2">
-                            <MapPin className={`w-5 h-5 ${selectedCenter === fc.id ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)]'}`} />
-                            <Badge variant="outline" className="bg-white/50 text-[10px] gap-1 border border-black/5 border-transparent">
-                              <Navigation className="w-3 h-3" /> {fc.distance}
+                          <div className="flex justify-between items-start mb-4">
+                            <MapPin className={`w-6 h-6 ${selectedCenter === fc.id ? 'text-[var(--vendor-accent-action)]' : 'text-white/20'}`} />
+                            <Badge variant="outline" className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 ${selectedCenter === fc.id ? 'bg-[var(--vendor-accent-action)] text-white border-none' : 'bg-white/10 text-white/40 border-white/10'}`}>
+                              <Navigation className="w-3 h-3" />
+                              {fc.distance} away
                             </Badge>
                           </div>
-                          <h4 className="font-bold text-[var(--color-text-heading)]">{fc.name}</h4>
-                          <p className="text-sm text-[var(--color-text-muted)] mt-1">{fc.address}</p>
+                          <h4 className={`text-lg font-black mb-1 ${selectedCenter === fc.id ? 'text-[var(--vendor-bg)]' : 'text-white'}`}>{fc.name}</h4>
+                          <p className={`text-sm leading-relaxed ${selectedCenter === fc.id ? 'text-[var(--vendor-bg)]/60' : 'text-white/40'}`}>{fc.address}</p>
                         </div>
                       ))}
                     </div>
@@ -168,79 +200,105 @@ export function VendorDropoffs() {
                 </CardContent>
               </Card>
 
-              <Card className="border-[var(--color-border)] shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">2. Add Orders</CardTitle>
-                  <CardDescription>Scan or enter order IDs to include in this dropoff.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input placeholder="Enter Order ID (e.g. ORD-7291)" className="flex-1" />
-                    <Button variant="secondary" className="bg-[var(--color-primary-bg)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white">
-                      Add
-                    </Button>
-                    <Button variant="outline" size="icon" className="border-[var(--color-primary)] text-[var(--color-primary)] shrink-0">
-                      <QrCode className="w-5 h-5" />
-                    </Button>
+              {/* Step 2: Orders */}
+              <Card className="bg-white/5 border border-white/10 rounded-[40px] p-8 overflow-hidden">
+                <CardHeader className="p-0 mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-[var(--vendor-accent-action)]/10 text-[var(--vendor-accent-action)] flex items-center justify-center font-black text-xl">2</div>
+                    <div>
+                      <CardTitle className="text-2xl font-black text-white">Consolidate Orders</CardTitle>
+                      <CardDescription className="text-[var(--vendor-text-muted-on-dark)] text-base">Scan or enter the Order IDs included in this batch.</CardDescription>
+                    </div>
                   </div>
-                  
-                  {/* Added orders will appear here after scanning/entering order IDs */}
-                  <div className="border border-[var(--color-border)] rounded-md overflow-hidden bg-[var(--color-bg-page)]">
-                    <div className="p-3 text-xs text-[var(--color-text-muted)] text-center">
-                      No orders added yet. Scan or enter order IDs above.
+                </CardHeader>
+
+                <CardContent className="p-0">
+                  <div className="space-y-6">
+                    <div className="flex gap-3">
+                      <Input 
+                        placeholder="ORD-000000" 
+                        className="h-14 flex-1 bg-white/5 border-white/10 text-white rounded-2xl px-6 focus:ring-[var(--vendor-accent-action)]/20 text-lg font-mono tracking-widest" 
+                      />
+                      <Button className="h-14 px-8 bg-white text-[var(--vendor-bg)] hover:bg-white/90 rounded-2xl font-black">
+                        Add
+                      </Button>
+                      <Button variant="outline" size="icon" className="h-14 w-14 border-white/10 text-white hover:bg-white/5 rounded-2xl shrink-0">
+                        <QrCode className="w-6 h-6" />
+                      </Button>
+                    </div>
+                    
+                    <div className="bg-black/20 border border-white/5 rounded-3xl p-12 text-center">
+                      <QrCode className="w-12 h-12 text-white/10 mx-auto mb-4" />
+                      <p className="text-white/40 font-bold">No orders staged for dropoff.</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="border-[var(--color-border)] shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">3. Additional Notes</CardTitle>
+              {/* Step 3: Notes */}
+              <Card className="bg-white/5 border border-white/10 rounded-[40px] p-8 overflow-hidden">
+                <CardHeader className="p-0 mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-[var(--vendor-accent-action)]/10 text-[var(--vendor-accent-action)] flex items-center justify-center font-black text-xl">3</div>
+                    <CardTitle className="text-2xl font-black text-white">Special Instructions</CardTitle>
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <Textarea placeholder="Any special handling instructions for the FC staff?" />
+                <CardContent className="p-0">
+                  <Textarea 
+                    placeholder="Fragile items, urgent handling, or other notes for the center staff..." 
+                    className="min-h-[120px] bg-white/5 border-white/10 text-white rounded-2xl p-6 focus:ring-[var(--vendor-accent-action)]/20"
+                  />
                 </CardContent>
+                <CardFooter className="p-0 mt-4">
+                  <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest flex items-center gap-2">
+                    <Clock className="w-3 h-3" />
+                    Center staff will review these notes upon arrival.
+                  </p>
+                </CardFooter>
               </Card>
             </div>
 
-            {/* Summary Sticky Panel */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24 space-y-6">
-                <Card className="border-[var(--color-border)] shadow-sm bg-[var(--color-bg-card)]">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-[var(--color-text-heading)]">Dropoff Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex justify-between items-start text-sm">
-                      <span className="text-[var(--color-text-muted)]">Center:</span>
-                      <span className="font-medium text-right max-w-[150px]">
-                        {selectedCenter ? fulfillmentCenters.find(fc => fc.id === selectedCenter)?.name : 'Not selected'}
+            {/* Sidebar Summary */}
+            <div className="space-y-6">
+              <div className="sticky top-24">
+                <div className="bg-white rounded-[40px] p-8 shadow-2xl border border-black/5">
+                  <h3 className="text-2xl font-black text-[var(--vendor-bg)] mb-8">Batch Summary</h3>
+                  
+                  <div className="space-y-6 mb-10">
+                    <div className="flex justify-between items-start py-4 border-b border-black/5">
+                      <span className="text-[var(--color-text-muted)] font-medium">Selected Hub</span>
+                      <span className="font-black text-[var(--vendor-bg)] text-right max-w-[150px]">
+                        {selectedCenter ? fulfillmentCenters.find(fc => fc.id === selectedCenter)?.name : 'None'}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-sm border-t border-[var(--color-border)] pt-4">
-                      <span className="text-[var(--color-text-muted)]">Total Orders:</span>
-                      <span className="font-bold text-lg">2</span>
+                    <div className="flex justify-between items-center py-4 border-b border-black/5">
+                      <span className="text-[var(--color-text-muted)] font-medium">Total Orders</span>
+                      <span className="font-black text-[var(--vendor-bg)] text-2xl">0</span>
                     </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-[var(--color-text-muted)]">Total Items:</span>
-                      <span className="font-bold text-lg">4</span>
+                  </div>
+
+                  <Button 
+                    className={`w-full h-20 rounded-[24px] font-black text-xl transition-all duration-300 shadow-2xl ${
+                      selectedCenter 
+                        ? 'bg-[var(--vendor-accent-action)] hover:bg-[var(--vendor-accent-action)]/90 text-white shadow-[var(--vendor-accent-action)]/20' 
+                        : 'bg-black/5 text-black/20 cursor-not-allowed'
+                    }`}
+                    disabled={!selectedCenter}
+                  >
+                    Authorize Batch
+                  </Button>
+                  
+                  <div className="mt-8 flex gap-4 p-5 bg-black/5 rounded-3xl">
+                    <div className="bg-black/10 p-2 rounded-xl h-fit shrink-0">
+                      <Clock className="w-4 h-4 text-black/40" />
                     </div>
-                  </CardContent>
-                  <CardFooter className="pt-4 border-t border-[var(--color-border)] flex-col gap-3">
-                    <Button 
-                      className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white font-bold h-12"
-                      disabled={!selectedCenter}
-                    >
-                      Generate Dropoff QR
-                    </Button>
-                    <p className="text-xs text-center text-[var(--color-text-muted)]">
-                      You must present the QR code at the FC.
+                    <p className="text-[10px] font-bold text-black/40 leading-relaxed uppercase tracking-widest">
+                      Batches must be delivered within 24 hours of authorization.
                     </p>
-                  </CardFooter>
-                </Card>
+                  </div>
+                </div>
               </div>
             </div>
-
           </div>
         </TabsContent>
       </Tabs>
