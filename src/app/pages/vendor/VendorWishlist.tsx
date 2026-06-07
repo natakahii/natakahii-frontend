@@ -131,8 +131,8 @@ export function VendorWishlist() {
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-page)] relative group">
                         <img 
-                          src={item.product.images[0]?.image_path || 'https://via.placeholder.com/40x40?text=Product'} 
-                          alt={item.product.name} 
+                          src={item.product?.images?.[0]?.image_path || 'https://via.placeholder.com/40x40?text=Product'} 
+                          alt={item.product?.name || 'Product'} 
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -140,7 +140,7 @@ export function VendorWishlist() {
                         </div>
                       </div>
                       <span className="text-sm font-medium text-[var(--color-text-heading)] line-clamp-1 max-w-[200px]">
-                        {item.product.name}
+                        {item.product?.name || 'Unknown Product'}
                       </span>
                     </div>
                   </TableCell>

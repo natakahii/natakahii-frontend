@@ -554,24 +554,19 @@ export function VendorProducts() {
         </VendorCard>
 
       <Dialog open={isWishlistModalOpen} onOpenChange={setIsWishlistModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Heart className="w-5 h-5 text-[var(--color-accent)]" />
+        <DialogContent className="sm:max-w-[425px] bg-white border-none shadow-2xl">
+          <DialogHeader className="border-b pb-4">
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-[var(--color-text-heading)]">
+              <Heart className="w-5 h-5 text-[var(--color-accent)] fill-[var(--color-accent)]" />
               Wishlist Interest
             </DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <div className="flex items-center gap-3 mb-6 p-3 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
-              <img 
-                src={selectedProduct?.images[0]?.image_path || 'https://via.placeholder.com/48x48?text=Product'} 
-                alt={selectedProduct?.name} 
-                className="w-12 h-12 rounded-lg object-cover"
-              />
-              <div>
-                <p className="text-sm font-bold text-[var(--color-text-heading)] line-clamp-1">{selectedProduct?.name}</p>
-                <p className="text-[11px] text-[var(--color-text-muted)]">{selectedProduct?.wishlists_count} people wishlisted this</p>
-              </div>
+          <div className="py-4 space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-sm font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Interested Customers</span>
+              <Badge variant="secondary" className="bg-[var(--vendor-accent-action-bg)] text-[var(--vendor-accent-action)] border-none">
+                {selectedProduct?.wishlists_count || 0} Total
+              </Badge>
             </div>
 
             <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">

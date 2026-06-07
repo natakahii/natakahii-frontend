@@ -195,14 +195,14 @@ export function VendorOrders() {
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-lg overflow-hidden border border-[var(--color-border)]">
                         <img 
-                          src={item.product.images[0]?.image_path || 'https://via.placeholder.com/40x40?text=Product'} 
-                          alt={item.product.name} 
+                          src={item.product?.images?.[0]?.image_path || 'https://via.placeholder.com/40x40?text=Product'} 
+                          alt={item.product?.name || 'Product'} 
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-[var(--color-text-heading)] line-clamp-1 max-w-[150px]">
-                          {item.product.name}
+                          {item.product?.name || 'Unknown Product'}
                         </span>
                         <span className="text-[11px] text-[var(--color-text-muted)]">Qty: {item.quantity}</span>
                       </div>

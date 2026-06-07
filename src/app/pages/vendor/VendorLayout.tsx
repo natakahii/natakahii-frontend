@@ -48,6 +48,8 @@ const mobilePrimaryNav = [
   { name: 'Home', path: '/vendor/dashboard', icon: LayoutDashboard },
   { name: 'Products', path: '/vendor/dashboard/products', icon: Package },
   { name: 'Orders', path: '/vendor/dashboard/orders', icon: ShoppingBag },
+  { name: 'Wallet', path: '/vendor/dashboard/wallet', icon: Wallet },
+  { name: 'Wishlist', path: '/vendor/dashboard/wishlist', icon: Heart },
 ];
 
 const mobileDrawerGroups = [
