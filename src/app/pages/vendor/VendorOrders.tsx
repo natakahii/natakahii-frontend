@@ -190,8 +190,14 @@ export function VendorOrders() {
                 <TableRow key={item.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-page)] transition-colors">
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-black text-sm text-[var(--color-text-heading)] font-mono tracking-wider">#{item.order?.order_number || 'N/A'}</span>
-                      <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">{item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-black text-sm text-[var(--color-text-heading)] font-mono tracking-wider">
+                          {item.order?.order_number ? `#${item.order.order_number}` : 'No ID'}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider mt-0.5">
+                        {item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unknown Date'}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -210,18 +216,24 @@ export function VendorOrders() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-page)]">
+                      <div className="h-10 w-10 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-page)] shrink-0">
                         <img 
                           src={getImageUrl(item.product?.images?.[0]?.image_path)} 
                           alt={item.product?.name || 'Product'} 
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-[var(--color-text-heading)] line-clamp-1 max-w-[150px]">
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-bold text-[var(--color-text-heading)] truncate max-w-[180px]">
                           {item.product?.name || 'Unknown Product'}
                         </span>
-                        <span className="text-[10px] text-[var(--color-text-muted)] font-black uppercase tracking-widest">Qty: {item.quantity}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[10px] text-[var(--color-text-muted)] font-black uppercase tracking-widest">Qty: {item.quantity}</span>
+                          <span className="w-1 h-1 rounded-full bg-[var(--color-border)]" />
+                          <span className="text-[10px] text-[var(--vendor-accent-action)] font-black uppercase tracking-widest">
+                            {safeFormatCurrency(item.unit_price)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </TableCell>
