@@ -10,6 +10,7 @@ import {
   MapPin,
   Phone,
   RefreshCw,
+  Rocket,
   ShieldCheck,
   Store,
   UploadCloud,
@@ -20,6 +21,7 @@ import {
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import { FormField } from '../../components/ui/form-field';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -178,6 +180,7 @@ export function VendorApply() {
   const [plans, setPlans] = useState<VendorSubscriptionPlanRecord[]>([]);
   const [plansError, setPlansError] = useState<string | null>(null);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
 
   useEffect(() => {
     if (hasUserRole(user, 'vendor')) {
@@ -804,14 +807,89 @@ export function VendorApply() {
                   {step === 3 && (
                     <div className="space-y-10 animate-in fade-in slide-in-from-right-8 duration-500">
                       <section>
-                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-4">Choose Selling Plan</h3>
-                        <VendorSubscriptionPlan
-                          plans={plans}
-                          selectedPlan={form.subscription_plan}
-                          onSelectPlan={(plan) => updateField('subscription_plan', plan)}
-                          isLoading={isLoadingPlans}
-                          error={plansError}
-                        />
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                          <div>
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-1">Growth Plan</h3>
+                            <p className="text-[13px] text-[var(--color-text-body)] font-medium">Select a plan that scales with your business.</p>
+                          </div>
+                          <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={() => setIsPlanModalOpen(true)}
+                            className="h-12 px-6 rounded-2xl border-2 border-[var(--color-accent)]/20 text-[var(--color-accent)] font-black hover:bg-[var(--color-accent)]/5 transition-all gap-2 shrink-0"
+                          >
+                            <Rocket className="w-4 h-4" />
+                            {form.subscription_plan ? 'Change Selling Plan' : 'Choose Your Plan'}
+                          </Button>
+                        </div>
+
+                        {selectedPlan ? (
+                          <div className="bg-[var(--color-bg-page)] rounded-[32px] p-6 border-2 border-[var(--color-accent)]/10 flex items-center gap-5 group hover:border-[var(--color-accent)]/30 transition-all cursor-pointer" onClick={() => setIsPlanModalOpen(true)}>
+                            <div className="w-14 h-14 rounded-2xl bg-white shadow-xl shadow-[var(--color-accent)]/5 flex items-center justify-center shrink-0">
+                              <ShieldCheck className="w-7 h-7 text-[var(--color-accent)]" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-black text-xl text-[var(--color-text-heading)]">{selectedPlan.name}</p>
+                                {selectedPlan.is_free && <Badge className="bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-50">Free</Badge>}
+                              </div>
+                              <p className="text-[13px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mt-0.5">
+                                {selectedPlan.is_free ? 'Core Marketplace Tools' : `${formatCurrency(Number(selectedPlan.price))} / ${selectedPlan.billing_cycle === 'yearly' ? 'year' : 'month'}`}
+                              </p>
+                            </div>
+                            <div className="p-3 rounded-full bg-white border border-[var(--color-border)] opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ArrowRight className="w-4 h-4 text-[var(--color-text-muted)]" />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-[var(--color-bg-page)] rounded-[32px] p-10 border-2 border-dashed border-[var(--color-border)] flex flex-col items-center text-center gap-4">
+                            <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-[var(--color-text-muted)]">
+                              <Rocket className="w-7 h-7 opacity-20" />
+                            </div>
+                            <p className="font-bold text-[var(--color-text-muted)]">No plan selected yet.</p>
+                            <Button type="button" variant="ghost" onClick={() => setIsPlanModalOpen(true)} className="text-[var(--color-accent)] font-black">Choose a plan</Button>
+                          </div>
+                        )}
+
+                        <Dialog open={isPlanModalOpen} onOpenChange={setIsPlanModalOpen}>
+                          <DialogContent className="sm:max-w-[1100px] max-h-[90vh] overflow-y-auto p-0 border-none bg-white rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] vendor-command-center">
+                            <div className="p-8 sm:p-12">
+                              <DialogHeader className="mb-10 text-center">
+                                <div className="mx-auto w-16 h-16 rounded-2xl bg-[var(--vendor-accent-action-bg)] flex items-center justify-center mb-4">
+                                  <Rocket className="w-8 h-8 text-[var(--vendor-accent-action)]" />
+                                </div>
+                                <DialogTitle className="text-4xl font-black text-[var(--color-text-heading)] tracking-tight">
+                                  Professional Growth Plans
+                                </DialogTitle>
+                                <p className="text-[var(--color-text-muted)] text-lg mt-2 font-medium max-w-2xl mx-auto">
+                                  Choose a plan that scales with your business goals. Each plan unlocks unique marketplace benefits.
+                                </p>
+                              </DialogHeader>
+                              
+                              <VendorSubscriptionPlan
+                                plans={plans}
+                                selectedPlan={form.subscription_plan}
+                                onSelectPlan={(plan) => {
+                                  updateField('subscription_plan', plan);
+                                  setIsPlanModalOpen(false);
+                                }}
+                                isLoading={isLoadingPlans}
+                                error={plansError}
+                                title=""
+                                description=""
+                              />
+                              
+                              <div className="mt-12 flex justify-center">
+                                <Button 
+                                  onClick={() => setIsPlanModalOpen(false)}
+                                  className="h-14 px-12 rounded-2xl bg-[var(--color-text-heading)] text-white font-black text-lg hover:bg-black transition-all"
+                                >
+                                  Close Plan Gallery
+                                </Button>
+                              </div>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </section>
 
                       <section className="space-y-6">
