@@ -96,9 +96,8 @@ export function VendorOrders() {
     setSelectedOrder(item);
     setIsDetailsOpen(true);
     
-    // In a real app, you'd call an API to mark the order as "seen" here
-    // For now, we'll just simulate it by triggering a refresh of the dashboard counts if needed
-    // apiClient.post(`/vendor/orders/${item.id}/mark-seen`);
+    // Refresh counts in the sidebar/mobile nav
+    window.dispatchEvent(new CustomEvent('refresh-vendor-counts'));
   };
 
   const getStatusBadge = (status: string) => {
@@ -135,7 +134,7 @@ export function VendorOrders() {
         description="Track and manage your customer sales and order logistics."
         actions={
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="gap-2 rounded-[18px] border-white/10 text-white hover:bg-white/5 h-12 px-6">
+            <Button variant="outline" className="gap-2 rounded-[18px] border-[var(--color-border)] text-[var(--color-text-heading)] hover:bg-[var(--color-bg-page)] h-12 px-6">
               <ShoppingBag className="w-4 h-4 text-[var(--vendor-accent-action)]" />
               Batch History
             </Button>
@@ -151,13 +150,13 @@ export function VendorOrders() {
 
       <div className="flex flex-col md:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
-          <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
+          <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
           <Input 
             placeholder="Search by Order ID or Customer..." 
-            className="pl-12 h-14 bg-white/5 border-white/10 text-white rounded-2xl focus:ring-[var(--vendor-accent-action)]/20" 
+            className="pl-12 h-14 bg-white border-[var(--color-border)] text-[var(--color-text-heading)] rounded-2xl focus:ring-[var(--vendor-accent-action)]/20" 
           />
         </div>
-        <Button variant="outline" className="h-14 px-8 border-white/10 text-white hover:bg-white/5 rounded-2xl font-bold gap-2">
+        <Button variant="outline" className="h-14 px-8 border-[var(--color-border)] text-[var(--color-text-heading)] hover:bg-[var(--color-bg-page)] rounded-2xl font-bold gap-2">
           <Filter className="w-4 h-4" />
           Filter
         </Button>
@@ -170,35 +169,35 @@ export function VendorOrders() {
           description="When customers purchase your products, they will appear here."
         />
       ) : (
-        <VendorCard className="overflow-hidden bg-white/5 border-white/10">
+        <VendorCard className="overflow-hidden bg-white border-[var(--color-border)]">
           <Table>
-            <TableHeader className="bg-white/5 border-b border-white/10">
+            <TableHeader className="bg-[var(--color-bg-card)] border-b border-[var(--color-border)]">
               <TableRow className="hover:bg-transparent border-none">
-                <TableHead className="text-white/40 font-black uppercase tracking-widest text-[10px] h-14">Order ID</TableHead>
-                <TableHead className="text-white/40 font-black uppercase tracking-widest text-[10px] h-14">Customer</TableHead>
-                <TableHead className="text-white/40 font-black uppercase tracking-widest text-[10px] h-14">Product</TableHead>
-                <TableHead className="text-white/40 font-black uppercase tracking-widest text-[10px] h-14">Amount</TableHead>
-                <TableHead className="text-white/40 font-black uppercase tracking-widest text-[10px] h-14">Status</TableHead>
-                <TableHead className="text-right text-white/40 font-black uppercase tracking-widest text-[10px] h-14">Actions</TableHead>
+                <TableHead className="text-[var(--color-text-muted)] font-black uppercase tracking-widest text-[10px] h-14">Order ID</TableHead>
+                <TableHead className="text-[var(--color-text-muted)] font-black uppercase tracking-widest text-[10px] h-14">Customer</TableHead>
+                <TableHead className="text-[var(--color-text-muted)] font-black uppercase tracking-widest text-[10px] h-14">Product</TableHead>
+                <TableHead className="text-[var(--color-text-muted)] font-black uppercase tracking-widest text-[10px] h-14">Amount</TableHead>
+                <TableHead className="text-[var(--color-text-muted)] font-black uppercase tracking-widest text-[10px] h-14">Status</TableHead>
+                <TableHead className="text-right text-[var(--color-text-muted)] font-black uppercase tracking-widest text-[10px] h-14">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {orders.map((item) => (
-                <TableRow key={item.id} className="border-white/5 hover:bg-white/5 transition-colors">
+                <TableRow key={item.id} className="border-[var(--color-border)] hover:bg-[var(--color-bg-page)] transition-colors">
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-black text-sm text-white font-mono tracking-wider">#{item.order.order_number}</span>
-                      <span className="text-[10px] text-white/40 font-bold uppercase tracking-wider">{new Date(item.created_at).toLocaleDateString()}</span>
+                      <span className="font-black text-sm text-[var(--color-text-heading)] font-mono tracking-wider">#{item.order.order_number}</span>
+                      <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">{new Date(item.created_at).toLocaleDateString()}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
-                        <User className="w-3.5 h-3.5 text-white/20" />
-                        <span className="font-bold text-sm text-white">{item.order.customer.name}</span>
+                        <User className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+                        <span className="font-bold text-sm text-[var(--color-text-heading)]">{item.order.customer.name}</span>
                       </div>
                       <div className="flex flex-col gap-0.5 mt-1">
-                        <div className="flex items-center gap-1.5 text-[11px] text-white/40 font-medium">
+                        <div className="flex items-center gap-1.5 text-[11px] text-[var(--color-text-muted)] font-medium">
                           <Mail className="w-3 h-3" />
                           {item.order.customer.email}
                         </div>
@@ -207,7 +206,7 @@ export function VendorOrders() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg overflow-hidden border border-white/10 bg-black/20">
+                      <div className="h-10 w-10 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-page)]">
                         <img 
                           src={item.product?.images?.[0]?.image_path || 'https://via.placeholder.com/40x40?text=Product'} 
                           alt={item.product?.name || 'Product'} 
@@ -215,15 +214,15 @@ export function VendorOrders() {
                         />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm font-bold text-white line-clamp-1 max-w-[150px]">
+                        <span className="text-sm font-bold text-[var(--color-text-heading)] line-clamp-1 max-w-[150px]">
                           {item.product?.name || 'Unknown Product'}
                         </span>
-                        <span className="text-[10px] text-white/40 font-black uppercase tracking-widest">Qty: {item.quantity}</span>
+                        <span className="text-[10px] text-[var(--color-text-muted)] font-black uppercase tracking-widest">Qty: {item.quantity}</span>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className="font-black text-sm text-white">{safeFormatCurrency(item.subtotal)}</span>
+                    <span className="font-black text-sm text-[var(--color-text-heading)]">{safeFormatCurrency(item.subtotal)}</span>
                   </TableCell>
                   <TableCell>
                     {getStatusBadge(item.status)}
@@ -234,7 +233,7 @@ export function VendorOrders() {
                         onClick={() => handleViewDetails(item)}
                         variant="ghost" 
                         size="sm" 
-                        className="h-10 w-10 p-0 rounded-xl hover:bg-white/10 transition-colors" 
+                        className="h-10 w-10 p-0 rounded-xl hover:bg-[var(--color-bg-page)] transition-colors" 
                         title="View Order Details"
                       >
                         <Eye className="h-5 w-5 text-[var(--vendor-accent-action)]" />
@@ -242,32 +241,32 @@ export function VendorOrders() {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="h-10 w-10 p-0 rounded-xl hover:bg-white/10 transition-colors" 
+                        className="h-10 w-10 p-0 rounded-xl hover:bg-[var(--color-bg-page)] transition-colors" 
                         title="View Product"
                         onClick={() => window.open(`/product/${item.product?.id}`, '_blank')}
                       >
-                        <ExternalLink className="h-4 w-4 text-white/40" />
+                        <ExternalLink className="h-4 w-4 text-[var(--color-text-muted)]" />
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-10 w-10 p-0 rounded-xl hover:bg-white/10" disabled={isActionLoading === item.id}>
-                            <MoreHorizontal className="h-5 w-5 text-white/40" />
+                          <Button variant="ghost" size="sm" className="h-10 w-10 p-0 rounded-xl hover:bg-[var(--color-bg-page)]" disabled={isActionLoading === item.id}>
+                            <MoreHorizontal className="h-5 w-5 text-[var(--color-text-muted)]" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56 bg-[var(--vendor-bg)] border-white/10 text-white rounded-2xl p-2 shadow-2xl">
-                          <DropdownMenuItem onClick={() => handleStatusUpdate(item.id, 'confirmed')} className="gap-3 h-12 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
+                        <DropdownMenuContent align="end" className="w-56 bg-white border border-[var(--color-border)] text-[var(--color-text-heading)] rounded-2xl p-2 shadow-2xl">
+                          <DropdownMenuItem onClick={() => handleStatusUpdate(item.id, 'confirmed')} className="gap-3 h-12 rounded-xl hover:bg-[var(--color-bg-page)] transition-colors cursor-pointer">
                             <CheckCircle className="w-4 h-4 text-blue-500" /> 
                             <span className="font-bold">Confirm Order</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusUpdate(item.id, 'processing')} className="gap-3 h-12 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
+                          <DropdownMenuItem onClick={() => handleStatusUpdate(item.id, 'processing')} className="gap-3 h-12 rounded-xl hover:bg-[var(--color-bg-page)] transition-colors cursor-pointer">
                             <Package className="w-4 h-4 text-indigo-500" /> 
                             <span className="font-bold">Start Processing</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusUpdate(item.id, 'shipped')} className="gap-3 h-12 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
+                          <DropdownMenuItem onClick={() => handleStatusUpdate(item.id, 'shipped')} className="gap-3 h-12 rounded-xl hover:bg-[var(--color-bg-page)] transition-colors cursor-pointer">
                             <Truck className="w-4 h-4 text-purple-500" /> 
                             <span className="font-bold">Mark as Shipped</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusUpdate(item.id, 'delivered')} className="gap-3 h-12 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
+                          <DropdownMenuItem onClick={() => handleStatusUpdate(item.id, 'delivered')} className="gap-3 h-12 rounded-xl hover:bg-[var(--color-bg-page)] transition-colors cursor-pointer">
                             <CheckCircle className="w-4 h-4 text-green-500" /> 
                             <span className="font-bold">Mark as Delivered</span>
                           </DropdownMenuItem>
@@ -284,13 +283,13 @@ export function VendorOrders() {
 
       {/* Order Details Dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="sm:max-w-[600px] bg-[var(--vendor-bg)] border-white/10 text-white p-0 overflow-hidden rounded-[40px] shadow-2xl">
-          <div className="p-8 bg-gradient-to-br from-white/10 to-transparent">
+        <DialogContent className="sm:max-w-[600px] bg-white border-none text-[var(--color-text-heading)] p-0 overflow-hidden rounded-[40px] shadow-2xl">
+          <div className="p-8">
             <DialogHeader className="mb-8">
               <div className="flex justify-between items-start">
                 <div>
                   <DialogTitle className="text-3xl font-black mb-1">Order Details</DialogTitle>
-                  <p className="text-[var(--vendor-text-muted-on-dark)] font-mono tracking-widest uppercase text-xs">#{selectedOrder?.order.order_number}</p>
+                  <p className="text-[var(--color-text-muted)] font-mono tracking-widest uppercase text-xs">#{selectedOrder?.order.order_number}</p>
                 </div>
                 {selectedOrder && getStatusBadge(selectedOrder.status)}
               </div>
@@ -299,10 +298,10 @@ export function VendorOrders() {
             <div className="space-y-8">
               {/* Customer & Product Grid */}
               <div className="grid grid-cols-2 gap-6">
-                <div className="bg-white/5 rounded-[32px] p-6 border border-white/5">
-                  <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4">Customer Info</p>
+                <div className="bg-[var(--color-bg-card)] rounded-[32px] p-6 border border-[var(--color-border)]">
+                  <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em] mb-4">Customer Info</p>
                   <div className="flex items-center gap-3 mb-4">
-                    <Avatar className="h-12 w-12 border border-white/10 shadow-lg">
+                    <Avatar className="h-12 w-12 border border-[var(--color-border)] shadow-lg">
                       <AvatarImage src={undefined} alt={selectedOrder?.order.customer.name} />
                       <AvatarFallback className="bg-[var(--vendor-accent-action)] text-white font-black">
                         {selectedOrder?.order.customer.name.charAt(0)}
@@ -310,7 +309,7 @@ export function VendorOrders() {
                     </Avatar>
                     <div>
                       <p className="font-black text-lg">{selectedOrder?.order.customer.name}</p>
-                      <p className="text-xs text-white/40 font-medium">{selectedOrder?.order.customer.email}</p>
+                      <p className="text-xs text-[var(--color-text-muted)] font-medium">{selectedOrder?.order.customer.email}</p>
                     </div>
                   </div>
                   {selectedOrder?.order.customer.phone_number && (
@@ -321,10 +320,10 @@ export function VendorOrders() {
                   )}
                 </div>
 
-                <div className="bg-white/5 rounded-[32px] p-6 border border-white/5">
-                  <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-4">Product Details</p>
+                <div className="bg-[var(--color-bg-card)] rounded-[32px] p-6 border border-[var(--color-border)]">
+                  <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em] mb-4">Product Details</p>
                   <div className="flex items-center gap-3">
-                    <div className="h-14 w-14 rounded-2xl overflow-hidden border border-white/10 shadow-lg bg-black/20">
+                    <div className="h-14 w-14 rounded-2xl overflow-hidden border border-[var(--color-border)] shadow-lg bg-[var(--color-bg-page)]">
                       <img 
                         src={selectedOrder?.product?.images?.[0]?.image_path || 'https://via.placeholder.com/60x60?text=Product'} 
                         alt={selectedOrder?.product?.name} 
@@ -333,14 +332,14 @@ export function VendorOrders() {
                     </div>
                     <div>
                       <p className="font-black text-sm line-clamp-1">{selectedOrder?.product?.name}</p>
-                      <p className="text-xs text-white/40 font-black uppercase tracking-widest mt-0.5">Quantity: {selectedOrder?.quantity}</p>
+                      <p className="text-xs text-[var(--color-text-muted)] font-black uppercase tracking-widest mt-0.5">Quantity: {selectedOrder?.quantity}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Order Summary */}
-              <div className="bg-white rounded-[32px] p-8 shadow-2xl text-[var(--vendor-bg)]">
+              <div className="bg-[var(--color-bg-card)] rounded-[32px] p-8 shadow-inner border border-[var(--color-border)] text-[var(--color-text-heading)]">
                 <h4 className="text-xl font-black mb-6 flex items-center gap-2">
                   <ShoppingBag className="w-5 h-5 text-[var(--vendor-accent-action)]" />
                   Financial Summary
@@ -354,7 +353,7 @@ export function VendorOrders() {
                     <span className="text-[var(--color-text-muted)]">Quantity</span>
                     <span className="font-bold">x {selectedOrder?.quantity}</span>
                   </div>
-                  <div className="h-px bg-black/5 my-2" />
+                  <div className="h-px bg-[var(--color-border)] my-2" />
                   <div className="flex justify-between items-center">
                     <span className="font-black text-lg">Total Payout</span>
                     <span className="text-2xl font-black text-[var(--vendor-accent-action)]">
@@ -367,7 +366,7 @@ export function VendorOrders() {
               <div className="flex gap-4">
                 <Button 
                   onClick={() => setIsDetailsOpen(false)}
-                  className="flex-1 h-14 bg-white/10 text-white hover:bg-white/20 rounded-2xl font-black transition-all"
+                  className="flex-1 h-14 bg-[var(--color-bg-page)] text-[var(--color-text-heading)] hover:bg-[var(--color-border)] rounded-2xl font-black transition-all"
                 >
                   Close
                 </Button>
@@ -380,7 +379,7 @@ export function VendorOrders() {
                   className={`flex-1 h-14 rounded-2xl font-black transition-all shadow-xl ${
                     selectedOrder?.status === 'pending'
                     ? 'bg-[var(--vendor-accent-action)] text-white hover:bg-[var(--vendor-accent-action)]/90 shadow-[var(--vendor-accent-action)]/20'
-                    : 'bg-white/5 text-white/20 cursor-not-allowed'
+                    : 'bg-[var(--color-bg-card)] text-[var(--color-text-muted)] cursor-not-allowed'
                   }`}
                 >
                   Confirm Payout

@@ -37,6 +37,10 @@ function normalizeNotification(notification: any): AppNotification {
   };
 }
 
+export async function markNotificationsAsRead(): Promise<void> {
+  await apiClient.post('/notifications/read-all', {});
+}
+
 export async function fetchNotifications(perPage = 20): Promise<NotificationListResponse> {
   const response = await apiClient.get<any>(`/notifications?per_page=${perPage}`);
   const notificationsPayload = Array.isArray(response?.notifications) ? response.notifications : [];

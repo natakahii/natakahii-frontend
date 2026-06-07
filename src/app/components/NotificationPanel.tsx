@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 
 import { EmptyState } from "./ui/empty-state";
 import { Skeleton } from "./ui/skeleton";
-import { fetchNotifications } from "../services/notificationService";
+import { fetchNotifications, markNotificationsAsRead } from "../services/notificationService";
 
 interface NotificationItem {
   id: string;
@@ -113,6 +113,16 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
     setNotifications(notifications.filter(n => n.id !== id));
   };
 
+  const handleClose = async () => {
+    try {
+      await markNotificationsAsRead();
+      window.dispatchEvent(new CustomEvent('refresh-vendor-counts'));
+    } catch (error) {
+      console.error("Failed to mark notifications as read", error);
+    }
+    onClose();
+  };
+
   const getIcon = (type: string) => {
     switch (type) {
       case "order": return <Box className="w-5 h-5 text-[#142490]" />;
@@ -140,7 +150,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={handleClose}
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[150]"
           />
           <motion.div
@@ -160,7 +170,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                   Mark all read
                 </button>
                 <button
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="p-2 text-[#9BA5BC] hover:bg-[#E2E6F0] rounded-full transition-colors"
                 >
                   <X className="w-5 h-5" />

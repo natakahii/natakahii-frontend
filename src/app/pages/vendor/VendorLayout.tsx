@@ -188,8 +188,16 @@ export function VendorLayout() {
     };
 
     fetchCounts();
+    
+    // Listen for custom event to refresh counts
+    const handleRefresh = () => fetchCounts();
+    window.addEventListener('refresh-vendor-counts', handleRefresh);
+    
     const interval = setInterval(fetchCounts, 60000); // Refresh every minute
-    return () => clearInterval(interval);
+    return () => {
+      window.removeEventListener('refresh-vendor-counts', handleRefresh);
+      clearInterval(interval);
+    };
   }, []);
 
   return (
