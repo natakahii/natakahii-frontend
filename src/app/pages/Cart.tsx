@@ -1,3 +1,4 @@
+import { getImageUrl } from '../utils/images';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
@@ -274,7 +275,7 @@ export function Cart() {
           {items.map((item) => {
             const price = item.product?.price || 0;
             const name = item.product?.name || 'Product';
-            const image = item.product?.images?.[0]?.image_path || '';
+            const image = getImageUrl(item.product?.images?.[0]?.image_path);
             return (
               <motion.div
                 key={item.id}
@@ -386,7 +387,7 @@ export function Cart() {
               const stock = selectedVariant?.stock ?? product?.stock ?? item.product?.stock ?? 0;
               const variantImage = selectedVariant
                 ? getProductPrimaryImage(product!)
-                : (item.product?.images?.[0]?.image_path || '');
+                : getImageUrl(item.product?.images?.[0]?.image_path);
 
               return (
                 <div key={item.id} className="bg-[var(--color-bg-page)] rounded-[16px] p-4 border border-[var(--color-border)]/50">

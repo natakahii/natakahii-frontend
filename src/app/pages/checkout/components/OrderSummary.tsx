@@ -1,3 +1,4 @@
+import { getImageUrl } from '../../../utils/images';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
 
 interface OrderSummaryProps {
@@ -26,7 +27,7 @@ export function OrderSummary({
           <div key={item.id} className="flex items-start gap-4 bg-[var(--color-bg-page)] rounded-[16px] p-4 border border-[var(--color-border)]/50">
             <div className="w-16 h-16 rounded-[12px] overflow-hidden bg-white shrink-0 border border-[var(--color-border)]">
               <ImageWithFallback 
-                src={item.product?.images?.[0]?.image_path || ''} 
+                src={getImageUrl(item.product?.images?.[0]?.image_path)} 
                 alt={item.product?.name || 'Product'} 
                 className="w-full h-full object-cover" 
               />

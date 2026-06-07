@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
+import { getImageUrl } from '../../../utils/images';
 import { 
-  CheckCircle, MapPin, User, MapPinned, Navigation, CreditCard, 
+  CheckCircle, MapPin, User, MapPinned, Navigation, CreditCard,
   Truck, Package, Box, Home, Download,
 } from 'lucide-react';
 import { ImageWithFallback } from '../../../components/figma/ImageWithFallback';
@@ -245,7 +246,7 @@ export function SuccessStep({
             {items.map((item) => (
               <div key={item.id} className="flex gap-3 items-center">
                 <div className="w-12 h-12 rounded-[8px] bg-[var(--color-bg-card)] overflow-hidden border border-[var(--color-border)]/50 shrink-0">
-                  <ImageWithFallback src={item.product?.images?.[0]?.image_path || ''} alt={item.product?.name || 'Item'} className="w-full h-full object-cover" />
+                  <ImageWithFallback src={getImageUrl(item.product?.images?.[0]?.image_path)} alt={item.product?.name || 'Item'} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-bold text-[var(--color-text-heading)] truncate">{item.product?.name || 'Product'}</p>

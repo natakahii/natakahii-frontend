@@ -170,16 +170,16 @@ export function VendorSubscriptionManagement() {
           />
 
           {/* Verification Status Card */}
-          <div className="bg-gradient-to-br from-[var(--vendor-bg-card)] to-[var(--vendor-bg)] rounded-[40px] p-8 border border-[var(--vendor-border)] shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-12 opacity-5">
-              <ShieldCheck className="w-48 h-48" />
+          <div className="bg-[var(--color-bg-card)] rounded-[32px] p-8 border border-[var(--color-border)] shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-12 opacity-[0.03]">
+              <ShieldCheck className="w-48 h-48 text-[var(--color-text-heading)]" />
             </div>
             
             <div className="relative z-10">
               <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--vendor-accent-action)] mb-2 block">Identity & Trust</span>
-                  <h2 className="text-3xl font-black text-white">{verification.headline}</h2>
+                  <h2 className="text-3xl font-black text-[var(--color-text-heading)]">{verification.headline}</h2>
                 </div>
                 {isPremiumVerifiedVendor(vendor) && (
                   <div className="bg-[var(--vendor-accent-action)] text-white px-6 py-2 rounded-full font-bold flex items-center gap-2 shadow-lg shadow-[var(--vendor-accent-action)]/20">
@@ -189,7 +189,7 @@ export function VendorSubscriptionManagement() {
                 )}
               </div>
 
-              <p className="text-[var(--vendor-text-muted-on-dark)] text-lg leading-relaxed max-w-3xl mb-8">
+              <p className="text-[var(--color-text-body)] text-lg leading-relaxed max-w-3xl mb-8">
                 {verification.detail}
               </p>
 
@@ -199,10 +199,10 @@ export function VendorSubscriptionManagement() {
                   { label: 'Search Priority', value: isPremiumVerifiedVendor(vendor) ? 'Maximum' : 'Standard', icon: ArrowUpRight },
                   { label: 'Storefront Tools', value: 'Pro Suite', icon: ShieldCheck }
                 ].map((stat) => (
-                  <div key={stat.label} className="bg-white/5 rounded-[24px] p-6 border border-white/5 hover:border-white/10 transition-colors">
+                  <div key={stat.label} className="bg-[var(--color-bg-page)] rounded-[24px] p-6 border border-[var(--color-border)] hover:border-[var(--vendor-accent-action)]/30 transition-colors">
                     <stat.icon className="w-6 h-6 text-[var(--vendor-accent-action)] mb-4" />
-                    <p className="text-xs font-bold text-[var(--vendor-text-muted-on-dark)] uppercase tracking-widest mb-1">{stat.label}</p>
-                    <p className="text-xl font-black text-white">{stat.value}</p>
+                    <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-1">{stat.label}</p>
+                    <p className="text-xl font-black text-[var(--color-text-heading)]">{stat.value}</p>
                   </div>
                 ))}
               </div>

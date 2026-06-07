@@ -38,6 +38,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { User, Mail } from 'lucide-react';
 import { safeFormatCurrency } from '../../utils/currency';
+import { getImageUrl } from '../../utils/images';
 import {
   VendorCard,
   VendorEmptyState,
@@ -378,7 +379,7 @@ export function VendorProducts() {
                       <TableRow key={product.id}>
                         <TableCell>
                           <img
-                            src={product.images[0]?.image_path || 'https://via.placeholder.com/96x96?text=Product'}
+                            src={getImageUrl(product.images[0]?.image_path)}
                             alt={product.name}
                             className="w-14 h-14 rounded-xl object-cover border border-[var(--color-border)] bg-[var(--color-bg-card)]"
                           />
@@ -484,7 +485,7 @@ export function VendorProducts() {
                   <VendorCard className="overflow-hidden p-0">
                     <div className="aspect-[4/3] w-full relative group bg-[var(--color-bg-card)]">
                       <img
-                        src={product.images[0]?.image_path || 'https://via.placeholder.com/600x450?text=Product'}
+                        src={getImageUrl(product.images[0]?.image_path)}
                         alt={product.name}
                         className="w-full h-full object-cover"
                       />

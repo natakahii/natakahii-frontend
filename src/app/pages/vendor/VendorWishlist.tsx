@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Heart, Mail, User, Package, ExternalLink, Sparkles, TrendingUp, Users, ShoppingBag } from 'lucide-react';
+import { getImageUrl } from '../../utils/images';
 import { 
   VendorCard, 
   VendorEmptyState, 
@@ -156,7 +157,7 @@ export function VendorWishlist() {
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-page)] relative group">
                         <img 
-                          src={item.product.images?.[0]?.image_path || 'https://via.placeholder.com/40x40?text=Product'} 
+                          src={getImageUrl(item.product.images?.[0]?.image_path)} 
                           alt={item.product.name} 
                           className="w-full h-full object-cover"
                         />

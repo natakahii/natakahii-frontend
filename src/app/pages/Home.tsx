@@ -8,6 +8,7 @@ import mixxbyyasLogo from '../../assets/mixxbyyas.png';
 import halopesaLogo from '../../assets/halopesa.png';
 import selcomLogo from '../../assets/selcom.png';
 import azampesaLogo from '../../assets/azampesa.png';
+import { getImageUrl } from '../utils/images';
 import {
   Heart,
   Play,
@@ -42,7 +43,9 @@ export function Home() {
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  //const navigate = useNavigate();
+
+  const displayProducts = useMemo(() => featuredProducts, [featuredProducts]);
+  const displayVideos = useMemo(() => videos.slice(0, 12), [videos]);
 
   useEffect(() => {
     let isMounted = true;
@@ -146,9 +149,9 @@ export function Home() {
                 </Card>
               ))}
             </div>
-          ) : featuredProducts.length > 0 ? (
+          ) : displayProducts.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {featuredProducts.map((product) => {
+              {displayProducts.map((product) => {
                 const discountPercent = getProductDiscountPercent(product);
                 const rating = product.reviews_avg_rating ? product.reviews_avg_rating.toFixed(1) : null;
                 const image = getProductPrimaryImage(product);
@@ -277,15 +280,18 @@ export function Home() {
         <section>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="font-times-bold text-[22px] lg:text-[28px] text-[var(--color-text-heading)] tracking-[-0.5px]">Discover on Video</h2>
-              <p className="text-[14px] text-[var(--color-text-muted)] mt-1">Watch real vendor demos and reviews.</p>
+              <div className="flex items-center gap-2 mb-1">
+                <Watch className="w-5 h-5 text-[var(--color-primary)]" />
+                <h2 className="font-times-bold text-[22px] lg:text-[28px] text-[var(--color-text-heading)] tracking-[-0.5px]">Discover on Video</h2>
+              </div>
+              <p className="text-[14px] text-[var(--color-text-muted)]">Watch real vendor demos and reviews.</p>
             </div>
             <Link to="/video" className="text-[var(--color-primary)] font-semibold text-[14px] hover:text-[var(--color-accent)] flex items-center gap-1 bg-[var(--color-primary-bg)] px-4 py-2 rounded-full">
               Open Feed <Play className="w-4 h-4" />
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {videos.length === 0 ? (
+            {displayVideos.length === 0 ? (
               // Skeleton loading state
               Array.from({ length: 12 }).map((_, index) => (
                 <div key={index} className="relative aspect-[9/16] rounded-[16px] overflow-hidden bg-[var(--color-bg-card)] shadow-[var(--shadow-level-1)]">
@@ -298,11 +304,11 @@ export function Home() {
                 </div>
               ))
             ) : (
-              videos.slice(0, 12).map((video) => (
+              displayVideos.map((video) => (
                 <Link key={video.id} to={`/video?v=${video.id}`} className="relative aspect-[9/16] rounded-[16px] overflow-hidden bg-[var(--color-bg-card)] group cursor-pointer shadow-[var(--shadow-level-1)] block">
                   {/* Video Thumbnail or Placeholder */}
                   <ImageWithFallback
-                    src={video.product?.images?.[0]?.image_path || ''}
+                    src={getImageUrl(video.product?.images?.[0]?.image_path)}
                     alt={video.title || 'Video'}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />

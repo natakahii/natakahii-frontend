@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { getImageUrl } from '../utils/images';
 import { Heart, Share2, Play, Pause, ShoppingBag, Plus, Check, Volume2, VolumeX } from 'lucide-react';
 import { useNavigate, Link, useSearchParams } from 'react-router';
 import { Button } from '../components/ui/button';
@@ -424,7 +425,7 @@ function MobileVideoCard({ video, onUpdate, isLast, onLoadMore }: MobileVideoCar
     }
   };
 
-  const primaryImage = video.product?.images?.[0]?.image_path || '/natakahii-logo.png';
+  const primaryImage = getImageUrl(video.product?.images?.[0]?.image_path);
   const vendorLogo = video.vendor?.logo || '/natakahii-logo.png';
   const effectivePrice = video.product?.effective_price || video.product?.price || 0;
 
@@ -788,7 +789,7 @@ function DesktopVideoCard({ video, onUpdate }: DesktopVideoCardProps) {
     }
   };
 
-  const primaryImage = video.product?.images?.[0]?.image_path || '/natakahii-logo.png';
+  const primaryImage = getImageUrl(video.product?.images?.[0]?.image_path);
   const vendorLogo = video.vendor?.logo || '/natakahii-logo.png';
   const effectivePrice = video.product?.effective_price || video.product?.price || 0;
 

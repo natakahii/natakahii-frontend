@@ -214,26 +214,12 @@ export function VendorWalletPage() {
       {error && !wallet && <VendorInlineError message={error} onRetry={() => loadWallet(page, transactionType)} />}
 
       {wallet && (
-        <>
-          {/* Hero balance band */}
-          <VendorCard glow className="p-8 bg-[var(--vendor-bg)] border-[var(--vendor-border)] text-white overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-[var(--vendor-accent-action)]/20 to-transparent pointer-events-none" />
-            <div className="relative">
-              <p className="text-sm text-white/60 vendor-body">Available Balance</p>
-              <p className="text-4xl sm:text-5xl font-bold vendor-heading mt-2">
-                {safeFormatCurrency(wallet.available_balance)}
-              </p>
-              <p className="text-sm text-white/50 mt-2 vendor-body">Ready to withdraw to your registered payout method</p>
-            </div>
-          </VendorCard>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <VendorBalanceTile title="Available" amount={wallet.available_balance} description="Ready to withdraw" icon={<Wallet className="h-5 w-5" />} variant="available" index={0} />
-            <VendorBalanceTile title="Pending" amount={wallet.pending_balance} description="Awaiting delivery" icon={<Clock className="h-5 w-5" />} variant="pending" index={1} />
-            <VendorBalanceTile title="Held" amount={wallet.held_balance} description="Under dispute" icon={<Lock className="h-5 w-5" />} variant="held" index={2} />
-            <VendorBalanceTile title="Lifetime Earnings" amount={wallet.lifetime_earnings} description="Total earned" icon={<TrendingUp className="h-5 w-5" />} variant="lifetime" index={3} />
-          </div>
-        </>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <VendorBalanceTile title="Available" amount={wallet.available_balance} description="Ready to withdraw" icon={<Wallet className="h-5 w-5" />} variant="available" index={0} />
+          <VendorBalanceTile title="Pending" amount={wallet.pending_balance} description="Awaiting delivery" icon={<Clock className="h-5 w-5" />} variant="pending" index={1} />
+          <VendorBalanceTile title="Held" amount={wallet.held_balance} description="Under dispute" icon={<Lock className="h-5 w-5" />} variant="held" index={2} />
+          <VendorBalanceTile title="Lifetime Earnings" amount={wallet.lifetime_earnings} description="Total earned" icon={<TrendingUp className="h-5 w-5" />} variant="lifetime" index={3} />
+        </div>
       )}
 
       <VendorCard className="overflow-hidden">

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { ShoppingBag, Package, Truck, CheckCircle, Clock, ExternalLink, MoreHorizontal, User, Mail, Phone, Eye, Search, Filter } from 'lucide-react';
+import { getImageUrl } from '../../utils/images';
 import { 
   VendorCard, 
   VendorEmptyState, 
@@ -45,6 +47,7 @@ interface OrderItem {
 }
 
 export function VendorOrders() {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState<number | null>(null);
@@ -208,7 +211,7 @@ export function VendorOrders() {
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-lg overflow-hidden border border-[var(--color-border)] bg-[var(--color-bg-page)]">
                         <img 
-                          src={item.product?.images?.[0]?.image_path || 'https://via.placeholder.com/40x40?text=Product'} 
+                          src={getImageUrl(item.product?.images?.[0]?.image_path)} 
                           alt={item.product?.name || 'Product'} 
                           className="w-full h-full object-cover"
                         />
@@ -233,17 +236,17 @@ export function VendorOrders() {
                         onClick={() => handleViewDetails(item)}
                         variant="ghost" 
                         size="sm" 
-                        className="h-10 w-10 p-0 rounded-xl hover:bg-[var(--color-bg-page)] transition-colors" 
-                        title="View Order Details"
+                        className="h-10 w-10 p-0 rounded-xl bg-[var(--vendor-accent-action-bg)] hover:bg-[var(--vendor-accent-action)] group transition-all duration-300" 
+                        title="Quick View"
                       >
-                        <Eye className="h-5 w-5 text-[var(--vendor-accent-action)]" />
+                        <Eye className="h-5 w-5 text-[var(--vendor-accent-action)] group-hover:text-white transition-colors" />
                       </Button>
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="h-10 w-10 p-0 rounded-xl hover:bg-[var(--color-bg-page)] transition-colors" 
+                        className="h-10 w-10 p-0 rounded-xl hover:bg-[var(--color-bg-page)] transition-colors border border-transparent hover:border-[var(--color-border)]" 
                         title="View Product"
-                        onClick={() => window.open(`/product/${item.product?.id}`, '_blank')}
+                        onClick={() => navigate(`/product/${item.product?.id}`)}
                       >
                         <ExternalLink className="h-4 w-4 text-[var(--color-text-muted)]" />
                       </Button>
@@ -283,107 +286,171 @@ export function VendorOrders() {
 
       {/* Order Details Dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="sm:max-w-[600px] bg-white border-none text-[var(--color-text-heading)] p-0 overflow-hidden rounded-[40px] shadow-2xl">
-          <div className="p-8">
-            <DialogHeader className="mb-8">
-              <div className="flex justify-between items-start">
-                <div>
-                  <DialogTitle className="text-3xl font-black mb-1">Order Details</DialogTitle>
-                  <p className="text-[var(--color-text-muted)] font-mono tracking-widest uppercase text-xs">#{selectedOrder?.order.order_number}</p>
-                </div>
-                {selectedOrder && getStatusBadge(selectedOrder.status)}
-              </div>
-            </DialogHeader>
-
-            <div className="space-y-8">
-              {/* Customer & Product Grid */}
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-[var(--color-bg-card)] rounded-[32px] p-6 border border-[var(--color-border)]">
-                  <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em] mb-4">Customer Info</p>
-                  <div className="flex items-center gap-3 mb-4">
-                    <Avatar className="h-12 w-12 border border-[var(--color-border)] shadow-lg">
-                      <AvatarImage src={undefined} alt={selectedOrder?.order.customer.name} />
-                      <AvatarFallback className="bg-[var(--vendor-accent-action)] text-white font-black">
-                        {selectedOrder?.order.customer.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-black text-lg">{selectedOrder?.order.customer.name}</p>
-                      <p className="text-xs text-[var(--color-text-muted)] font-medium">{selectedOrder?.order.customer.email}</p>
+        <DialogContent className="sm:max-w-[650px] bg-white border-none text-[var(--color-text-heading)] p-0 overflow-hidden rounded-[40px] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.15)]">
+          <div className="relative">
+            {/* Header Decoration */}
+            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[var(--vendor-accent-action-bg)]/30 to-transparent pointer-events-none" />
+            
+            <div className="p-8 relative">
+              <DialogHeader className="mb-8">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-[var(--vendor-accent-action)] uppercase tracking-[0.3em]">Order Fulfillment</p>
+                    <DialogTitle className="text-4xl font-black tracking-tight">Order Details</DialogTitle>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[var(--color-text-muted)] font-mono text-xs bg-[var(--color-bg-page)] px-3 py-1 rounded-full border border-[var(--color-border)]">
+                        #{selectedOrder?.order.order_number}
+                      </span>
+                      <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider">
+                        {selectedOrder && new Date(selectedOrder.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      </span>
                     </div>
                   </div>
-                  {selectedOrder?.order.customer.phone_number && (
-                    <div className="flex items-center gap-2 text-sm font-bold text-[var(--vendor-accent-action)]">
-                      <Phone className="w-3.5 h-3.5" />
-                      {selectedOrder.order.customer.phone_number}
+                  {selectedOrder && (
+                    <div className="scale-110 origin-top-right">
+                      {getStatusBadge(selectedOrder.status)}
                     </div>
                   )}
                 </div>
+              </DialogHeader>
 
-                <div className="bg-[var(--color-bg-card)] rounded-[32px] p-6 border border-[var(--color-border)]">
-                  <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em] mb-4">Product Details</p>
-                  <div className="flex items-center gap-3">
-                    <div className="h-14 w-14 rounded-2xl overflow-hidden border border-[var(--color-border)] shadow-lg bg-[var(--color-bg-page)]">
-                      <img 
-                        src={selectedOrder?.product?.images?.[0]?.image_path || 'https://via.placeholder.com/60x60?text=Product'} 
-                        alt={selectedOrder?.product?.name} 
-                        className="w-full h-full object-cover"
-                      />
+              <div className="space-y-8">
+                {/* Information Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Customer Section */}
+                  <div className="bg-[var(--color-bg-page)] rounded-[32px] p-6 border border-[var(--color-border)] hover:border-[var(--vendor-accent-action)]/20 transition-colors">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="p-2 bg-white rounded-xl border border-[var(--color-border)] shadow-sm">
+                        <User className="w-4 h-4 text-[var(--vendor-accent-action)]" />
+                      </div>
+                      <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Customer Info</p>
                     </div>
-                    <div>
-                      <p className="font-black text-sm line-clamp-1">{selectedOrder?.product?.name}</p>
-                      <p className="text-xs text-[var(--color-text-muted)] font-black uppercase tracking-widest mt-0.5">Quantity: {selectedOrder?.quantity}</p>
+                    
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-14 w-14 border-2 border-white shadow-xl">
+                        <AvatarImage src={undefined} alt={selectedOrder?.order.customer.name} />
+                        <AvatarFallback className="bg-[var(--vendor-accent-action)] text-white font-black text-xl">
+                          {selectedOrder?.order.customer.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-0.5">
+                        <p className="font-black text-xl leading-tight">{selectedOrder?.order.customer.name}</p>
+                        <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] font-medium">
+                          <Mail className="w-3 h-3" />
+                          {selectedOrder?.order.customer.email}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {selectedOrder?.order.customer.phone_number && (
+                      <div className="mt-4 pt-4 border-t border-[var(--color-border)]/50">
+                        <div className="flex items-center gap-2 text-sm font-bold text-[var(--vendor-accent-action)] bg-white w-fit px-4 py-2 rounded-2xl border border-[var(--vendor-accent-action)]/10">
+                          <Phone className="w-3.5 h-3.5" />
+                          {selectedOrder.order.customer.phone_number}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Product Section */}
+                  <div className="bg-[var(--color-bg-page)] rounded-[32px] p-6 border border-[var(--color-border)] hover:border-[var(--vendor-accent-action)]/20 transition-colors">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="p-2 bg-white rounded-xl border border-[var(--color-border)] shadow-sm">
+                        <Package className="w-4 h-4 text-[var(--vendor-accent-action)]" />
+                      </div>
+                      <p className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Product Details</p>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <div className="h-16 w-16 rounded-2xl overflow-hidden border-2 border-white shadow-xl bg-white shrink-0">
+                        <img 
+                          src={getImageUrl(selectedOrder?.product?.images?.[0]?.image_path)} 
+                          alt={selectedOrder?.product?.name} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="font-black text-sm leading-snug line-clamp-2">{selectedOrder?.product?.name}</p>
+                        <div className="inline-flex items-center px-2 py-0.5 bg-white border border-[var(--color-border)] rounded-md">
+                          <span className="text-[10px] font-black text-[var(--vendor-accent-action)] uppercase tracking-widest">Qty: {selectedOrder?.quantity}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Order Summary */}
-              <div className="bg-[var(--color-bg-card)] rounded-[32px] p-8 shadow-inner border border-[var(--color-border)] text-[var(--color-text-heading)]">
-                <h4 className="text-xl font-black mb-6 flex items-center gap-2">
-                  <ShoppingBag className="w-5 h-5 text-[var(--vendor-accent-action)]" />
-                  Financial Summary
-                </h4>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center text-sm font-medium">
-                    <span className="text-[var(--color-text-muted)]">Unit Price</span>
-                    <span className="font-bold">{safeFormatCurrency(selectedOrder?.unit_price || 0)}</span>
+                {/* Financial Summary */}
+                <div className="bg-[var(--color-text-heading)] rounded-[32px] p-8 shadow-2xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-8 opacity-[0.05] group-hover:scale-110 transition-transform duration-700">
+                    <ShoppingBag className="w-32 h-32 text-white" />
                   </div>
-                  <div className="flex justify-between items-center text-sm font-medium">
-                    <span className="text-[var(--color-text-muted)]">Quantity</span>
-                    <span className="font-bold">x {selectedOrder?.quantity}</span>
-                  </div>
-                  <div className="h-px bg-[var(--color-border)] my-2" />
-                  <div className="flex justify-between items-center">
-                    <span className="font-black text-lg">Total Payout</span>
-                    <span className="text-2xl font-black text-[var(--vendor-accent-action)]">
-                      {safeFormatCurrency(selectedOrder?.subtotal || 0)}
-                    </span>
+                  
+                  <div className="relative z-10">
+                    <h4 className="text-sm font-black text-white/40 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                      Financial Summary
+                    </h4>
+                    
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/60 font-medium">Unit Price</span>
+                        <span className="text-white font-bold">{safeFormatCurrency(selectedOrder?.unit_price || 0)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/60 font-medium">Total Quantity</span>
+                        <span className="text-white font-bold">× {selectedOrder?.quantity}</span>
+                      </div>
+                      
+                      <div className="h-px bg-white/10 my-4" />
+                      
+                      <div className="flex justify-between items-end">
+                        <div className="space-y-1">
+                          <p className="text-xs font-black text-[var(--vendor-accent-action)] uppercase tracking-widest">Net Payout</p>
+                          <p className="text-white/40 text-[10px] font-medium leading-tight">After platform commission</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-4xl font-black text-white tracking-tighter">
+                            {safeFormatCurrency(selectedOrder?.subtotal || 0)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex gap-4">
-                <Button 
-                  onClick={() => setIsDetailsOpen(false)}
-                  className="flex-1 h-14 bg-[var(--color-bg-page)] text-[var(--color-text-heading)] hover:bg-[var(--color-border)] rounded-2xl font-black transition-all"
-                >
-                  Close
-                </Button>
-                <Button 
-                  onClick={() => {
-                    setIsDetailsOpen(false);
-                    if (selectedOrder) handleStatusUpdate(selectedOrder.id, 'confirmed');
-                  }}
-                  disabled={selectedOrder?.status !== 'pending'}
-                  className={`flex-1 h-14 rounded-2xl font-black transition-all shadow-xl ${
-                    selectedOrder?.status === 'pending'
-                    ? 'bg-[var(--vendor-accent-action)] text-white hover:bg-[var(--vendor-accent-action)]/90 shadow-[var(--vendor-accent-action)]/20'
-                    : 'bg-[var(--color-bg-card)] text-[var(--color-text-muted)] cursor-not-allowed'
-                  }`}
-                >
-                  Confirm Payout
-                </Button>
+                {/* Actions */}
+                <div className="flex gap-4 pt-2">
+                  <Button 
+                    onClick={() => setIsDetailsOpen(false)}
+                    variant="outline"
+                    className="flex-1 h-16 border-[var(--color-border)] text-[var(--color-text-heading)] hover:bg-[var(--color-bg-page)] rounded-[24px] font-black transition-all text-lg"
+                  >
+                    Close
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setIsDetailsOpen(false);
+                      if (selectedOrder) handleStatusUpdate(selectedOrder.id, 'confirmed');
+                    }}
+                    disabled={selectedOrder?.status !== 'pending'}
+                    className={`flex-[1.5] h-16 rounded-[24px] font-black text-lg transition-all shadow-xl relative overflow-hidden group ${
+                      selectedOrder?.status === 'pending'
+                      ? 'bg-[var(--vendor-accent-action)] text-white hover:shadow-[var(--vendor-accent-action)]/30 active:scale-[0.98]'
+                      : 'bg-[var(--color-bg-page)] text-[var(--color-text-muted)] border border-[var(--color-border)] cursor-not-allowed opacity-60'
+                    }`}
+                  >
+                    {selectedOrder?.status === 'pending' ? (
+                      <>
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          <CheckCircle className="w-5 h-5" />
+                          Confirm & Process
+                        </span>
+                        <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                      </>
+                    ) : (
+                      'Order Processed'
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

@@ -1,3 +1,4 @@
+import { getImageUrl } from '../utils/images';
 import { apiClient } from './apiClient';
 
 export interface ProductFilterParams {
@@ -361,7 +362,7 @@ export function getProductPrice(product: Pick<CatalogProduct, 'effective_price'>
 }
 
 export function getProductPrimaryImage(product: Pick<CatalogProduct, 'images'>): string {
-  return product.images[0]?.image_path || '/natakahii-logo.png';
+  return getImageUrl(product.images[0]?.image_path);
 }
 
 export function getProductDiscountPercent(product: Pick<CatalogProduct, 'price' | 'discount_price'>): number | null {
