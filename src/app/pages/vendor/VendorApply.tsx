@@ -443,16 +443,15 @@ export function VendorApply() {
     },
     { label: 'Address', value: form.address || 'Not provided yet', icon: MapPin },
     {
-      label: 'Verification Document Type',
+      label: 'Identity Document Type',
       value: formatDocumentLabel(form.verification_document_type),
       icon: ShieldCheck,
     },
     {
-      label: 'Verification Document File',
+      label: 'Document File',
       value: form.verification_document?.name || 'Upload required before submission.',
       icon: FileText,
     },
-    { label: 'Description', value: form.description || 'No description added yet.', icon: Store },
   ]), [form, selectedPlan]);
 
   if (view === 'checking' || view === 'redirecting') {
@@ -628,83 +627,16 @@ export function VendorApply() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-page)] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto mb-10">
+      <div className="max-w-4xl mx-auto mb-10">
         <Link to="/" className="inline-flex items-center gap-2 text-sm font-black text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)] transition-colors group">
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Back to Home
         </Link>
       </div>
-      <div className="max-w-7xl mx-auto grid lg:grid-cols-5 gap-12">
-        {/* Left Column: Benefits & Context */}
-        <div className="lg:col-span-2 space-y-12">
-          <div className="space-y-4">
-            <div className="w-16 h-1 w-24 bg-[var(--color-accent)] rounded-full" />
-            <h1 className="text-4xl sm:text-5xl font-black text-[var(--color-text-heading)] tracking-tight leading-[1.1]">
-              Professional <br />
-              <span className="text-[var(--color-primary)]">Vendor Enrollment</span>
-            </h1>
-            <p className="text-lg text-[var(--color-text-body)] font-medium max-w-md">
-              Join our exclusive marketplace of verified East African sellers. Complete these steps to activate your workspace.
-            </p>
-          </div>
-
-          <div className="grid gap-6">
-            {[
-              {
-                title: 'Identity Verification',
-                description: 'We verify every seller with government-issued IDs to maintain marketplace integrity.',
-                icon: ShieldCheck,
-                color: 'text-blue-600',
-                bg: 'bg-blue-50',
-              },
-              {
-                title: 'Instant Fulfillment',
-                description: 'Once approved, your store is instantly ready to manage inventory and shipments.',
-                icon: Store,
-                color: 'text-purple-600',
-                bg: 'bg-purple-50',
-              },
-              {
-                title: 'East Africa Reach',
-                description: 'Connect with buyers across the region through our integrated logistics network.',
-                icon: MapPin,
-                color: 'text-emerald-600',
-                bg: 'bg-emerald-50',
-              },
-            ].map((benefit, idx) => (
-              <div 
-                key={benefit.title} 
-                className="flex gap-5 p-6 rounded-[32px] bg-white border border-[var(--color-border)]/50 hover:border-[var(--color-accent)]/30 transition-all duration-500 group"
-                style={{ transitionDelay: `${idx * 100}ms` }}
-              >
-                <div className={`w-14 h-14 rounded-2xl ${benefit.bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500`}>
-                  <benefit.icon className={`w-7 h-7 ${benefit.color}`} />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-lg font-black text-[var(--color-text-heading)]">{benefit.title}</h3>
-                  <p className="text-[14px] leading-relaxed text-[var(--color-text-body)] font-medium">{benefit.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Integration Badge */}
-          <div className="p-6 rounded-[32px] bg-[var(--color-text-heading)] text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-10">
-              <RefreshCw className="w-24 h-24 animate-spin-slow" />
-            </div>
-            <div className="relative z-10 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-[var(--color-accent)]" />
-              </div>
-              <p className="text-sm font-bold tracking-wide">Live Nataka Hii API Integration</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Multi-step Form */}
-        <div className="lg:col-span-3">
-          <Card className="border-none bg-white rounded-[48px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] overflow-hidden">
+      
+      <div className="max-w-4xl mx-auto">
+        {/* Enrollment Card */}
+        <Card className="border-none bg-white rounded-[48px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] overflow-hidden">
             <div className="h-2 w-full bg-[var(--color-bg-page)]">
               <div 
                 className="h-full bg-[var(--color-accent)] transition-all duration-700 ease-in-out" 
@@ -718,10 +650,12 @@ export function VendorApply() {
                   {[1, 2, 3].map((num) => (
                     <div 
                       key={num}
-                      className={`w-3 h-3 rounded-full transition-all duration-500 ${
-                        num === step ? 'w-10 bg-[var(--color-accent)]' : num < step ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]'
-                      }`}
-                    />
+                      className={`flex items-center justify-center transition-all duration-500 ${
+                        num === step ? 'w-10 h-3 rounded-full bg-[var(--color-accent)]' : 'w-3 h-3 rounded-full'
+                      } ${num < step ? 'bg-[var(--color-primary)]' : num !== step ? 'bg-[var(--color-border)]' : ''}`}
+                    >
+                      {num < step && <CheckCircle2 className="w-2.5 h-2.5 text-white animate-in zoom-in duration-300" />}
+                    </div>
                   ))}
                 </div>
                 <span className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
@@ -729,9 +663,14 @@ export function VendorApply() {
                 </span>
               </div>
               
-              <CardTitle className="text-3xl sm:text-4xl font-black text-[var(--color-text-heading)] tracking-tight">
-                {stepLabels[step]}
-              </CardTitle>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[var(--color-primary-bg)] flex items-center justify-center shrink-0">
+                  <Store className="w-6 h-6 text-[var(--color-primary)]" />
+                </div>
+                <CardTitle className="text-3xl sm:text-4xl font-black text-[var(--color-text-heading)] tracking-tight">
+                  {stepLabels[step]}
+                </CardTitle>
+              </div>
               <CardDescription className="text-base font-medium text-[var(--color-text-body)] mt-2">
                 {step === 1 && 'Basic information to set up your seller identity.'}
                 {step === 2 && 'Location details for logistics and verification.'}
@@ -863,83 +802,111 @@ export function VendorApply() {
                   )}
 
                   {step === 3 && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
-                      <VendorSubscriptionPlan
-                        plans={plans}
-                        selectedPlan={form.subscription_plan}
-                        onSelectPlan={(plan) => updateField('subscription_plan', plan)}
-                        isLoading={isLoadingPlans}
-                        error={plansError}
-                      />
+                    <div className="space-y-10 animate-in fade-in slide-in-from-right-8 duration-500">
+                      <section>
+                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-4">Choose Selling Plan</h3>
+                        <VendorSubscriptionPlan
+                          plans={plans}
+                          selectedPlan={form.subscription_plan}
+                          onSelectPlan={(plan) => updateField('subscription_plan', plan)}
+                          isLoading={isLoadingPlans}
+                          error={plansError}
+                        />
+                      </section>
 
-                      <div className="space-y-6">
-                        <FormField label="Identity Document Type" required error={fieldErrors.verification_document_type}>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {vendorVerificationDocumentOptions.map((option) => {
-                              const isSelected = form.verification_document_type === option.value;
-                              return (
-                                <button
-                                  key={option.value}
-                                  type="button"
-                                  onClick={() => updateField('verification_document_type', option.value)}
-                                  className={`p-6 rounded-[24px] text-left border-2 transition-all duration-300 ${
-                                    isSelected
-                                      ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/5 shadow-[0_8px_20px_-6px_rgba(var(--color-accent-rgb),0.2)]'
-                                      : 'border-[var(--color-border)] hover:border-[var(--color-accent)]/30'
-                                  }`}
-                                >
-                                  <p className={`font-black ${isSelected ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-heading)]'}`}>
-                                    {option.label}
-                                  </p>
-                                  <p className="text-sm text-[var(--color-text-body)] mt-1 font-medium">{option.description}</p>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </FormField>
+                      <section className="space-y-6">
+                        <div>
+                          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)] mb-1">Identity Verification</h3>
+                          <p className="text-[13px] text-[var(--color-text-body)] font-medium">Select a document type and upload a clear digital copy.</p>
+                        </div>
 
-                        <FormField label="Upload ID Document" required error={fieldErrors.verification_document}>
-                          <label className="relative block group">
-                            <input
-                              type="file"
-                              accept=".pdf,.jpg,.jpeg,.png"
-                              className="hidden"
-                              onChange={handleVerificationDocumentChange}
-                            />
-                            <div className={`p-10 rounded-[32px] border-2 border-dashed transition-all duration-500 flex flex-col items-center text-center cursor-pointer ${
-                              form.verification_document 
-                                ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5' 
-                                : 'border-[var(--color-border)] hover:border-[var(--color-accent)] bg-[var(--color-bg-page)]'
-                            }`}>
-                              <div className={`w-16 h-16 rounded-2xl mb-4 flex items-center justify-center transition-all duration-500 ${
-                                form.verification_document ? 'bg-[var(--color-primary)] text-white' : 'bg-white text-[var(--color-text-muted)] group-hover:text-[var(--color-accent)]'
+                        <div className="space-y-6">
+                          <FormField label="Identity Document Type" required error={fieldErrors.verification_document_type}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {vendorVerificationDocumentOptions.map((option) => {
+                                const isSelected = form.verification_document_type === option.value;
+                                return (
+                                  <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => updateField('verification_document_type', option.value)}
+                                    className={`p-6 rounded-[24px] text-left border-2 transition-all duration-300 ${
+                                      isSelected
+                                        ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/5 shadow-[0_8px_20px_-6px_rgba(var(--color-accent-rgb),0.2)]'
+                                        : 'border-[var(--color-border)] hover:border-[var(--color-accent)]/30'
+                                    }`}
+                                  >
+                                    <p className={`font-black ${isSelected ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-heading)]'}`}>
+                                      {option.label}
+                                    </p>
+                                    <p className="text-[12px] text-[var(--color-text-body)] mt-1 font-medium leading-relaxed opacity-70">{option.description}</p>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </FormField>
+
+                          <FormField label="Upload Document" required error={fieldErrors.verification_document}>
+                            <label className="relative block group">
+                              <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                className="hidden"
+                                onChange={handleVerificationDocumentChange}
+                              />
+                              <div className={`p-10 rounded-[32px] border-2 border-dashed transition-all duration-500 flex flex-col items-center text-center cursor-pointer ${
+                                form.verification_document 
+                                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5' 
+                                  : 'border-[var(--color-border)] hover:border-[var(--color-accent)] bg-[var(--color-bg-page)]'
                               }`}>
-                                <UploadCloud className="w-8 h-8" />
+                                <div className={`w-16 h-16 rounded-2xl mb-4 flex items-center justify-center transition-all duration-500 ${
+                                  form.verification_document ? 'bg-[var(--color-primary)] text-white' : 'bg-white text-[var(--color-text-muted)] group-hover:text-[var(--color-accent)]'
+                                }`}>
+                                  <UploadCloud className="w-8 h-8" />
+                                </div>
+                                <p className="text-lg font-black text-[var(--color-text-heading)]">
+                                  {form.verification_document ? form.verification_document.name : 'Drop file here or browse'}
+                                </p>
+                                <p className="text-[13px] font-medium text-[var(--color-text-body)] mt-1 max-w-xs opacity-70">
+                                  Accepted: PDF, JPG, PNG (Max 5MB)
+                                </p>
                               </div>
-                              <p className="text-lg font-black text-[var(--color-text-heading)]">
-                                {form.verification_document ? form.verification_document.name : 'Select ID Document'}
-                              </p>
-                              <p className="text-sm font-medium text-[var(--color-text-body)] mt-1 max-w-xs">
-                                Upload a clear PDF or image of your government-issued identity card.
-                              </p>
-                            </div>
-                          </label>
-                        </FormField>
-                      </div>
+                            </label>
+                          </FormField>
+                        </div>
+                      </section>
 
-                      <div className="p-8 rounded-[40px] bg-[var(--color-bg-page)] border border-[var(--color-border)]/50 space-y-6">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Application Summary</h4>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
-                          {reviewRows.filter(r => !['Description'].includes(r.label)).map((row) => (
-                            <div key={row.label} className="space-y-1">
-                              <p className="text-[11px] font-black text-[var(--color-primary)] uppercase tracking-wider">{row.label}</p>
-                              <p className="text-sm font-bold text-[var(--color-text-heading)] line-clamp-1">{row.value}</p>
+                      <section>
+                        <div className="p-8 rounded-[40px] bg-[var(--color-bg-page)] border border-[var(--color-border)]/50 space-y-8">
+                          <div className="flex items-center justify-between border-b border-[var(--color-border)]/50 pb-4">
+                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-[var(--color-text-muted)]">Application Summary</h4>
+                            <span className="text-[10px] font-black text-[var(--color-accent)] uppercase px-3 py-1 bg-[var(--color-accent)]/10 rounded-full">Final Review</span>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-8">
+                            {reviewRows.filter(r => !['Description'].includes(r.label) && r.value !== 'Not provided yet').map((row) => (
+                              <div key={row.label} className="space-y-1.5">
+                                <div className="flex items-center gap-2">
+                                  <row.icon className="w-3.5 h-3.5 text-[var(--color-primary)] opacity-60" />
+                                  <p className="text-[10px] font-black text-[var(--color-primary)] uppercase tracking-wider">{row.label}</p>
+                                </div>
+                                <p className="text-sm font-bold text-[var(--color-text-heading)] break-words leading-tight">{row.value}</p>
+                              </div>
+                            ))}
+                          </div>
+
+                          {form.description && (
+                            <div className="pt-6 border-t border-[var(--color-border)]/50 space-y-2">
+                              <p className="text-[10px] font-black text-[var(--color-primary)] uppercase tracking-wider">Business Description</p>
+                              <p className="text-sm font-medium text-[var(--color-text-body)] leading-relaxed">{form.description}</p>
                             </div>
-                          ))}
+                          )}
                         </div>
-                      </div>
+                        
+                        <p className="text-[12px] text-[var(--color-text-muted)] mt-6 text-center font-medium px-4">
+                          By submitting, you confirm all details are accurate and the identification document provided is authentic.
+                        </p>
+                      </section>
                     </div>
                   )}
                 </div>
@@ -961,14 +928,13 @@ export function VendorApply() {
                   className="h-14 px-10 rounded-2xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] text-white font-black text-lg shadow-xl shadow-[var(--color-accent)]/20 transition-all hover:scale-[1.02] active:scale-[0.98] gap-3"
                   isLoading={isSubmitting}
                 >
-                  {step === 3 ? 'Submit Enrollment' : 'Continue Step'}
+                  {step === 3 ? 'Submit Application' : 'Continue Step'}
                   {step < 3 && <ArrowRight className="w-5 h-5" />}
                 </Button>
               </div>
             </form>
           </Card>
         </div>
-      </div>
     </div>
   );
 }
