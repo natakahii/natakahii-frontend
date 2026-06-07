@@ -19,6 +19,7 @@ import {
   Watch,
   Zap,
   Video,
+  ArrowRight,
 } from 'lucide-react';
 import { Badge, VendorVerificationBadge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -123,17 +124,31 @@ export function Home() {
           <p className="text-[18px] sm:text-[20px] md:text-[22px] text-white/95 mb-12 max-w-3xl mx-auto leading-[1.6] font-medium">
             East Africa's premier marketplace connecting you with verified local vendors, AI-curated products, and a fully protected shopping experience.
           </p>
+
+          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20">
+            <MapPin className="w-5 h-5 text-[var(--color-accent)]" />
+            <span className="text-white font-bold tracking-wide uppercase text-[13px]">Serving East Africa</span>
+          </div>
         </div>
       </section>
 
       <div className="container mx-auto px-4 flex flex-col gap-12 lg:gap-20">
         <section>
-          <div className="flex items-center justify-between mb-6 bg-gradient-to-r from-[var(--color-accent-bg)] to-transparent p-4 rounded-t-[16px] border-l-4 border-[var(--color-accent)]">
-            <div className="flex items-center gap-3">
-              <Zap className="w-6 h-6 text-[var(--color-accent)]" />
-              <h2 className="font-times-bold text-[22px] text-[var(--color-text-heading)] tracking-[-0.5px]">Fresh Picks</h2>
-              <Badge variant="hot-deal" className="ml-2">Live from the catalog</Badge>
+          <div className="flex items-center justify-between mb-8 bg-gradient-to-r from-[var(--color-accent-bg)] to-transparent p-6 rounded-[24px] border-l-8 border-[var(--color-accent)] shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-[var(--color-accent)] flex items-center justify-center shadow-lg shadow-[var(--color-accent)]/20 animate-pulse">
+                <Zap className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="font-snasm text-[28px] text-[var(--color-text-heading)] tracking-tight">Fresh Picks</h2>
+                <p className="text-[13px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em] opacity-70">Live from the catalog</p>
+              </div>
             </div>
+            <Link to="/explore">
+              <Button variant="ghost" className="text-[var(--color-primary)] font-black uppercase tracking-widest text-[11px] hover:bg-[var(--color-primary-bg)] gap-2 h-12 px-6 rounded-2xl transition-all">
+                View All <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
           </div>
 
           {isLoading ? (
@@ -150,7 +165,7 @@ export function Home() {
               ))}
             </div>
           ) : displayProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
               {displayProducts.map((product) => {
                 const discountPercent = getProductDiscountPercent(product);
                 const rating = product.reviews_avg_rating ? product.reviews_avg_rating.toFixed(1) : null;
@@ -159,62 +174,79 @@ export function Home() {
                 const vendorTier = getVendorVerificationTier(product.vendor);
 
                 return (
-                  <Link to={getProductPath(product)} key={product.id}>
-                    <Card className="group cursor-pointer hover:shadow-[var(--shadow-level-2)] transition-shadow h-full flex flex-col">
-                      <div className="relative aspect-square overflow-hidden bg-[var(--color-bg-card)]">
-                        <ImageWithFallback src={image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        <button className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-accent)] hover:bg-white transition-all">
-                          <Heart className="w-4 h-4" />
-                        </button>
-                        <Badge variant="hot-deal" className="absolute top-3 left-3 bg-[var(--color-accent)]">
-                          {discountPercent ? `-${discountPercent}%` : 'Featured'}
-                        </Badge>
-                      </div>
-                      <div className="p-4 flex flex-col flex-1">
-                        <div className="text-[12px] text-[var(--color-text-muted)] mb-1 flex items-center justify-between">
-                          <span className="min-w-0 flex items-center gap-2">
-                            <span className="truncate font-semibold text-[var(--color-text-body)]">
-                              {product.vendor?.shop_name || 'Verified Vendor'}
-                            </span>
-                            {vendorTier === 'premium' && (
-                              <VendorVerificationBadge tone="compact" label="Verified vendor" className="shrink-0" />
-                            )}
-                          </span>
-                          {rating ? (
-                            <span className="flex items-center gap-1 text-[var(--color-text-heading)] font-medium">
-                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /> {rating}
-                            </span>
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-50px" }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                  >
+                    <Link to={getProductPath(product)}>
+                      <Card className="group cursor-pointer hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 h-full flex flex-col border-none bg-white rounded-[24px] overflow-hidden">
+                        <div className="relative aspect-square overflow-hidden bg-[var(--color-bg-card)]">
+                          <ImageWithFallback 
+                            src={image} 
+                            alt={product.name} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out" 
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
+                          
+                          <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-accent)] hover:bg-white shadow-sm transition-all duration-300 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
+                            <Heart className="w-5 h-5" />
+                          </button>
+                          
+                          {discountPercent ? (
+                            <Badge variant="hot-deal" className="absolute top-4 left-4 bg-[var(--color-accent)] text-white font-black px-3 py-1 rounded-lg shadow-lg">
+                              -{discountPercent}%
+                            </Badge>
                           ) : (
-                            <span className="text-[11px] font-semibold text-[var(--color-primary)]">New</span>
+                            <Badge className="absolute top-4 left-4 bg-white/90 backdrop-blur-md text-[var(--color-primary)] font-bold px-3 py-1 rounded-lg shadow-sm border-none">
+                              Featured
+                            </Badge>
                           )}
                         </div>
-                        {product.vendor && (
-                          <div className="text-[11px] text-[var(--color-text-muted)] mb-2 flex items-center gap-1">
-                            <MapPin className="w-3 h-3 shrink-0" />
-                            <span className="truncate">
-                              {[product.vendor.street, product.vendor.region, product.vendor.city].filter(Boolean).join(', ') || product.vendor.shop_name || 'Verified Vendor'}
-                            </span>
-                          </div>
-                        )}
-                        <h3 className="font-semibold text-[14px] text-[var(--color-text-heading)] line-clamp-2 mb-2 group-hover:text-[var(--color-primary)] transition-colors">
-                          {product.name}
-                        </h3>
-                        <div className="mt-auto flex items-end justify-between">
-                          <div>
-                            {product.discount_price && product.discount_price < product.price && (
-                              <div className="text-[12px] text-[var(--color-text-muted)] line-through decoration-red-500/50">{formatCurrency(product.price)}</div>
-                            )}
-                            <div className="text-[18px] font-bold text-[var(--color-accent)] tracking-tight">
-                              {formatCurrency(price)}
+
+                        <div className="p-5 flex flex-col flex-1">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="truncate text-[11px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">
+                                {product.vendor?.shop_name || 'Verified'}
+                              </span>
+                              {vendorTier === 'premium' && (
+                                <VendorVerificationBadge tone="compact" className="shrink-0" />
+                              )}
                             </div>
+                            {rating && (
+                              <div className="flex items-center gap-1 bg-yellow-50 px-2 py-0.5 rounded-full">
+                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                <span className="text-[11px] font-black text-yellow-700">{rating}</span>
+                              </div>
+                            )}
                           </div>
-                          <Button variant="primary" size="xs" className="w-8 h-8 rounded-full p-0 flex items-center justify-center">
-                            <ShoppingCart className="w-4 h-4" />
-                          </Button>
+
+                          <h3 className="font-bold text-[15px] text-[var(--color-text-heading)] line-clamp-2 mb-3 leading-snug group-hover:text-[var(--color-primary)] transition-colors duration-300">
+                            {product.name}
+                          </h3>
+
+                          <div className="mt-auto pt-4 flex items-end justify-between border-t border-gray-50">
+                            <div className="space-y-0.5">
+                              {product.discount_price && product.discount_price < product.price && (
+                                <p className="text-[11px] text-[var(--color-text-muted)] line-through font-medium opacity-60">
+                                  {formatCurrency(product.price)}
+                                </p>
+                              )}
+                              <p className="text-[19px] font-black text-[var(--color-accent)] tracking-tighter">
+                                {formatCurrency(price)}
+                              </p>
+                            </div>
+                            <Button className="w-10 h-10 rounded-2xl p-0 bg-[var(--color-primary-bg)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-all duration-300 shadow-sm">
+                              <ShoppingCart className="w-5 h-5" />
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </Card>
-                  </Link>
+                      </Card>
+                    </Link>
+                  </motion.div>
                 );
               })}
             </div>
@@ -278,19 +310,23 @@ export function Home() {
         </section>
 
         <section>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Watch className="w-5 h-5 text-[var(--color-primary)]" />
-                <h2 className="font-times-bold text-[22px] lg:text-[28px] text-[var(--color-text-heading)] tracking-[-0.5px]">Discover on Video</h2>
+          <div className="flex items-center justify-between mb-8 bg-gradient-to-r from-[var(--color-primary-bg)] to-transparent p-6 rounded-[24px] border-l-8 border-[var(--color-primary)] shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg shadow-[var(--color-primary)]/20">
+                <Watch className="w-6 h-6 text-white" />
               </div>
-              <p className="text-[14px] text-[var(--color-text-muted)]">Watch real vendor demos and reviews.</p>
+              <div>
+                <h2 className="font-snasm text-[28px] text-[var(--color-text-heading)] tracking-tight">Discover on Video</h2>
+                <p className="text-[13px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em] opacity-70">Watch real vendor demos</p>
+              </div>
             </div>
-            <Link to="/video" className="text-[var(--color-primary)] font-semibold text-[14px] hover:text-[var(--color-accent)] flex items-center gap-1 bg-[var(--color-primary-bg)] px-4 py-2 rounded-full">
-              Open Feed <Play className="w-4 h-4" />
+            <Link to="/video">
+              <Button variant="ghost" className="text-[var(--color-primary)] font-black uppercase tracking-widest text-[11px] hover:bg-[var(--color-primary-bg)] gap-2 h-12 px-6 rounded-2xl transition-all">
+                Open Feed <Play className="w-4 h-4" />
+              </Button>
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {displayVideos.length === 0 ? (
               // Skeleton loading state
               Array.from({ length: 12 }).map((_, index) => (
@@ -305,43 +341,51 @@ export function Home() {
               ))
             ) : (
               displayVideos.map((video) => (
-                <Link key={video.id} to={`/video?v=${video.id}`} className="relative aspect-[9/16] rounded-[16px] overflow-hidden bg-[var(--color-bg-card)] group cursor-pointer shadow-[var(--shadow-level-1)] block">
-                  {/* Video Thumbnail or Placeholder */}
-                  <ImageWithFallback
-                    src={getImageUrl(video.product?.images?.[0]?.image_path)}
-                    alt={video.title || 'Video'}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
+                <motion.div
+                  key={video.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Link to={`/video?v=${video.id}`} className="relative aspect-[9/16] rounded-[24px] overflow-hidden bg-[var(--color-bg-card)] group cursor-pointer shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] block">
+                    {/* Video Thumbnail or Placeholder */}
+                    <ImageWithFallback
+                      src={getImageUrl(video.product?.images?.[0]?.image_path)}
+                      alt={video.title || 'Video'}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80 group-hover:from-black/40 transition-all duration-500" />
 
-                  {/* Play Icon - Always visible with pulse animation */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/40 shadow-lg group-hover:scale-110 transition-transform">
-                      <Play className="w-7 h-7 text-white fill-white ml-1" />
-                    </div>
-                  </div>
-
-                  {/* Video Badge */}
-                  <div className="absolute top-3 left-3">
-                    <div className="flex items-center gap-1 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full">
-                      <Video className="w-3 h-3 text-white" />
-                      <span className="text-[10px] font-medium text-white">VIDEO</span>
-                    </div>
-                  </div>
-
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-6 h-6 rounded-full overflow-hidden border border-white/50">
-                        <ImageWithFallback
-                          src={video.vendor?.logo || ''}
-                          alt={video.vendor?.shop_name || 'Vendor'}
-                        />
+                    {/* Play Icon - Always visible with pulse animation */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border-2 border-white/40 shadow-xl group-hover:scale-110 group-hover:bg-[var(--color-accent)]/20 group-hover:border-[var(--color-accent)]/40 transition-all duration-500">
+                        <Play className="w-8 h-8 text-white fill-white ml-1" />
                       </div>
-                      <span className="text-[12px] font-medium text-white shadow-sm truncate">{video.vendor?.shop_name || 'Vendor'}</span>
                     </div>
-                    <h3 className="text-[13px] font-semibold text-white leading-tight line-clamp-2">{video.title || video.product?.name || 'Product Video'}</h3>
-                  </div>
-                </Link>
+
+                    {/* Video Badge */}
+                    <div className="absolute top-4 left-4">
+                      <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                        <Video className="w-3.5 h-3.5 text-white" />
+                        <span className="text-[10px] font-black text-white tracking-widest">LIVE</span>
+                      </div>
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-white/50 shadow-sm">
+                          <ImageWithFallback
+                            src={video.vendor?.logo || ''}
+                            alt={video.vendor?.shop_name || 'Vendor'}
+                          />
+                        </div>
+                        <span className="text-[12px] font-black text-white shadow-sm truncate tracking-wide">{video.vendor?.shop_name || 'Vendor'}</span>
+                      </div>
+                      <h3 className="text-[14px] font-bold text-white leading-tight line-clamp-2 drop-shadow-md">{video.title || video.product?.name || 'Product Video'}</h3>
+                    </div>
+                  </Link>
+                </motion.div>
               ))
             )}
           </div>
