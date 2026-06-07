@@ -37,6 +37,7 @@ interface OrderItem {
       name: string;
       email: string;
       phone_number?: string;
+      profile_photo?: string | null;
     };
   };
   product: {
@@ -328,7 +329,7 @@ export function VendorOrders() {
                     
                     <div className="flex items-center gap-4">
                       <Avatar className="h-14 w-14 border-2 border-white shadow-xl">
-                        <AvatarImage src={undefined} alt={selectedOrder?.order.customer.name} />
+                        <AvatarImage src={getImageUrl(selectedOrder?.order.customer.profile_photo)} alt={selectedOrder?.order.customer.name} />
                         <AvatarFallback className="bg-[var(--vendor-accent-action)] text-white font-black text-xl">
                           {selectedOrder?.order.customer.name.charAt(0)}
                         </AvatarFallback>
