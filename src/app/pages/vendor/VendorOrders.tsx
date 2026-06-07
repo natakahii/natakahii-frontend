@@ -104,15 +104,19 @@ export function VendorOrders() {
     window.dispatchEvent(new CustomEvent('refresh-vendor-counts'));
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const getStatusBadge = (status?: string) => {
+    if (!status) {
+      return <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200">Unknown</Badge>;
+    }
+    
+    switch (status.toLowerCase()) {
       case 'pending': return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
       case 'confirmed': return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Confirmed</Badge>;
       case 'processing': return <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">Processing</Badge>;
       case 'shipped': return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">Shipped</Badge>;
       case 'delivered': return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Delivered</Badge>;
       case 'cancelled': return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Cancelled</Badge>;
-      default: return <Badge variant="outline">{status}</Badge>;
+      default: return <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200 capitalize">{status}</Badge>;
     }
   };
 
@@ -227,10 +231,10 @@ export function VendorOrders() {
                         <span className="text-sm font-bold text-[var(--color-text-heading)] truncate max-w-[180px]">
                           {item.product?.name || 'Unknown Product'}
                         </span>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[10px] text-[var(--color-text-muted)] font-black uppercase tracking-widest">Qty: {item.quantity}</span>
-                          <span className="w-1 h-1 rounded-full bg-[var(--color-border)]" />
-                          <span className="text-[10px] text-[var(--vendor-accent-action)] font-black uppercase tracking-widest">
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] text-[var(--color-text-muted)] font-black uppercase tracking-widest whitespace-nowrap">Qty: {item.quantity}</span>
+                          <span className="w-1 h-1 rounded-full bg-[var(--color-border)] shrink-0" />
+                          <span className="text-[10px] text-[var(--vendor-accent-action)] font-black uppercase tracking-widest whitespace-nowrap">
                             {safeFormatCurrency(item.unit_price)}
                           </span>
                         </div>
@@ -404,13 +408,13 @@ export function VendorOrders() {
                     </h4>
                     
                     <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/60 font-medium">Unit Price</span>
+                      <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
+                        <span className="text-white/60 font-medium text-sm">Unit Price</span>
                         <span className="text-white font-bold">{safeFormatCurrency(selectedOrder?.unit_price || 0)}</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/60 font-medium">Total Quantity</span>
-                        <span className="text-white font-bold">× {selectedOrder?.quantity}</span>
+                      <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
+                        <span className="text-white/60 font-medium text-sm">Total Quantity</span>
+                        <span className="text-white font-bold">× {selectedOrder?.quantity || 0}</span>
                       </div>
                       
                       <div className="h-px bg-white/10 my-4" />
