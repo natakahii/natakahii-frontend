@@ -30,6 +30,8 @@ import { VendorSettings } from "./pages/vendor/VendorSettings";
 import { VendorSubscriptionManagement } from "./pages/vendor/VendorSubscriptionManagement";
 import { VendorWalletPage } from "./pages/vendor/VendorWallet";
 import { VendorPayouts } from "./pages/vendor/VendorPayouts";
+import { VendorWishlist } from "./pages/vendor/VendorWishlist";
+import { VendorOrders } from "./pages/vendor/VendorOrders";
 
 // Error/404 Page
 import { NotFound } from "./pages/NotFound";
@@ -107,11 +109,13 @@ export const router = createBrowserRouter([
           { path: "products", Component: VendorProducts },
           { path: "products/add", Component: VendorProductForm },
           { path: "products/:productId/edit", Component: VendorProductForm },
+          { path: "orders", Component: VendorOrders },
           { path: "analytics", Component: VendorAnalytics },
           { path: "dropoffs", Component: VendorDropoffs },
           { path: "subscription", Component: VendorSubscriptionManagement },
           { path: "settings", Component: VendorSettings },
           { path: "wallet", Component: VendorWalletPage },
+          { path: "wishlist", Component: VendorWishlist },
           { path: "payouts", Component: VendorPayouts },
           { path: "*", Component: VendorDashboardHome },
         ],

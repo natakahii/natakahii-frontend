@@ -250,8 +250,16 @@ export async function createVendorProduct(payload: VendorProductPayload): Promis
   return {
     message: response?.message || 'Product created successfully.',
     product: normalizeProduct(response?.product),
-    social_media: extractResourceArray<any>(response?.social_media).map(normalizeMedia),
+    social_media: [],
   };
+}
+
+export async function fetchVendorWishlist(): Promise<any> {
+  return apiClient.get<any>('/vendor/wishlist');
+}
+
+export async function fetchProductWishlistUsers(productId: string | number): Promise<any> {
+  return apiClient.get<any>(`/vendor/products/${productId}/wishlist`);
 }
 
 export async function updateVendorProduct(productId: string | number, payload: VendorProductPayload): Promise<VendorProductDetailResponse & { message: string }> {

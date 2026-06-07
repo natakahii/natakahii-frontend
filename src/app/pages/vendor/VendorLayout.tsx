@@ -15,24 +15,31 @@ import {
   Package,
   Settings,
   ShieldCheck,
+  ShoppingBag,
   Store,
   Truck,
   Wallet,
   X,
+  Heart,
+  Bell,
 } from 'lucide-react';
 import { useAuth } from '../../providers/AuthProvider';
 import { getVendorStorefrontPath } from '../../utils/storefront';
 import { cn } from '../../components/ui/utils';
+import { NotificationPanel } from '../../components/NotificationPanel';
+import { apiClient } from '../../services/apiClient';
 
 const SIDEBAR_KEY = 'vendor-sidebar-collapsed';
 
 const navItems = [
   { name: 'Dashboard', path: '/vendor/dashboard', icon: LayoutDashboard },
   { name: 'Products', path: '/vendor/dashboard/products', icon: Package },
+  { name: 'My Orders', path: '/vendor/dashboard/orders', icon: ShoppingBag },
   { name: 'Analytics', path: '/vendor/dashboard/analytics', icon: BarChart3 },
   { name: 'Dropoffs', path: '/vendor/dashboard/dropoffs', icon: Truck },
   { name: 'Plan', path: '/vendor/dashboard/subscription', icon: ShieldCheck },
   { name: 'Wallet', path: '/vendor/dashboard/wallet', icon: Wallet },
+  { name: 'Wishlist', path: '/vendor/dashboard/wishlist', icon: Heart },
   { name: 'Payouts', path: '/vendor/dashboard/payouts', icon: CreditCard },
   { name: 'Settings', path: '/vendor/dashboard/settings', icon: Settings },
 ];
@@ -40,7 +47,7 @@ const navItems = [
 const mobilePrimaryNav = [
   { name: 'Home', path: '/vendor/dashboard', icon: LayoutDashboard },
   { name: 'Products', path: '/vendor/dashboard/products', icon: Package },
-  { name: 'Wallet', path: '/vendor/dashboard/wallet', icon: Wallet },
+  { name: 'Orders', path: '/vendor/dashboard/orders', icon: ShoppingBag },
 ];
 
 const mobileDrawerGroups = [
@@ -65,10 +72,12 @@ function NavItemLink({
   item,
   collapsed,
   onNavigate,
+  badge,
 }: {
   item: (typeof navItems)[0];
   collapsed: boolean;
   onNavigate?: () => void;
+  badge?: number;
 }) {
   return (
     <NavLink
@@ -86,8 +95,24 @@ function NavItemLink({
         )
       }
     >
-      <item.icon className="w-5 h-5 shrink-0 group-hover:scale-110 transition-transform" />
-      {!collapsed && <span className="flex-1 truncate">{item.name}</span>}
+      <div className="relative">
+        <item.icon className="w-5 h-5 shrink-0 group-hover:scale-110 transition-transform" />
+        {collapsed && badge !== undefined && badge > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--vendor-accent-action)] text-[9px] font-bold text-white border border-[var(--vendor-bg)]">
+            {badge > 9 ? '9+' : badge}
+          </span>
+        )}
+      </div>
+      {!collapsed && (
+        <>
+          <span className="flex-1 truncate">{item.name}</span>
+          {badge !== undefined && badge > 0 && (
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--vendor-accent-action)] px-1.5 text-[10px] font-bold text-white">
+              {badge > 99 ? '99+' : badge}
+            </span>
+          )}
+        </>
+      )}
     </NavLink>
   );
 }
@@ -97,6 +122,9 @@ export function VendorLayout() {
   const location = useLocation();
   const { logout, user } = useAuth();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+  const [orderCount, setOrderCount] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem(SIDEBAR_KEY) === 'true';
@@ -142,6 +170,25 @@ export function VendorLayout() {
   };
 
   const sidebarWidth = collapsed ? 'md:ml-[72px]' : 'md:ml-60';
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const [orderRes, notifRes] = await Promise.all([
+          apiClient.get<any>('/vendor/orders/count'),
+          apiClient.get<any>('/notifications')
+        ]);
+        setOrderCount(orderRes.count || 0);
+        setUnreadNotifications(notifRes.unread_count || 0);
+      } catch (error) {
+        console.error('Failed to fetch counts', error);
+      }
+    };
+
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 60000); // Refresh every minute
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="vendor-command-center min-h-screen flex bg-[var(--vendor-bg)] text-[var(--color-text-body)]">
@@ -197,7 +244,12 @@ export function VendorLayout() {
 
         <nav className="flex-1 overflow-y-auto py-4 space-y-1 px-2 custom-scrollbar">
           {navItems.map((item) => (
-            <NavItemLink key={item.name} item={item} collapsed={collapsed} />
+            <NavItemLink 
+              key={item.name} 
+              item={item} 
+              collapsed={collapsed} 
+              badge={item.name === 'My Orders' ? orderCount : undefined}
+            />
           ))}
         </nav>
 
@@ -297,6 +349,7 @@ export function VendorLayout() {
                       item={item}
                       collapsed={false}
                       onNavigate={() => setIsMobileNavOpen(false)}
+                      badge={item.name === 'Orders' ? orderCount : undefined}
                     />
                   ))}
 
@@ -382,16 +435,22 @@ export function VendorLayout() {
           <button
             type="button"
             className={cn(
-              'flex h-full w-full flex-col items-center justify-center space-y-0.5',
-              isMobileNavOpen ? 'text-[var(--vendor-accent-action)]' : 'text-[var(--color-text-muted)]',
+              'flex h-full w-full flex-col items-center justify-center space-y-0.5 relative',
+              isNotificationPanelOpen ? 'text-[var(--vendor-accent-action)]' : 'text-[var(--color-text-muted)]',
             )}
-            onClick={() => setIsMobileNavOpen(true)}
+            onClick={() => setIsNotificationPanelOpen(true)}
           >
-            <Menu className="w-6 h-6" />
-            <span className="text-[10px] font-semibold">More</span>
+            <Bell className="w-6 h-6" />
+            <span className="text-[10px] font-semibold">Notifications</span>
+            {unreadNotifications > 0 && (
+              <span className="absolute top-2 right-[30%] flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white border border-white">
+                {unreadNotifications > 9 ? '9+' : unreadNotifications}
+              </span>
+            )}
           </button>
         </div>
       </main>
+      <NotificationPanel isOpen={isNotificationPanelOpen} onClose={() => setIsNotificationPanelOpen(false)} />
     </div>
   );
 }

@@ -15,6 +15,8 @@ interface NotificationItem {
   time: string;
   unread: boolean;
   group: string;
+  productImage?: string;
+  productName?: string;
 }
 
 interface NotificationPanelProps {
@@ -83,6 +85,8 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
           time: formatNotificationTime(notification.created_at),
           unread: !notification.read_at,
           group: groupNotification(notification.created_at),
+          productImage: notification.data?.product_image,
+          productName: notification.data?.product_name,
         })));
       })
       .catch(() => {
@@ -196,12 +200,23 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                               }`}
                             >
                               <div className="shrink-0 mt-1">
-                                {getIcon(notif.type)}
+                                {notif.productImage ? (
+                                  <div className="w-12 h-12 rounded-lg overflow-hidden border border-[#E2E6F0]">
+                                    <img src={notif.productImage} alt={notif.productName || "Product"} className="w-full h-full object-cover" />
+                                  </div>
+                                ) : (
+                                  getIcon(notif.type)
+                                )}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <h4 className={`text-[14px] leading-tight ${notif.unread ? "font-extrabold text-[#1A2035]" : "font-bold text-[#4A5468]"}`}>
                                   {notif.title}
                                 </h4>
+                                {notif.productName && (
+                                  <p className="text-[12px] font-bold text-[#142490] mt-0.5">
+                                    {notif.productName}
+                                  </p>
+                                )}
                                 <p className="text-[13px] text-[#4A5468] mt-1 leading-snug">
                                   {notif.desc}
                                 </p>

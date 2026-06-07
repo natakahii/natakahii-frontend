@@ -27,7 +27,16 @@ import {
   deleteVendorProduct,
   fetchVendorProducts,
   updateVendorProductStatus,
+  fetchProductWishlistUsers,
 } from '../../services/vendorProductService';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/ui/dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
+import { User, Mail } from 'lucide-react';
 import { safeFormatCurrency } from '../../utils/currency';
 import {
   VendorCard,
@@ -87,6 +96,30 @@ export function VendorProducts() {
   const [filterStatus, setFilterStatus] = useState<'all' | VendorProductStatus>('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Wishlist Modal State
+  const [isWishlistModalOpen, setIsWishlistModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
+  const [wishlistUsers, setWishlistUsers] = useState<any[]>([]);
+  const [isWishlistLoading, setIsWishlistLoading] = useState(false);
+
+  const handleShowWishlist = async (product: CatalogProduct) => {
+    setSelectedProduct(product);
+    setIsWishlistModalOpen(true);
+    setIsWishlistLoading(true);
+    try {
+      const response = await fetchProductWishlistUsers(product.id);
+      setWishlistUsers(response.users || []);
+    } catch (error) {
+      toast({
+        type: 'error',
+        title: 'Error',
+        message: 'Could not fetch wishlist users.',
+      });
+    } finally {
+      setIsWishlistLoading(false);
+    }
+  };
 
   const categoryOptions = useMemo(() => flattenCategories(categories), [categories]);
   const storefrontPath = getVendorStorefrontPath(user?.vendor);
@@ -372,10 +405,15 @@ export function VendorProducts() {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1 text-[var(--color-text-muted)]">
-                            <Heart className="w-3.5 h-3.5 text-[var(--color-accent)]" />
-                            <span className="text-[13px]">{product.wishlists_count || 0}</span>
-                          </div>
+                          <button 
+                            onClick={() => handleShowWishlist(product)}
+                            className="flex items-center gap-1 text-[var(--color-text-muted)] hover:text-[var(--vendor-accent-action)] transition-colors group"
+                          >
+                            <Heart className="w-3.5 h-3.5 text-[var(--color-accent)] group-hover:scale-110 transition-transform" />
+                            <span className="text-[13px] font-medium underline underline-offset-4 decoration-dotted decoration-[var(--color-border)] group-hover:decoration-[var(--vendor-accent-action)]">
+                              {product.wishlists_count || 0}
+                            </span>
+                          </button>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={`capitalize ${getStatusBadgeClasses(product.status)}`}>
@@ -513,7 +551,72 @@ export function VendorProducts() {
               )}
             </div>
           )}
-      </VendorCard>
+        </VendorCard>
+
+      <Dialog open={isWishlistModalOpen} onOpenChange={setIsWishlistModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Heart className="w-5 h-5 text-[var(--color-accent)]" />
+              Wishlist Interest
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-center gap-3 mb-6 p-3 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
+              <img 
+                src={selectedProduct?.images[0]?.image_path || 'https://via.placeholder.com/48x48?text=Product'} 
+                alt={selectedProduct?.name} 
+                className="w-12 h-12 rounded-lg object-cover"
+              />
+              <div>
+                <p className="text-sm font-bold text-[var(--color-text-heading)] line-clamp-1">{selectedProduct?.name}</p>
+                <p className="text-[11px] text-[var(--color-text-muted)]">{selectedProduct?.wishlists_count} people wishlisted this</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+              {isWishlistLoading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-[var(--color-bg-card)] animate-pulse" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 w-24 bg-[var(--color-bg-card)] animate-pulse rounded" />
+                        <div className="h-2 w-32 bg-[var(--color-bg-card)] animate-pulse rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : wishlistUsers.length === 0 ? (
+                <div className="text-center py-8">
+                  <User className="w-12 h-12 text-[var(--color-text-muted)] mx-auto mb-2 opacity-20" />
+                  <p className="text-sm text-[var(--color-text-muted)]">No customer details available yet.</p>
+                </div>
+              ) : (
+                wishlistUsers.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-[var(--color-bg-page)] transition-colors">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10 border border-[var(--color-border)]">
+                        <AvatarImage src={user.profile_photo || undefined} />
+                        <AvatarFallback>
+                          <User className="w-4 h-4 text-[var(--color-text-muted)]" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-[var(--color-text-heading)]">{user.name}</span>
+                        <div className="flex items-center gap-1.5 text-[11px] text-[var(--color-text-muted)]">
+                          <Mail className="w-3 h-3" />
+                          {user.email}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
