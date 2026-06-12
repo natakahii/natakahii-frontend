@@ -43,11 +43,7 @@ const mobileProviders: PaymentProvider[] = [
      { id: 'card', name: 'Credit / Debit Card', color: '#1A1F71', textColor: '#fff' },
    ];
 
-   // Calculate cargo shipping cost from backend quote
-   const cargoShippingCost = useMemo(() => {
-     if (shippingMethod !== 'natakahii_cargo' || !quote) return 0;
-     return quote.estimate || 0;
-   }, [shippingMethod, quote]);
+
 
 const shippingProviders = [
   { id: 'fargo', name: 'Fargo Courier', level: 'Express', days: '1-2 Days', price: 450 },
@@ -244,13 +240,21 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
       .catch(() => setAvailableStations([]));
   }, [selectedWard, selectedDistrict, selectedRegion]);
 
+   const shippingCost = useMemo(() => {
+     if (shippingMethod === 'natakahii_cargo') {
+       return quote?.estimate || 0;
+     }
+     const provider = shippingProviders.find(p => p.id === shippingMethod);
+     return provider ? provider.price : 0;
+   }, [shippingMethod, quote]);
+
    const subtotal = items.reduce((sum, item) => {
      const price = item.product?.effective_price ?? item.product?.price ?? 0;
      return sum + price * item.quantity;
    }, 0);
    const platformFee = Math.round(subtotal * 0.02);
    const isCargoShipping = shippingMethod === 'natakahii_cargo';
-   const total = isCargoShipping ? subtotal + platformFee + (quote?.estimate || 0) : subtotal + platformFee + (shippingProviders.find(p => p.id === shippingMethod)?.price || 0);
+   const total = subtotal + platformFee + shippingCost;
 
   const isMobileMoney = ['mpesa', 'airtel_money', 'halopesa', 'mixx_by_yas'].includes(paymentMethod);
   const isCardPayment = paymentMethod === 'card';
