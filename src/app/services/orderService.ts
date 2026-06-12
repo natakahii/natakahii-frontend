@@ -5,6 +5,13 @@ interface CartItem {
   quantity: number;
 }
 
+interface CargoShippingDetails {
+  pickup_hub_code: string;
+  delivery_hub_code: string;
+  service_level: 'standard' | 'express' | 'same_day';
+  weight_kg: number;
+}
+
 interface CheckoutBreakdown {
   items_by_vendor: Record<number, any>;
   subtotal: number;
@@ -26,6 +33,25 @@ export const orderService = {
     payment_method: string;
   }) {
     return apiClient.post<any>('/orders', JSON.stringify(data));
+  },
+
+  async createCargoOrder(data: {
+    items: CartItem[];
+    pickup_hub_code: string;
+    delivery_hub_code: string;
+    service_level: 'standard' | 'express' | 'same_day';
+    weight_kg: number;
+    customer_name: string;
+    customer_phone: string;
+    customer_email?: string;
+    delivery_address: {
+      street: string;
+      city: string;
+      district: string;
+      region: string;
+    };
+  }) {
+    return apiClient.post<any>('/cargo/orders/from-natakahii', JSON.stringify(data));
   },
 
   async retryPayment(orderId: number, data: {

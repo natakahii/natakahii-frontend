@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+   import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import { useCart } from '../providers/CartProvider';
-import { orderService } from '../services/orderService';
+import { orderService, type CargoShippingDetails } from '../services/orderService';
 import { pollPaymentStatus, paymentService } from '../services/paymentService';
 import { locationService, type PickupStation } from '../services/locationService';
 import { formatCurrency } from '../utils/currency';
+import { calculateCargoQuote, getServiceDays } from '../utils/cargoPricing';
 
 // Components
 import { CheckoutProgress } from './checkout/components/CheckoutProgress';
@@ -15,6 +16,7 @@ import { PaymentStep } from './checkout/components/PaymentStep';
 import { SuccessStep } from './checkout/components/SuccessStep';
 import { AddressDialog } from './checkout/components/AddressDialog';
 import { PaymentMethodDialog } from './checkout/components/PaymentMethodDialog';
+import { CargoStep } from './checkout/components/CargoStep';
 
 // Payment provider logos
 import mpesaLogo from '../../assets/mpesa.png';
@@ -37,13 +39,20 @@ const mobileProviders: PaymentProvider[] = [
   { id: 'mixx_by_yas', name: 'Mixx by Yas', logo: mixxbyyasLogo, color: '#E91E63' },
 ];
 
-const cardProviders: PaymentProvider[] = [
-  { id: 'card', name: 'Credit / Debit Card', color: '#1A1F71', textColor: '#fff' },
-];
+   const cardProviders: PaymentProvider[] = [
+     { id: 'card', name: 'Credit / Debit Card', color: '#1A1F71', textColor: '#fff' },
+   ];
+
+   // Calculate cargo shipping cost from backend quote
+   const cargoShippingCost = useMemo(() => {
+     if (shippingMethod !== 'natakahii_cargo' || !quote) return 0;
+     return quote.estimate || 0;
+   }, [shippingMethod, quote]);
 
 const shippingProviders = [
   { id: 'fargo', name: 'Fargo Courier', level: 'Express', days: '1-2 Days', price: 450 },
-  { id: 'sendy', name: 'Sendy', level: 'Same Day', days: 'Today', price: 800 }
+  { id: 'sendy', name: 'Sendy', level: 'Same Day', days: 'Today', price: 800 },
+  { id: 'natakahii_cargo', name: 'NatakaHii Cargo', level: 'Inter-city', days: '2-4 Days', price: 5000 }
 ];
 
 function formatPaymentFailureError(statusResult: { status: string; error_message?: string }): string {
@@ -56,20 +65,35 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
   const base = baseMessages[statusResult.status] || `Payment ${statusResult.status}`;
   const detail = statusResult.error_message ? `: ${statusResult.error_message}` : '';
 
-  return `${base}${detail}. You can retry below.`;
-}
+   return `${base}${detail}. You can retry below.`;
+ }
 
-export function Checkout() {
-  const [step, setStep] = useState(1);
-  const [shippingMethod] = useState(shippingProviders[0].id);
-  const [paymentMethod, setPaymentMethod] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [orderResult, setOrderResult] = useState<any>(null);
-  const pollingAborted = useRef(false);
-  const navigate = useNavigate();
-  const { items } = useCart();
-  const [searchParams] = useSearchParams();
+ export function Checkout() {
+   const [step, setStep] = useState(1);
+   const [shippingMethod, setShippingMethod] = useState('natakahii_cargo');
+   const [paymentMethod, setPaymentMethod] = useState('');
+   const [loading, setLoading] = useState(false);
+   const [error, setError] = useState('');
+   const [orderResult, setOrderResult] = useState<any>(null);
+   const [quote, setQuote] = useState<any>(null);
+   const pollingAborted = useRef(false);
+   const navigate = useNavigate();
+   const { items } = useCart();
+   const [searchParams] = useSearchParams();
+
+  // Load hubs from cargo backend
+  useEffect(() => {
+    const fetchHubs = async () => {
+      try {
+        const res = await fetch('http://localhost:8001/api/hubs');
+        const data = await res.json();
+        setHubs(data);
+      } catch (err) {
+        console.error('Failed to fetch hubs', err);
+      }
+    };
+    fetchHubs();
+  }, []);
 
   /* ── Step 1: Address ── */
   const [addressDrawerOpen, setAddressDrawerOpen] = useState(false);
@@ -89,6 +113,14 @@ export function Checkout() {
   const [wards, setWards] = useState<string[]>([]);
   const [availableStations, setAvailableStations] = useState<PickupStation[]>([]);
 
+  /* ── Step 1.5: Cargo Selection ── */
+  const [cargoStepOpen, setCargoStepOpen] = useState(false);
+  const [pickupHub, setPickupHub] = useState<string>('');
+  const [deliveryHub, setDeliveryHub] = useState<string>('');
+  const [cargoServiceLevel, setCargoServiceLevel] = useState<'standard' | 'express' | 'same_day'>('standard');
+  const [cargoWeight, setCargoWeight] = useState<number>(1);
+  const [hubs, setHubs] = useState<{id: number; name: string; code: string}[]>([]);
+
   /* ── Step 2: Payment ── */
   const [paymentDrawerOpen, setPaymentDrawerOpen] = useState(false);
   const [paymentDrawerCategory, setPaymentDrawerCategory] = useState<'mobile' | 'card' | null>(null);
@@ -104,6 +136,29 @@ export function Checkout() {
       pollingAborted.current = true;
     };
   }, []);
+
+  /* ── handle cargo step transitions ── */
+  const handleCargoNext = async () => {
+    if (!pickupHub || !deliveryHub) {
+      setError('Please select both pickup and delivery hubs');
+      return;
+    }
+    
+    await handleCargoPlaceOrder();
+    if (!error) {
+      setCargoStepOpen(false);
+      setStep(3); // Go directly to success step
+    }
+  };
+
+  const handleCargoBack = () => {
+    if (step === 1) {
+      navigate(-1);
+    } else {
+      setCargoStepOpen(true);
+      setStep(1);
+    }
+  };
 
   /* ── detect returning user after card payment or hosted checkout redirect ── */
   useEffect(() => {
@@ -189,13 +244,13 @@ export function Checkout() {
       .catch(() => setAvailableStations([]));
   }, [selectedWard, selectedDistrict, selectedRegion]);
 
-  const subtotal = items.reduce((sum, item) => {
-    const price = item.product?.effective_price ?? item.product?.price ?? 0;
-    return sum + price * item.quantity;
-  }, 0);
-  const platformFee = Math.round(subtotal * 0.02);
-  const shippingCost = shippingProviders.find(p => p.id === shippingMethod)?.price || 0;
-  const total = subtotal + platformFee + shippingCost;
+   const subtotal = items.reduce((sum, item) => {
+     const price = item.product?.effective_price ?? item.product?.price ?? 0;
+     return sum + price * item.quantity;
+   }, 0);
+   const platformFee = Math.round(subtotal * 0.02);
+   const isCargoShipping = shippingMethod === 'natakahii_cargo';
+   const total = isCargoShipping ? subtotal + platformFee + (quote?.estimate || 0) : subtotal + platformFee + (shippingProviders.find(p => p.id === shippingMethod)?.price || 0);
 
   const isMobileMoney = ['mpesa', 'airtel_money', 'halopesa', 'mixx_by_yas'].includes(paymentMethod);
   const isCardPayment = paymentMethod === 'card';
@@ -267,24 +322,36 @@ export function Checkout() {
 
   const handleNext = () => {
     if (step === 1) {
-      if (!savedAddress || !fullName || !mobileNumber || !streetAddress || !selectedRegion || !selectedDistrict || !selectedWard) {
-        setError('Please add and save a complete shipping address');
-        return;
+      if (shippingMethod === 'natakahii_cargo') {
+        handleCargoNext();
+      } else {
+        if (!savedAddress || !fullName || !mobileNumber || !streetAddress || !selectedRegion || !selectedDistrict || !selectedWard) {
+          setError('Please add and save a complete shipping address');
+          return;
+        }
+        setError('');
+        setStep(2);
       }
-      setError('');
-      setStep(2);
     }
   };
 
   const handleBack = () => {
     if (step === 1) {
-      navigate(-1);
+      if (cargoStepOpen) {
+        navigate(-1);
+      }
       return;
     }
-    if (step === 2 && paymentFlowStep !== 'select') {
-      setPaymentFlowStep('select');
-      setPaymentPhoneError('');
-      return;
+    if (step === 2) {
+      if (shippingMethod === 'natakahii_cargo') {
+        handleCargoBack();
+        return;
+      }
+      if (paymentFlowStep !== 'select') {
+        setPaymentFlowStep('select');
+        setPaymentPhoneError('');
+        return;
+      }
     }
     setStep(s => Math.max(s - 1, 1));
     setError('');
@@ -341,6 +408,63 @@ export function Checkout() {
       .catch(() => {
         setError('Could not find a nearby pickup station. Please select one manually.');
       });
+  };
+
+  const handleCargoPlaceOrder = async () => {
+    if (items.length === 0) { setError('Your cart is empty'); return; }
+    setError('');
+    setLoading(true);
+
+   try {
+     // Calculate quote from cargo backend
+     const pickupHubId = hubs.find(h => h.code === pickupHub)?.id || 1;
+     const deliveryHubId = hubs.find(h => h.code === deliveryHub)?.id || 1;
+     const shipmentQuote = await fetch(`http://localhost:8001/api/shipments/quote`, {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({
+         origin_hub_id: pickupHubId,
+         destination_hub_id: deliveryHubId,
+         weight: cargoWeight,
+         service_level: cargoServiceLevel
+       })
+     });
+     
+     const quoteData = await shipmentQuote.json();
+     setQuote(quoteData);
+     
+     const cartItems = items.map(item => ({ product_id: item.product_id, quantity: item.quantity }));
+     const customerName = fullName || 'Customer';
+     const customerPhone = mobileNumber || '0700000000';
+
+     const result = await orderService.createCargoOrder({
+       items: cartItems,
+       pickup_hub_code: pickupHub,
+       delivery_hub_code: deliveryHub,
+       service_level: cargoServiceLevel,
+       weight_kg: cargoWeight,
+       customer_name: customerName,
+       customer_phone: customerPhone,
+       customer_email: null,
+       delivery_address: {
+         street: streetAddress || '',
+         city: selectedWard || '',
+         district: selectedDistrict || '',
+         region: selectedRegion || ''
+       },
+       special_instructions: null
+     });
+
+     setLoading(false);
+     setError('');
+     
+     // Show order has been placed for cargo
+     alert(`Order placed successfully!\nTracking: ${result.tracking_number}\nEstimated delivery: ${result.estimated_delivery}`);
+     navigate('/tracking');
+   } catch (err: any) {
+     setError(err.message || 'Cargo order failed. Please try again.');
+     setLoading(false);
+   }
   };
 
   const handlePlaceOrder = async () => {
@@ -552,7 +676,49 @@ export function Checkout() {
 
         <div className="w-full">
           <AnimatePresence mode="wait" initial={false}>
-            {step === 1 && (
+            {step === 1 && cargoStepOpen && (
+              <CargoStep 
+                key="cargo-step"
+                shippingMethod={shippingMethod}
+                shippingProviders={shippingProviders}
+                formatCurrency={formatCurrency}
+                pickupHub={pickupHub}
+                 setPickupHub={setPickupHub}
+                 deliveryHub={deliveryHub}
+                 setDeliveryHub={setDeliveryHub}
+                 cargoServiceLevel={cargoServiceLevel}
+                 setCargoServiceLevel={setCargoServiceLevel}
+                 cargoWeight={cargoWeight}
+                 setCargoWeight={setCargoWeight}
+                 hubs={hubs}
+                 onQuoteUpdate={(q) => setQuote(q)}
+                 error={error}
+                 handleNext={() => {
+                  if (!pickupHub || !deliveryHub) {
+                    setError('Please select both pickup and delivery hubs');
+                    return;
+                  }
+                  setError('');
+                  if (quote || quote === null) {
+                    handleCargoPlaceOrder();
+                    if (!error) {
+                      setCargoStepOpen(false);
+                      setStep(3);
+                    }
+                  }
+                }}
+                handleBack={() => {
+                  if (step === 1) {
+                    navigate(-1);
+                  } else {
+                    setCargoStepOpen(true);
+                    setStep(1);
+                  }
+                }}
+              />
+            )}
+
+            {step === 1 && !cargoStepOpen && (
               <DeliveryStep 
                 key="step1"
                 items={items}
