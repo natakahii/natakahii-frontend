@@ -15,5 +15,5 @@ services:
         VITE_FIREBASE_MEASUREMENT_ID: ${VITE_FIREBASE_MEASUREMENT_ID}
     image: natakahii-frontend
     ports:
-      - "3000:80"
+      - "3001:80"
     restart: unless-stopped
