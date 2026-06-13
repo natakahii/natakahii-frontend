@@ -13,7 +13,7 @@ interface Toast {
   duration?: number;
 }
 
-const TOAST_DURATION = 4000; // 4 seconds auto-dismiss
+const TOAST_DURATION = 3000; // 3 seconds auto-dismiss
 
 let toastId = 0;
 const getToastId = () => `toast-${toastId++}`;
@@ -65,7 +65,7 @@ export function Toaster() {
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="fixed top-4 right-4 z-[200] flex flex-col gap-3 pointer-events-none w-[340px] max-w-[calc(100vw-2rem)]">
+    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] flex flex-col items-center gap-2 pointer-events-none w-auto max-w-[90vw]">
       {activeToasts.map((t) => (
         <ToastItem key={t.id} toast={t} onDismiss={() => dismiss(t.id)} />
       ))}
@@ -75,70 +75,24 @@ export function Toaster() {
 }
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
-  const [progress, setProgress] = useState(100);
-  const duration = toast.duration || TOAST_DURATION;
-
-  useEffect(() => {
-    const startTime = Date.now();
-    const endTime = startTime + duration;
-
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const remaining = endTime - now;
-      if (remaining <= 0) {
-        setProgress(0);
-        clearInterval(interval);
-      } else {
-        setProgress((remaining / duration) * 100);
-      }
-    }, 16); // 60fps
-
-    return () => clearInterval(interval);
-  }, [duration]);
-
   const config = {
-    success: { icon: CheckCircle2, border: "border-[#16A34A]", bg: "bg-[#16A34A]", color: "text-[#16A34A]" },
-    error: { icon: XCircle, border: "border-[#DC2626]", bg: "bg-[#DC2626]", color: "text-[#DC2626]" },
-    warning: { icon: AlertTriangle, border: "border-[#D97706]", bg: "bg-[#D97706]", color: "text-[#D97706]" },
-    info: { icon: Info, border: "border-[#0284C7]", bg: "bg-[#0284C7]", color: "text-[#0284C7]" },
+    success: { icon: CheckCircle2, color: "text-[#16A34A]" },
+    error: { icon: XCircle, color: "text-[#DC2626]" },
+    warning: { icon: AlertTriangle, color: "text-[#D97706]" },
+    info: { icon: Info, color: "text-[#0284C7]" },
   }[toast.type];
 
   const Icon = config.icon;
 
   return (
     <div 
-      className={cn(
-        "relative bg-white rounded-xl shadow-[var(--shadow-level-3)] pointer-events-auto border border-[#E2E6F0] overflow-hidden flex flex-col animate-in slide-in-from-top-2 fade-in duration-300",
-        `border-l-4 ${config.border}`
-      )}
+      onClick={onDismiss}
+      className="bg-gray-900/90 backdrop-blur-md rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] pointer-events-auto border border-white/10 flex items-center px-4 py-2.5 cursor-pointer animate-in slide-in-from-bottom-5 fade-in duration-300 hover:scale-105 transition-all"
     >
-      <div className="flex items-start gap-3 p-4">
-        <Icon className={cn("w-5 h-5 shrink-0 mt-0.5", config.color)} />
-        <div className="flex-1 min-w-0">
-          <h4 className="text-[14px] font-bold text-[#1A2035] leading-tight">
-            {toast.title}
-          </h4>
-          {toast.message && (
-            <p className="text-[13px] text-[#4A5468] mt-1 leading-relaxed">
-              {toast.message}
-            </p>
-          )}
-        </div>
-        <button
-          onClick={onDismiss}
-          className="text-[#9BA5BC] hover:bg-[#F0F2F8] p-1 rounded-full transition-colors shrink-0"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Progress Bar at bottom */}
-      <div className="h-1 bg-[#F8F9FC] w-full shrink-0">
-        <div
-          className={cn("h-full transition-all ease-linear", config.bg)}
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+      <Icon className={cn("w-4 h-4 shrink-0 mr-2.5", config.color)} />
+      <span className="text-[13px] font-medium text-white line-clamp-1">
+        {toast.title} {toast.message ? <span className="text-gray-300 ml-1 font-normal">- {toast.message}</span> : ''}
+      </span>
     </div>
   );
 }
