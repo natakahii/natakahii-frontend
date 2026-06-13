@@ -38,7 +38,7 @@ function normalizeNotification(notification: any): AppNotification {
 }
 
 export async function markNotificationsAsRead(): Promise<void> {
-  await apiClient.post('/notifications/read-all', {});
+  await apiClient.patch('/notifications/read-all', {});
 }
 
 export async function fetchNotifications(perPage = 20): Promise<NotificationListResponse> {
