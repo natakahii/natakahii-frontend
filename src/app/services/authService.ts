@@ -118,10 +118,6 @@ export function hasUserRole(user: AuthUser | null | undefined, role: string): bo
 }
 
 export function resolveUserDefaultRoute(user: AuthUser | null | undefined): string {
-  if (hasUserRole(user, 'vendor')) {
-    return '/vendor/dashboard';
-  }
-
   return '/customer';
 }
 

@@ -134,19 +134,16 @@ export function Home() {
 
       <div className="container mx-auto px-4 flex flex-col gap-12 lg:gap-20">
         <section>
-          <div className="flex items-center justify-between mb-8 bg-gradient-to-r from-[var(--color-accent-bg)] to-transparent p-6 rounded-[24px] border-l-8 border-[var(--color-accent)] shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[var(--color-accent)] flex items-center justify-center shadow-lg shadow-[var(--color-accent)]/20 animate-pulse">
-                <Zap className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between mb-6 bg-white border border-[var(--color-border)] rounded-full p-2 pr-3 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-accent)] to-[#f97316] flex items-center justify-center text-white shadow-inner">
+                <Zap className="w-5 h-5 fill-white/20" />
               </div>
-              <div>
-                <h2 className="font-snasm text-[28px] text-[var(--color-text-heading)] tracking-tight">Fresh Picks</h2>
-                <p className="text-[13px] font-black text-[var(--color-primary)] uppercase tracking-[0.2em] opacity-70">Live from the catalog</p>
-              </div>
+              <h2 className="text-[15px] sm:text-[17px] font-bold text-[var(--color-text-heading)] tracking-tight">Fresh Picks</h2>
             </div>
             <Link to="/explore">
-              <Button variant="ghost" className="text-[var(--color-primary)] font-black uppercase tracking-widest text-[11px] hover:bg-[var(--color-primary-bg)] gap-2 h-12 px-6 rounded-2xl transition-all">
-                View All <ArrowRight className="w-4 h-4" />
+              <Button variant="ghost" className="h-8 px-4 text-[11px] sm:text-[12px] font-bold uppercase tracking-wider text-[var(--color-primary)] hover:bg-[var(--color-primary-bg)] rounded-full gap-1.5 transition-colors">
+                View All <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Link>
           </div>
@@ -310,19 +307,16 @@ export function Home() {
         </section>
 
         <section>
-          <div className="flex items-center justify-between mb-8 bg-gradient-to-r from-[var(--color-primary-bg)] to-transparent p-6 rounded-[24px] border-l-8 border-[var(--color-primary)] shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg shadow-[var(--color-primary)]/20">
-                <Watch className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between mb-6 bg-white border border-[var(--color-border)] rounded-full p-2 pr-3 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[#2563eb] flex items-center justify-center text-white shadow-inner">
+                <Watch className="w-5 h-5 fill-white/20" />
               </div>
-              <div>
-                <h2 className="font-snasm text-[28px] text-[var(--color-text-heading)] tracking-tight">Discover on Video</h2>
-                <p className="text-[13px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em] opacity-70">Watch real vendor demos</p>
-              </div>
+              <h2 className="text-[15px] sm:text-[17px] font-bold text-[var(--color-text-heading)] tracking-tight">Discover Videos</h2>
             </div>
             <Link to="/video">
-              <Button variant="ghost" className="text-[var(--color-primary)] font-black uppercase tracking-widest text-[11px] hover:bg-[var(--color-primary-bg)] gap-2 h-12 px-6 rounded-2xl transition-all">
-                Open Feed <Play className="w-4 h-4" />
+              <Button variant="ghost" className="h-8 px-4 text-[11px] sm:text-[12px] font-bold uppercase tracking-wider text-[var(--color-primary)] hover:bg-[var(--color-primary-bg)] rounded-full gap-1.5 transition-colors">
+                Watch <Play className="w-3.5 h-3.5 fill-current" />
               </Button>
             </Link>
           </div>
