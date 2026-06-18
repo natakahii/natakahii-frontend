@@ -31,14 +31,14 @@ export default defineConfig({
     },
   },
 
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://api.natakahii.com',
-        changeOrigin: true,
-      },
-    },
-  },
+   server: {
+     proxy: {
+       '/api': {
+         target: process.env.VITE_API_BASE_URL || 'http://localhost:8000',
+         changeOrigin: true,
+       },
+     },
+   },
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],

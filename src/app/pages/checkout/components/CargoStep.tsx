@@ -131,14 +131,11 @@ export function CargoStep({
             </label>
             <div className="relative">
               <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
-              <select
-                className="w-full bg-[var(--color-bg-page)] border border-[var(--color-border)] rounded-[12px] py-3 pl-10 pr-4 text-[14px] font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
-                value={pickupHub}
-                onChange={(e) => {
-                  setPickupHub(e.target.value);
-                  setError('');
-                }}
-              >
+               <select
+                 className="w-full bg-[var(--color-bg-page)] border border-[var(--color-border)] rounded-[12px] py-3 pl-10 pr-4 text-[14px] font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
+                 value={pickupHub}
+                 onChange={(e) => setPickupHub(e.target.value)}
+               >
                 <option value="">Select Pickup Hub</option>
                 {hubs.map(h => (
                   <option key={h.id} value={h.code}>
@@ -155,14 +152,11 @@ export function CargoStep({
             </label>
             <div className="relative">
               <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
-              <select
-                className="w-full bg-[var(--color-bg-page)] border border-[var(--color-border)] rounded-[12px] py-3 pl-10 pr-4 text-[14px] font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
-                value={deliveryHub}
-                onChange={(e) => {
-                  setDeliveryHub(e.target.value);
-                  setError('');
-                }}
-              >
+               <select
+                 className="w-full bg-[var(--color-bg-page)] border border-[var(--color-border)] rounded-[12px] py-3 pl-10 pr-4 text-[14px] font-bold text-[var(--color-text-heading)] focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
+                 value={deliveryHub}
+                 onChange={(e) => setDeliveryHub(e.target.value)}
+               >
                 <option value="">Select Delivery Hub</option>
                 {hubs.map(h => (
                   <option key={h.id} value={h.code}>
@@ -183,12 +177,9 @@ export function CargoStep({
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {(['standard', 'express', 'same_day'] as const).map((level) => (
-            <button
-              key={level}
-              onClick={() => {
-                setCargoServiceLevel(level);
-                setError('');
-              }}
+               <button
+               key={level}
+               onClick={() => setCargoServiceLevel(level)}
               className={`p-4 rounded-[16px] border-2 transition-all flex flex-col items-center gap-2
                 ${cargoServiceLevel === level 
                   ? 'border-[var(--color-primary)] bg-[var(--color-primary-bg)]' 
@@ -291,13 +282,10 @@ export function CargoStep({
       )}
 
       {/* Mobile action button - embedded */}
-      <div className="sm:hidden mt-6">
-        <Button
-          onClick={() => {
-            setError('');
-            handleNext();
-          }}
-          variant="primary"
+       <div className="sm:hidden mt-6">
+         <Button
+           onClick={() => handleNext()}
+           variant="primary"
           size="xl"
           className="w-full shadow-[var(--shadow-level-2)] bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] h-14 text-[16px] font-bold"
         >
@@ -337,16 +325,6 @@ export function CargoStep({
            CONFIRM CARGO <ChevronRight className="w-5 h-5 ml-2" />
          </Button>
        </div>
-     </div>
-   );
- }
-
- // Re-export handleNext and handleBack as props
-interface CargoStepPropsWithHandlers extends CargoStepProps {
-  handleNext: () => void;
-  handleBack: () => void;
-}
-
-export function CargoStepWithHandlers(props: CargoStepPropsWithHandlers) {
-  return <CargoStep {...props} />;
-}
+      </div>
+    );
+  }

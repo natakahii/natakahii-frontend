@@ -1,4 +1,4 @@
-   import { useMemo } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
@@ -38,12 +38,6 @@ const mobileProviders: PaymentProvider[] = [
   { id: 'halopesa', name: 'HaloPesa', logo: halopesaLogo, color: '#FF6B00' },
   { id: 'mixx_by_yas', name: 'Mixx by Yas', logo: mixxbyyasLogo, color: '#E91E63' },
 ];
-
-   const cardProviders: PaymentProvider[] = [
-     { id: 'card', name: 'Credit / Debit Card', color: '#1A1F71', textColor: '#fff' },
-   ];
-
-
 
 const shippingProviders = [
   { id: 'fargo', name: 'Fargo Courier', level: 'Express', days: '1-2 Days', price: 450 },
