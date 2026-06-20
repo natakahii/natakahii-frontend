@@ -13,18 +13,20 @@ import { Button } from '../../../components/ui/button';
 import type { OrderSummaryProps } from './OrderSummary';
 import { OrderSummary } from './OrderSummary';
 
- interface CargoStepProps extends OrderSummaryProps {
-   pickupHub: string;
-   setPickupHub: (id: string) => void;
-   deliveryHub: string;
-   setDeliveryHub: (id: string) => void;
-   cargoServiceLevel: 'standard' | 'express' | 'same_day';
-   setCargoServiceLevel: (level: 'standard' | 'express' | 'same_day') => void;
-   cargoWeight: number;
-   setCargoWeight: (weight: number) => void;
-   hubs: Array<{id: number; name: string; code: string}>;
-   onQuoteUpdate?: (quote: any) => void;
- }
+  interface CargoStepProps extends OrderSummaryProps {
+    pickupHub: string;
+    setPickupHub: (id: string) => void;
+    deliveryHub: string;
+    setDeliveryHub: (id: string) => void;
+    cargoServiceLevel: 'standard' | 'express' | 'same_day';
+    setCargoServiceLevel: (level: 'standard' | 'express' | 'same_day') => void;
+    cargoWeight: number;
+    setCargoWeight: (weight: number) => void;
+    hubs: Array<{id: number; name: string; code: string}>;
+    onQuoteUpdate?: (quote: any) => void;
+    handleNext: () => void;
+    handleBack: () => void;
+  }
 
 export function CargoStep({
   items,
@@ -37,15 +39,17 @@ export function CargoStep({
   formatCurrency,
   pickupHub,
   setPickupHub,
-   deliveryHub,
-   setDeliveryHub,
-   cargoServiceLevel,
-   setCargoServiceLevel,
-   cargoWeight,
-   setCargoWeight,
-   hubs,
-   onQuoteUpdate,
- }: CargoStepProps) {
+  deliveryHub,
+  setDeliveryHub,
+  cargoServiceLevel,
+  setCargoServiceLevel,
+  cargoWeight,
+  setCargoWeight,
+  hubs,
+  onQuoteUpdate,
+  handleNext,
+  handleBack,
+}: CargoStepProps) {
    const [quote, setQuote] = useState<any>(null);
    const [loadingQuote, setLoadingQuote] = useState(false);
 
@@ -283,9 +287,9 @@ export function CargoStep({
 
       {/* Mobile action button - embedded */}
        <div className="sm:hidden mt-6">
-         <Button
-           onClick={() => handleNext()}
-           variant="primary"
+          <Button
+          onClick={() => handleNext()}
+          variant="primary"
           size="xl"
           className="w-full shadow-[var(--shadow-level-2)] bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] h-14 text-[16px] font-bold"
         >

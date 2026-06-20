@@ -1,6 +1,6 @@
 import { 
   MapPin, Home, Plus, User, Phone, MapPinned, Navigation, 
-  ChevronLeft, ChevronRight 
+  ChevronLeft, ChevronRight, Truck
 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { OrderSummary } from './OrderSummary';
@@ -13,6 +13,7 @@ interface DeliveryStepProps {
   shippingCost: number;
   total: number;
   shippingMethod: string;
+  setShippingMethod: (v: string) => void;
   shippingProviders: any[];
   formatCurrency: (v: number) => string;
   savedAddress: boolean;
@@ -38,6 +39,7 @@ export function DeliveryStep({
   shippingCost,
   total,
   shippingMethod,
+  setShippingMethod,
   shippingProviders,
   formatCurrency,
   savedAddress,
@@ -77,6 +79,48 @@ export function DeliveryStep({
         shippingProviders={shippingProviders}
         formatCurrency={formatCurrency}
       />
+
+      {/* Shipping Method Selection */}
+      <div className="pt-6 border-t border-[var(--color-border)]">
+        <h3 className="font-bold text-[16px] text-[var(--color-text-heading)] mb-4 flex items-center gap-2">
+          <Truck className="w-5 h-5 text-[var(--color-primary)]" />
+          Shipping Method
+        </h3>
+        <div className="grid grid-cols-1 gap-3">
+          {shippingProviders.map((provider) => (
+            <button
+              key={provider.id}
+              onClick={() => {
+                setShippingMethod(provider.id);
+                setError('');
+              }}
+              className={`flex items-center justify-between p-4 rounded-[16px] border-2 transition-all text-left
+                ${shippingMethod === provider.id 
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary-bg)]' 
+                  : 'border-[var(--color-border)] hover:border-[var(--color-primary)]'
+                }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center
+                  ${shippingMethod === provider.id 
+                    ? 'bg-[var(--color-primary)] text-white' 
+                    : 'bg-[var(--color-bg-page)] text-[var(--color-text-muted)]'
+                  }`}
+                >
+                  <Truck size={18} />
+                </div>
+                <div>
+                  <p className="font-bold text-[14px] text-[var(--color-text-heading)]">{provider.name}</p>
+                  <p className="text-[12px] text-[var(--color-text-muted)]">{provider.level} · {provider.days}</p>
+                </div>
+              </div>
+              <span className="font-bold text-[14px] text-[var(--color-accent)]">
+                {provider.price > 0 ? formatCurrency(provider.price) : 'Free'}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Shipping Address Section */}
       <div className="pt-6 border-t border-[var(--color-border)]">

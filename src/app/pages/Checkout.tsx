@@ -135,23 +135,15 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
   const handleCargoNext = async () => {
     if (!pickupHub || !deliveryHub) {
       setError('Please select both pickup and delivery hubs');
+      setCargoStepOpen(true);
       return;
     }
-    
+
     await handleCargoPlaceOrder();
-    if (!error) {
-      setCargoStepOpen(false);
-      setStep(3); // Go directly to success step
-    }
   };
 
   const handleCargoBack = () => {
-    if (step === 1) {
-      navigate(-1);
-    } else {
-      setCargoStepOpen(true);
-      setStep(1);
-    }
+    setCargoStepOpen(false);
   };
 
   /* ── detect returning user after card payment or hosted checkout redirect ── */
@@ -325,6 +317,10 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
   const handleNext = () => {
     if (step === 1) {
       if (shippingMethod === 'natakahii_cargo') {
+        if (!pickupHub || !deliveryHub) {
+          setCargoStepOpen(true);
+          return;
+        }
         handleCargoNext();
       } else {
         if (!savedAddress || !fullName || !mobileNumber || !streetAddress || !selectedRegion || !selectedDistrict || !selectedWard) {
@@ -729,6 +725,7 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
                 shippingCost={shippingCost}
                 total={total}
                 shippingMethod={shippingMethod}
+                setShippingMethod={setShippingMethod}
                 shippingProviders={shippingProviders}
                 formatCurrency={formatCurrency}
                 savedAddress={savedAddress}

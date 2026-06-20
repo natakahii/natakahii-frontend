@@ -1,45 +1,24 @@
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
-import {
-  AuthResponse,
-  AuthUser,
-  OtpDispatchResponse,
-  OtpType,
-  RegisterInitiationResponse,
-  RegisterPayload,
-  ResetPasswordPayload,
-  VerifyRegistrationPayload,
-  clearLocalSession,
-  fetchCurrentUser,
-  forgotPassword as requestPasswordReset,
-  getCurrentToken,
-  getUserRoleNames,
-  login as loginRequest,
-  loginWithGoogle as loginWithGoogleRequest,
-  logout as logoutRequest,
-  register as registerRequest,
-  resendOtp as resendOtpRequest,
-  resetPassword as resetPasswordRequest,
-  resolveUserDefaultRoute,
-  verifyRegistration as verifyRegistrationRequest,
-} from '../services/authService';
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import * as authService from '../services/authService';
+import type { AuthUser } from '../services/authService';
 
 interface AuthContextValue {
   user: AuthUser | null;
-  isAuthenticated: boolean;
   isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (identifier: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  register: (payload: authService.RegisterPayload) => Promise<authService.RegisterInitiationResponse>;
+  verifyRegistration: (payload: authService.VerifyRegistrationPayload) => Promise<void>;
+  forgotPassword: (email: string) => Promise<authService.OtpDispatchResponse>;
+  resetPassword: (payload: authService.ResetPasswordPayload) => Promise<{ message: string }>;
+  resendOtp: (email: string, type: authService.OtpType) => Promise<authService.OtpDispatchResponse>;
+  logout: () => Promise<void>;
+  refreshCurrentUser: () => Promise<void>;
+  updateUser: (user: Partial<AuthUser>) => void;
+  hasRole: (role: string) => boolean;
   roleNames: string[];
   defaultRoute: string;
-  login: (email: string, password: string) => Promise<AuthResponse>;
-  loginWithGoogle: () => Promise<AuthResponse>;
-  register: (payload: RegisterPayload) => Promise<RegisterInitiationResponse>;
-  verifyRegistration: (payload: VerifyRegistrationPayload) => Promise<AuthResponse>;
-  resendOtp: (email: string, type: OtpType) => Promise<OtpDispatchResponse>;
-  forgotPassword: (email: string) => Promise<OtpDispatchResponse>;
-  resetPassword: (payload: ResetPasswordPayload) => Promise<{ message: string }>;
-  logout: () => Promise<void>;
-  refreshCurrentUser: () => Promise<AuthUser | null>;
-  updateUser: (user: AuthUser | null) => void;
-  hasRole: (role: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -48,103 +27,104 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function hydrateUser() {
-      if (!getCurrentToken()) {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-        return;
-      }
-
-      try {
-        const response = await fetchCurrentUser();
-
-        if (isMounted) {
-          setUser(response.user);
-        }
-      } catch {
-        await clearLocalSession();
-
-        if (isMounted) {
-          setUser(null);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+  const loadUser = useCallback(async () => {
+    const token = authService.getCurrentToken();
+    if (!token) {
+      setIsLoading(false);
+      return;
     }
-
-    void hydrateUser();
-
-    return () => {
-      isMounted = false;
-    };
+    try {
+      const { user } = await authService.fetchCurrentUser();
+      setUser(user);
+    } catch {
+      await authService.clearLocalSession();
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const roleNames = useMemo(() => getUserRoleNames(user), [user]);
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
 
-  const value = useMemo<AuthContextValue>(() => ({
-    user,
-    isAuthenticated: Boolean(user),
-    isLoading,
-    roleNames,
-    defaultRoute: user ? resolveUserDefaultRoute(user) : '/',
-    login: async (email: string, password: string) => {
-      const response = await loginRequest(email, password);
-      setUser(response.user);
-      return response;
-    },
-    loginWithGoogle: async () => {
-      const response = await loginWithGoogleRequest();
-      setUser(response.user);
-      return response;
-    },
-    register: (payload: RegisterPayload) => registerRequest(payload),
-    verifyRegistration: async (payload: VerifyRegistrationPayload) => {
-      const response = await verifyRegistrationRequest(payload);
-      setUser(response.user);
-      return response;
-    },
-    resendOtp: (email: string, type: OtpType) => resendOtpRequest(email, type),
-    forgotPassword: (email: string) => requestPasswordReset(email),
-    resetPassword: (payload: ResetPasswordPayload) => resetPasswordRequest(payload),
-    logout: async () => {
-      await logoutRequest();
-      setUser(null);
-    },
-    refreshCurrentUser: async () => {
-      if (!getCurrentToken()) {
-        setUser(null);
-        return null;
-      }
+  const roleNames = user ? authService.getUserRoleNames(user) : [];
+  const hasRole = useCallback((role: string) => roleNames.includes(role), [roleNames]);
+  const defaultRoute = authService.resolveUserDefaultRoute(user);
 
-      try {
-        const response = await fetchCurrentUser();
-        setUser(response.user);
-        return response.user;
-      } catch {
-        await clearLocalSession();
-        setUser(null);
-        return null;
-      }
-    },
-    updateUser: setUser,
-    hasRole: (role: string) => roleNames.includes(role),
-  }), [isLoading, roleNames, user]);
+  const login = async (identifier: string, password: string) => {
+    const response = await authService.login(identifier, password);
+    setUser(response.user);
+  };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const loginWithGoogle = async () => {
+    const response = await authService.loginWithGoogle();
+    setUser(response.user);
+  };
+
+  const register = async (payload: authService.RegisterPayload) => {
+    return authService.register(payload);
+  };
+
+  const verifyRegistration = async (payload: authService.VerifyRegistrationPayload) => {
+    const response = await authService.verifyRegistration(payload);
+    setUser(response.user);
+  };
+
+  const forgotPassword = async (email: string) => {
+    return authService.forgotPassword(email);
+  };
+
+  const resetPassword = async (payload: authService.ResetPasswordPayload) => {
+    return authService.resetPassword(payload);
+  };
+
+  const resendOtp = async (email: string, type: authService.OtpType) => {
+    return authService.resendOtp(email, type);
+  };
+
+  const logout = async () => {
+    await authService.logout();
+    setUser(null);
+  };
+
+  const refreshCurrentUser = async () => {
+    await loadUser();
+  };
+
+  const updateUser = (updates: Partial<AuthUser>) => {
+    setUser((prev) => (prev ? { ...prev, ...updates } : null));
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isAuthenticated: !!user,
+        login,
+        loginWithGoogle,
+        register,
+        verifyRegistration,
+        forgotPassword,
+        resetPassword,
+        resendOtp,
+        logout,
+        refreshCurrentUser,
+        updateUser,
+        hasRole,
+        roleNames,
+        defaultRoute,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
-
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider.');
+    throw new Error('useAuth must be used within AuthProvider');
   }
-
   return context;
 }
