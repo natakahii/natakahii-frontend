@@ -80,7 +80,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = useCallback(async (productId: number, quantity: number, variantId?: number) => {
     try {
-      const data = await apiClient.post<CartItem>('/cart', JSON.stringify({
+      const data = await apiClient.post<CartItem>('/cart/items', JSON.stringify({
         product_id: productId,
         quantity,
         variant_id: variantId,
@@ -102,7 +102,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const removeItem = useCallback(async (itemId: number) => {
     setItems((prev) => prev.filter((i) => i.id !== itemId));
     try {
-      await apiClient.delete<void>(`/cart/${itemId}`);
+      await apiClient.delete<void>(`/cart/items/${itemId}`);
     } catch {
       // ignore backend errors; localStorage is source of truth
     }
@@ -111,7 +111,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const updateQuantity = useCallback(async (itemId: number, quantity: number) => {
     setItems((prev) => prev.map((i) => (i.id === itemId ? { ...i, quantity: Math.max(1, quantity) } : i)));
     try {
-      await apiClient.patch<void>(`/cart/${itemId}`, JSON.stringify({ quantity }));
+      await apiClient.patch<void>(`/cart/items/${itemId}`, JSON.stringify({ quantity }));
     } catch {
       // ignore
     }
