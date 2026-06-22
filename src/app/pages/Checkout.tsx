@@ -4,6 +4,7 @@ import { AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import { useCart } from '../providers/CartProvider';
 import { orderService, type CargoShippingDetails } from '../services/orderService';
+import { cargoService } from '../services/cargoService';
 import { pollPaymentStatus, paymentService } from '../services/paymentService';
 import { locationService, type PickupStation } from '../services/locationService';
 import { formatCurrency } from '../utils/currency';
@@ -59,28 +60,27 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
   const base = baseMessages[statusResult.status] || `Payment ${statusResult.status}`;
   const detail = statusResult.error_message ? `: ${statusResult.error_message}` : '';
 
-   return `${base}${detail}. You can retry below.`;
- }
+  return `${base}${detail}. You can retry below.`;
+}
 
- export function Checkout() {
-   const [step, setStep] = useState(1);
-   const [shippingMethod, setShippingMethod] = useState('natakahii_cargo');
-   const [paymentMethod, setPaymentMethod] = useState('');
-   const [loading, setLoading] = useState(false);
-   const [error, setError] = useState('');
-   const [orderResult, setOrderResult] = useState<any>(null);
-   const [quote, setQuote] = useState<any>(null);
-   const pollingAborted = useRef(false);
-   const navigate = useNavigate();
-   const { items } = useCart();
-   const [searchParams] = useSearchParams();
+export function Checkout() {
+  const [step, setStep] = useState(1);
+  const [shippingMethod, setShippingMethod] = useState('natakahii_cargo');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [orderResult, setOrderResult] = useState<any>(null);
+  const [quote, setQuote] = useState<any>(null);
+  const pollingAborted = useRef(false);
+  const navigate = useNavigate();
+  const { items } = useCart();
+  const [searchParams] = useSearchParams();
 
   // Load hubs from cargo backend
   useEffect(() => {
     const fetchHubs = async () => {
       try {
-        const res = await fetch('http://localhost:8001/api/hubs');
-        const data = await res.json();
+        const data = await cargoService.getHubs();
         setHubs(data);
       } catch (err) {
         console.error('Failed to fetch hubs', err);
@@ -113,7 +113,7 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
   const [deliveryHub, setDeliveryHub] = useState<string>('');
   const [cargoServiceLevel, setCargoServiceLevel] = useState<'standard' | 'express' | 'same_day'>('standard');
   const [cargoWeight, setCargoWeight] = useState<number>(1);
-  const [hubs, setHubs] = useState<{id: number; name: string; code: string}[]>([]);
+  const [hubs, setHubs] = useState<{ id: number; name: string; code: string }[]>([]);
 
   /* ── Step 2: Payment ── */
   const [paymentDrawerOpen, setPaymentDrawerOpen] = useState(false);
@@ -161,90 +161,26 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
       return;
     }
 
-    if (pendingOrderId && step === 2) {
-      localStorage.removeItem('natakahii_pending_order_id');
-      setLoading(true);
-      setPaymentFlowStep('processing');
-      const checkStatus = async () => {
-        try {
-          if (sessionRef) {
-            localStorage.removeItem('natakahii_session_reference');
-            try { await paymentService.syncSession(sessionRef); } catch (syncErr) { /* ignore */ }
-          }
-          pollingAborted.current = false;
-          const statusResult = await pollPaymentStatus(parseInt(pendingOrderId), 10, 2000);
-          if (pollingAborted.current) return;
-          if (statusResult.status === 'successful') {
-            triggerConfetti();
-            setStep(3);
-          } else {
-            setError(formatPaymentFailureError(statusResult));
-            setPaymentFlowStep('confirm');
-          }
-        } catch (err: any) {
-          setError(err.message || 'Could not verify payment status. Please check your order history.');
-          setPaymentFlowStep('confirm');
-        } finally {
-          setLoading(false);
-        }
-      };
-      checkStatus();
+    if (paymentStatus === 'success' && pendingOrderId) {
+      handleVerifyReturningPayment(Number(pendingOrderId), sessionRef);
     }
-  }, [step, searchParams, navigate]);
+  }, [searchParams]);
 
-  /* ── load regions when drawer opens ── */
-  useEffect(() => {
-    if (!addressDrawerOpen) return;
-    locationService.fetchRegions().then(setRegions).catch(() => setRegions([]));
-  }, [addressDrawerOpen]);
-
-  /* ── cascade: region → districts ── */
-  useEffect(() => {
-    if (!selectedRegion) { setDistricts([]); setWards([]); return; }
-    locationService.fetchDistricts(selectedRegion).then(setDistricts).catch(() => setDistricts([]));
-    setSelectedDistrict('');
-    setSelectedWard('');
-    setPickupStation(null);
-  }, [selectedRegion]);
-
-  /* ── cascade: district → wards ── */
-  useEffect(() => {
-    if (!selectedRegion || !selectedDistrict) { setWards([]); return; }
-    locationService.fetchWards(selectedRegion, selectedDistrict).then(setWards).catch(() => setWards([]));
-    setSelectedWard('');
-    setPickupStation(null);
-  }, [selectedDistrict, selectedRegion]);
-
-  /* ── ward → pickup stations ── */
-  useEffect(() => {
-    if (!selectedRegion || !selectedDistrict || !selectedWard) {
-      setAvailableStations([]);
-      setPickupStation(null);
-      return;
+  const shippingCost = useMemo(() => {
+    if (shippingMethod === 'natakahii_cargo') {
+      return quote?.estimate || 0;
     }
-    locationService.fetchPickupStations(selectedRegion, selectedDistrict, selectedWard)
-      .then((stations) => {
-        setAvailableStations(stations);
-        if (stations.length > 0) setPickupStation(stations[0]);
-      })
-      .catch(() => setAvailableStations([]));
-  }, [selectedWard, selectedDistrict, selectedRegion]);
+    const provider = shippingProviders.find(p => p.id === shippingMethod);
+    return provider ? provider.price : 0;
+  }, [shippingMethod, quote]);
 
-   const shippingCost = useMemo(() => {
-     if (shippingMethod === 'natakahii_cargo') {
-       return quote?.estimate || 0;
-     }
-     const provider = shippingProviders.find(p => p.id === shippingMethod);
-     return provider ? provider.price : 0;
-   }, [shippingMethod, quote]);
-
-   const subtotal = items.reduce((sum, item) => {
-     const price = item.product?.effective_price ?? item.product?.price ?? 0;
-     return sum + price * item.quantity;
-   }, 0);
-   const platformFee = Math.round(subtotal * 0.02);
-   const isCargoShipping = shippingMethod === 'natakahii_cargo';
-   const total = subtotal + platformFee + shippingCost;
+  const subtotal = items.reduce((sum, item) => {
+    const price = item.product?.effective_price ?? item.product?.price ?? 0;
+    return sum + price * item.quantity;
+  }, 0);
+  const platformFee = Math.round(subtotal * 0.02);
+  const isCargoShipping = shippingMethod === 'natakahii_cargo';
+  const total = subtotal + platformFee + shippingCost;
 
   const isMobileMoney = ['mpesa', 'airtel_money', 'halopesa', 'mixx_by_yas'].includes(paymentMethod);
   const isCardPayment = paymentMethod === 'card';
@@ -252,27 +188,20 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
   function validateTanzaniaPhone(phone: string): { valid: boolean; message: string } {
     const digits = phone.replace(/\D/g, '');
     const normalized = digits.startsWith('255') ? digits.slice(3) : digits;
-    
+
     if (!normalized) return { valid: false, message: 'Phone number is required' };
-    
+
     if (normalized.length !== 9 && normalized.length !== 10) {
       return { valid: false, message: 'Phone number must be 10 digits (e.g. 07XX XXX XXX)' };
     }
 
     const prefix = normalized.startsWith('0') ? normalized.slice(1, 4) : normalized.slice(0, 3);
-    
-    // Comprehensive list of all valid Tanzanian mobile prefixes (3 digits)
+
     const allValidPrefixes = [
-      // Vodacom
       '741','742','743','744','745','746','747','748','749','751','752','753','754','755','756','757','758','759','761','762','763','764','765','766','767','768','769','771','772','773','774','775','776','777','778','779','781','782','783','784','785','786','787','788','789','795', '713', '797', '792', '799',
-      // Airtel
       '683','684','685','686','687','688','689', '690','691','692','693','694','695','696','697','698','699', '783','784','785','786','787','788','789',
-                               
-      // Halotel
       '620', '621', '622', '623', '624', '625', '626', '627', '628', '629', '640', '641', '642', '643', '644', '645', '646', '647', '648', '649',
-      // Tigo / Zantel / Mixx
       '650', '651', '652', '653', '654', '655', '656', '657', '658', '659', '710', '711', '712', '713', '714', '715', '716', '717', '718', '719', '670', '671', '672', '673', '674', '675', '676', '677', '678', '679', '770', '771', '772', '773', '774', '775', '776', '777', '778', '779',
-      // TTCL & Others
       '730', '731', '732', '733', '734', '735', '736', '737', '738', '739', '610', '611', '612', '613', '614', '615', '616', '617', '618', '619'
     ];
 
@@ -293,11 +222,7 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
     const prefix = normalized.startsWith('0') ? normalized.slice(1, 4) : normalized.slice(0, 3);
     const providerPrefixes: Record<string, string[]> = {
       mpesa: ['741','742','743','744','745','746','747','748','749','751','752','753','754','755','756','757','758','759','761','762','763','764','765','766','767','768','769','771','772','773','774','775','776','777','778','779','781','782','783','784','785','786','787','788','789','795', '713', '797', '792', '799'],
-      airtel_prefixes: [
-                        '683','684','685','686','687','688','689',
-                        '690','691','692','693','694','695','696','697','698','699',
-                        '783','784','785','786','787','788','789'
-                     ],
+      airtel_prefixes: ['683','684','685','686','687','688','689','690','691','692','693','694','695','696','697','698','699','783','784','785','786','787','788','789'],
       halopesa: ['620', '621', '622', '623', '624', '625', '626', '627', '628', '629', '640', '641', '642', '643', '644', '645', '646', '647', '648', '649'],
       mixx_by_yas: ['650', '651', '652', '653', '654', '655', '656', '657', '658', '659', '710', '711', '712', '713', '714', '715', '716', '717', '718', '719'],
     };
@@ -336,6 +261,8 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
   const handleBack = () => {
     if (step === 1) {
       if (cargoStepOpen) {
+        setCargoStepOpen(false);
+      } else {
         navigate(-1);
       }
       return;
@@ -362,7 +289,7 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
     if (isMobileMoney) {
       if (mpesaPhone.trim()) {
         const v = validateProviderPhone(paymentMethod, mpesaPhone);
-        if (v.valid) { setPaymentFlowStep('confirm'); } 
+        if (v.valid) { setPaymentFlowStep('confirm'); }
         else { setPaymentPhoneError(v.message); setPaymentFlowStep('request'); }
       } else {
         setPaymentFlowStep('request');
@@ -375,7 +302,7 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
   const handleSaveAddress = () => {
     if (!fullName.trim()) { setError('Full name is required'); return; }
     if (fullName.trim().length < 3) { setError('Please enter a valid full name'); return; }
-    
+
     const phoneValid = validateTanzaniaPhone(mobileNumber);
     if (!phoneValid.valid) { setError(phoneValid.message); return; }
 
@@ -386,10 +313,10 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
 
     if (!streetAddress.trim()) { setError('Street address is required'); return; }
     if (streetAddress.trim().length < 5) { setError('Please provide a more detailed street address'); return; }
-    
+
     if (!selectedRegion || !selectedDistrict || !selectedWard) { setError('Please select Region, District and Ward'); return; }
     if (!pickupStation) { setError('Please select a pickup station'); return; }
-    
+
     setError('');
     setSavedAddress(true);
     setAddressDrawerOpen(false);
@@ -413,56 +340,46 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
     setError('');
     setLoading(true);
 
-   try {
-     // Calculate quote from cargo backend
-     const pickupHubId = hubs.find(h => h.code === pickupHub)?.id || 1;
-     const deliveryHubId = hubs.find(h => h.code === deliveryHub)?.id || 1;
-     const shipmentQuote = await fetch(`http://localhost:8001/api/shipments/quote`, {
-       method: 'POST',
-       headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify({
-         origin_hub_id: pickupHubId,
-         destination_hub_id: deliveryHubId,
-         weight: cargoWeight,
-         service_level: cargoServiceLevel
-       })
-     });
-     
-     const quoteData = await shipmentQuote.json();
-     setQuote(quoteData);
-     
-     const cartItems = items.map(item => ({ product_id: item.product_id, quantity: item.quantity }));
-     const customerName = fullName || 'Customer';
-     const customerPhone = mobileNumber || '0700000000';
+    try {
+      const quoteData = await cargoService.getQuote({
+        origin_hub_id: hubs.find(h => h.code === pickupHub)?.id || 1,
+        destination_hub_id: hubs.find(h => h.code === deliveryHub)?.id || 1,
+        weight: cargoWeight,
+        service_level: cargoServiceLevel,
+      });
+      setQuote(quoteData);
 
-     const result = await orderService.createCargoOrder({
-       items: cartItems,
-       pickup_hub_code: pickupHub,
-       delivery_hub_code: deliveryHub,
-       service_level: cargoServiceLevel,
-       weight_kg: cargoWeight,
-       customer_name: customerName,
-       customer_phone: customerPhone,
-       customer_email: null,
-       delivery_address: {
-         street: streetAddress || '',
-         city: selectedWard || '',
-         district: selectedDistrict || '',
-         region: selectedRegion || ''
-       },
-       special_instructions: null
-     });
+      const cartItems = items.map(item => ({ product_id: item.product_id, quantity: item.quantity }));
+      const customerName = fullName || 'Customer';
+      const customerPhone = mobileNumber || '0700000000';
 
-     setLoading(false);
-     setError('');
-     
-     // Show order has been placed for cargo
-     alert(`Order placed successfully!\nTracking: ${result.tracking_number}\nEstimated delivery: ${result.estimated_delivery}`);
-     navigate('/tracking');
-   } catch (err: any) {
-     setError(err.message || 'Cargo order failed. Please try again.');
-     setLoading(false);
-   }
+      const result = await cargoService.createOrder({
+        items: cartItems,
+        pickup_hub_code: pickupHub,
+        delivery_hub_code: deliveryHub,
+        service_level: cargoServiceLevel,
+        weight_kg: cargoWeight,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        customer_email: null,
+        delivery_address: {
+          street: streetAddress || '',
+          city: selectedWard || '',
+          district: selectedDistrict || '',
+          region: selectedRegion || ''
+        },
+        special_instructions: null,
+      });
+
+      setLoading(false);
+      setError('');
+
+      alert(`Order placed successfully!\nTracking: ${result.tracking_number}\nEstimated delivery: ${result.estimated_delivery}`);
+      navigate('/tracking');
+    } catch (err: any) {
+      setError(err.message || 'Cargo order failed. Please try again.');
+      setLoading(false);
+    }
   };
 
   const handlePlaceOrder = async () => {
@@ -473,150 +390,147 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
 
     try {
       const cartItems = items.map(item => ({ product_id: item.product_id, quantity: item.quantity }));
-      const deliveryAddress = { street: streetAddress, city: selectedWard, district: selectedDistrict, region: selectedRegion, pickup_station: pickupStation?.name || '' };
-      const phoneNumber = isMobileMoney ? (mpesaPhone || mobileNumber) : mobileNumber;
-
-      const result = await orderService.createOrder({
+      const orderResponse = await orderService.createOrder({
         items: cartItems,
-        delivery_address: deliveryAddress,
-        phone_number: phoneNumber,
+        delivery_address: {
+          full_name: fullName,
+          phone_number: mobileNumber,
+          alt_phone_number: altMobileNumber,
+          street: streetAddress,
+          region: selectedRegion,
+          district: selectedDistrict,
+          ward: selectedWard,
+          pickup_station: pickupStation,
+        },
+        phone_number: mobileNumber,
         payment_method: paymentMethod,
       });
 
-      setOrderResult(result);
+      setOrderResult(orderResponse);
+
+      if (isCardPayment || paymentMethod === 'selcom' || paymentMethod === 'qr') {
+        setLoading(false);
+        if (orderResponse.payment_url) {
+          window.location.href = orderResponse.payment_url;
+        } else if (orderResponse.qr_code) {
+          setQrCodeUrl(orderResponse.qr_code);
+          setPaymentFlowStep('qr');
+        }
+        return;
+      }
 
       if (isMobileMoney) {
-        setPaymentFlowStep('awaiting');
-        setPaymentStatusMessage('A payment prompt has been sent to your phone. Please enter your PIN on your mobile device.');
-        setLoading(false);
-        pollingAborted.current = false;
-        try {
-          const orderId = result.order?.id;
-          if (orderId) {
-            const statusResult = await pollPaymentStatus(orderId, 60, 3000);
-            if (pollingAborted.current) return;
-            if (statusResult.status === 'successful') { triggerConfetti(); setStep(3); } 
-            else { setError(formatPaymentFailureError(statusResult)); setPaymentFlowStep('confirm'); }
-          }
-        } catch (pollErr: any) {
-          if (pollingAborted.current) return;
-          setError(pollErr.message || 'Payment status check timed out. Please check your phone and try again.');
+        const phoneToCharge = mpesaPhone.trim() || mobileNumber;
+        const paymentResponse = await paymentService.requestPayment({
+          order_id: orderResponse.id,
+          payment_method: paymentMethod,
+          phone_number: phoneToCharge,
+        });
+
+        if (paymentResponse.requires_confirmation) {
           setPaymentFlowStep('confirm');
-        }
-      } else if (isCardPayment) {
-        const paymentUrl = result.payment?.payment_url;
-        if (paymentUrl) {
-          localStorage.setItem('natakahii_pending_order_id', result.order?.id?.toString() || '');
-          setPaymentFlowStep('redirecting');
-          setLoading(false);
-          window.location.href = paymentUrl;
+          setPaymentStatusMessage(paymentResponse.message || 'Please confirm payment on your phone');
+        } else if (paymentResponse.payment_url) {
+          window.location.href = paymentResponse.payment_url;
+          return;
         } else {
-          setError('Card payment URL not received from provider. Please try again.');
-          setPaymentFlowStep('confirm');
-          setLoading(false);
+          setPaymentFlowStep('awaiting');
+          setPaymentStatusMessage(paymentResponse.message || 'Waiting for payment confirmation...');
         }
-      } else if (paymentMethod === 'dynamic_qr' || paymentMethod === 'qr') {
-        const qrCode = result.payment?.payment_qr_code;
-        if (qrCode) {
-          setQrCodeUrl(qrCode);
-          setPaymentFlowStep('qr');
-          setLoading(false);
-          try {
-            pollingAborted.current = false;
-            const orderId = result.order?.id;
-            if (orderId) {
-              const statusResult = await pollPaymentStatus(orderId, 60, 3000);
-              if (pollingAborted.current) return;
-              if (statusResult.status === 'successful') { triggerConfetti(); setStep(3); } 
-              else { setError(formatPaymentFailureError(statusResult)); setPaymentFlowStep('confirm'); }
-            }
-          } catch (pollErr: any) {
-            if (pollingAborted.current) return;
-            setError(pollErr.message || 'Payment status check timed out. Please scan the QR code again.');
-            setPaymentFlowStep('confirm');
-          }
+
+        const statusResult = await pollPaymentStatus({
+          orderId: orderResponse.id,
+          abortSignal: () => pollingAborted.current,
+        });
+
+        if (statusResult.status === 'completed' || statusResult.status === 'success') {
+          triggerConfetti();
+          setStep(3);
         } else {
-          setError('QR code not received from provider. Please try again.');
+          setError(formatPaymentFailureError(statusResult));
           setPaymentFlowStep('confirm');
-          setLoading(false);
         }
       } else {
         triggerConfetti();
         setStep(3);
       }
+
+      setLoading(false);
     } catch (err: any) {
       const backendError = err?.response?.data?.error || err?.response?.data?.message;
-      setError(backendError || err.message || 'Order failed. Please try again.');
+      setError(backendError || err.message || 'Failed to place order. Please try again.');
+      setPaymentFlowStep('select');
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyReturningPayment = async (orderId: number, sessionRef: string | null) => {
+    setLoading(true);
+    setPaymentFlowStep('awaiting');
+    try {
+      let statusResult;
+      if (sessionRef) {
+        statusResult = await paymentService.verifyHostedCheckout(sessionRef);
+      } else {
+        statusResult = await pollPaymentStatus({
+          orderId,
+          abortSignal: () => pollingAborted.current,
+        });
+      }
+
+      if (statusResult.status === 'completed' || statusResult.status === 'success') {
+        triggerConfetti();
+        setStep(3);
+      } else {
+        setError(formatPaymentFailureError(statusResult));
+        setPaymentFlowStep('confirm');
+      }
+
+      localStorage.removeItem('natakahii_pending_order_id');
+      localStorage.removeItem('natakahii_session_reference');
+    } catch (pollErr: any) {
+      if (pollingAborted.current) return;
+      setError(pollErr.message || 'Payment status check timed out. Please scan the QR code again.');
       setPaymentFlowStep('confirm');
+    } finally {
       setLoading(false);
     }
   };
 
   const handleRetryPayment = async () => {
-    if (!orderResult?.order?.id) return;
-    setError('');
+    if (!orderResult?.id) {
+      setError('No pending order found. Please start over.');
+      return;
+    }
+
     setLoading(true);
     setPaymentFlowStep('processing');
+    setError('');
+
     try {
-      const phoneNumber = mpesaPhone || mobileNumber;
-      const result = await orderService.retryPayment(orderResult.order.id, {
-        phone_number: phoneNumber,
+      const phoneToCharge = mpesaPhone.trim() || mobileNumber;
+      await orderService.retryPayment(orderResult.id, {
+        phone_number: phoneToCharge,
         payment_method: paymentMethod,
       });
-      setOrderResult(result);
-      if (isMobileMoney) {
-        setPaymentFlowStep('awaiting');
-        setPaymentStatusMessage('A new payment prompt has been sent to your phone. Please enter your PIN on your mobile device.');
-        setLoading(false);
-        try {
-          pollingAborted.current = false;
-          const statusResult = await pollPaymentStatus(orderResult.order.id, 60, 3000);
-          if (pollingAborted.current) return;
-          if (statusResult.status === 'successful') { triggerConfetti(); setStep(3); } 
-          else { setError(formatPaymentFailureError(statusResult)); setPaymentFlowStep('confirm'); }
-        } catch (pollErr: any) {
-          if (pollingAborted.current) return;
-          setError(pollErr.message || 'Payment status check timed out. Please check your phone and try again.');
-          setPaymentFlowStep('confirm');
-        }
-      } else if (isCardPayment) {
-        const paymentUrl = result.payment?.payment_url;
-        if (paymentUrl) {
-          localStorage.setItem('natakahii_pending_order_id', result.order?.id?.toString() || '');
-          setPaymentFlowStep('redirecting');
-          setLoading(false);
-          window.location.href = paymentUrl;
-        } else {
-          setError('Card payment URL not received from provider. Please try again.');
-          setPaymentFlowStep('confirm');
-          setLoading(false);
-        }
-      } else if (paymentMethod === 'dynamic_qr' || paymentMethod === 'qr') {
-        const qrCode = result.payment?.payment_qr_code;
-        if (qrCode) {
-          setQrCodeUrl(qrCode);
-          setPaymentFlowStep('qr');
-          setLoading(false);
-          try {
-            pollingAborted.current = false;
-            const statusResult = await pollPaymentStatus(orderResult.order.id, 60, 3000);
-            if (pollingAborted.current) return;
-            if (statusResult.status === 'successful') { triggerConfetti(); setStep(3); } 
-            else { setError(formatPaymentFailureError(statusResult)); setPaymentFlowStep('confirm'); }
-          } catch (pollErr: any) {
-            if (pollingAborted.current) return;
-            setError(pollErr.message || 'Payment status check timed out. Please scan the QR code again.');
-            setPaymentFlowStep('confirm');
-          }
-        } else {
-          setError('QR code not received from provider. Please try again.');
-          setPaymentFlowStep('confirm');
-          setLoading(false);
-        }
-      } else {
+
+      setPaymentFlowStep('awaiting');
+      setPaymentStatusMessage('Waiting for payment confirmation...');
+
+      const statusResult = await pollPaymentStatus({
+        orderId: orderResult.id,
+        abortSignal: () => pollingAborted.current,
+      });
+
+      if (statusResult.status === 'completed' || statusResult.status === 'success') {
         triggerConfetti();
         setStep(3);
+      } else {
+        setError(formatPaymentFailureError(statusResult));
+        setPaymentFlowStep('confirm');
       }
+
+      setLoading(false);
     } catch (err: any) {
       const backendError = err?.response?.data?.error || err?.response?.data?.message;
       setError(backendError || err.message || 'Payment retry failed. Please try again.');
@@ -641,7 +555,7 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
       <div className="bg-black/50 fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto p-4 lg:p-12 backdrop-blur-sm">
         <div className="w-full max-w-6xl relative z-10 my-auto">
           <CheckoutProgress step={3} />
-          <SuccessStep 
+          <SuccessStep
             orderResult={orderResult}
             fullName={fullName}
             mobileNumber={mobileNumber}
@@ -675,49 +589,28 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
         <div className="w-full">
           <AnimatePresence mode="wait" initial={false}>
             {step === 1 && cargoStepOpen && (
-              <CargoStep 
+              <CargoStep
                 key="cargo-step"
                 shippingMethod={shippingMethod}
                 shippingProviders={shippingProviders}
                 formatCurrency={formatCurrency}
                 pickupHub={pickupHub}
-                 setPickupHub={setPickupHub}
-                 deliveryHub={deliveryHub}
-                 setDeliveryHub={setDeliveryHub}
-                 cargoServiceLevel={cargoServiceLevel}
-                 setCargoServiceLevel={setCargoServiceLevel}
-                 cargoWeight={cargoWeight}
-                 setCargoWeight={setCargoWeight}
-                 hubs={hubs}
-                 onQuoteUpdate={(q) => setQuote(q)}
-                 error={error}
-                 handleNext={() => {
-                  if (!pickupHub || !deliveryHub) {
-                    setError('Please select both pickup and delivery hubs');
-                    return;
-                  }
-                  setError('');
-                  if (quote || quote === null) {
-                    handleCargoPlaceOrder();
-                    if (!error) {
-                      setCargoStepOpen(false);
-                      setStep(3);
-                    }
-                  }
-                }}
-                handleBack={() => {
-                  if (step === 1) {
-                    navigate(-1);
-                  } else {
-                    setCargoStepOpen(true);
-                    setStep(1);
-                  }
-                }}
+                setPickupHub={setPickupHub}
+                deliveryHub={deliveryHub}
+                setDeliveryHub={setDeliveryHub}
+                cargoServiceLevel={cargoServiceLevel}
+                setCargoServiceLevel={setCargoServiceLevel}
+                cargoWeight={cargoWeight}
+                setCargoWeight={setCargoWeight}
+                hubs={hubs}
+                onQuoteUpdate={(q) => setQuote(q)}
+                handleNext={handleCargoNext}
+                handleBack={handleCargoBack}
               />
             )}
 
             {step === 1 && !cargoStepOpen && (
-              <DeliveryStep 
+              <DeliveryStep
                 key="step1"
                 items={items}
                 subtotal={subtotal}
@@ -746,7 +639,7 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
             )}
 
             {step === 2 && (
-              <PaymentStep 
+              <PaymentStep
                 key="step2"
                 paymentFlowStep={paymentFlowStep}
                 paymentMethod={paymentMethod}
@@ -776,20 +669,9 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
             )}
           </AnimatePresence>
 
-          <AddressDialog 
+          <AddressDialog
             open={addressDrawerOpen}
             onOpenChange={setAddressDrawerOpen}
-            locView={locView}
-            setLocView={setLocView}
-            regions={regions}
-            selectedRegion={selectedRegion}
-            setSelectedRegion={setSelectedRegion}
-            districts={districts}
-            selectedDistrict={selectedDistrict}
-            setSelectedDistrict={setSelectedDistrict}
-            wards={wards}
-            selectedWard={selectedWard}
-            setSelectedWard={setSelectedWard}
             fullName={fullName}
             setFullName={setFullName}
             mobileNumber={mobileNumber}
@@ -798,30 +680,47 @@ function formatPaymentFailureError(statusResult: { status: string; error_message
             setAltMobileNumber={setAltMobileNumber}
             streetAddress={streetAddress}
             setStreetAddress={setStreetAddress}
-            availableStations={availableStations}
+            selectedRegion={selectedRegion}
+            setSelectedRegion={setSelectedRegion}
+            selectedDistrict={selectedDistrict}
+            setSelectedDistrict={setSelectedDistrict}
+            selectedWard={selectedWard}
+            setSelectedWard={setSelectedWard}
             pickupStation={pickupStation}
             setPickupStation={setPickupStation}
-            handleUseMyLocation={handleUseMyLocation}
-            isDefaultAddress={isDefaultAddress}
-            setIsDefaultAddress={setIsDefaultAddress}
+            availableStations={availableStations}
+            setAvailableStations={setAvailableStations}
+            regions={regions}
+            setRegions={setRegions}
+            districts={districts}
+            setDistricts={setDistricts}
+            wards={wards}
+            setWards={setWards}
+            locView={locView}
+            setLocView={setLocView}
+            onUseMyLocation={handleUseMyLocation}
+            onSave={handleSaveAddress}
             error={error}
-            handleSaveAddress={handleSaveAddress}
+            setError={setError}
           />
 
-          <PaymentMethodDialog 
+          <PaymentMethodDialog
             open={paymentDrawerOpen}
             onOpenChange={setPaymentDrawerOpen}
-            paymentDrawerCategory={paymentDrawerCategory}
+            category={paymentDrawerCategory}
             mobileProviders={mobileProviders}
             cardProviders={cardProviders}
-            paymentMethod={paymentMethod}
-            setPaymentMethod={setPaymentMethod}
+            selectedMethod={paymentMethod}
+            onSelect={setPaymentMethod}
+            mpesaPhone={mpesaPhone}
             setMpesaPhone={setMpesaPhone}
+            paymentPhoneError={paymentPhoneError}
+            validateProviderPhone={validateProviderPhone}
+            onStartPayment={handleStartPaymentFlow}
+            loading={loading}
           />
         </div>
       </div>
-
-      {/* Mobile Fixed Bottom Bar removed for embedded design */}
     </div>
   );
 }
