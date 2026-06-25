@@ -3,12 +3,11 @@ import { useNavigate, useSearchParams } from 'react-router';
 import { AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 import { useCart } from '../providers/CartProvider';
-import { orderService, type CargoShippingDetails } from '../services/orderService';
+import { orderService } from '../services/orderService';
 import { cargoService } from '../services/cargoService';
 import { pollPaymentStatus, paymentService } from '../services/paymentService';
 import { locationService, type PickupStation } from '../services/locationService';
 import { formatCurrency } from '../utils/currency';
-import { calculateCargoQuote, getServiceDays } from '../utils/cargoPricing';
 
 // Components
 import { CheckoutProgress } from './checkout/components/CheckoutProgress';
@@ -689,35 +688,27 @@ export function Checkout() {
             pickupStation={pickupStation}
             setPickupStation={setPickupStation}
             availableStations={availableStations}
-            setAvailableStations={setAvailableStations}
             regions={regions}
-            setRegions={setRegions}
             districts={districts}
-            setDistricts={setDistricts}
             wards={wards}
-            setWards={setWards}
             locView={locView}
             setLocView={setLocView}
-            onUseMyLocation={handleUseMyLocation}
-            onSave={handleSaveAddress}
+            handleUseMyLocation={handleUseMyLocation}
+            isDefaultAddress={isDefaultAddress}
+            setIsDefaultAddress={setIsDefaultAddress}
+            handleSaveAddress={handleSaveAddress}
             error={error}
-            setError={setError}
           />
 
           <PaymentMethodDialog
             open={paymentDrawerOpen}
             onOpenChange={setPaymentDrawerOpen}
-            category={paymentDrawerCategory}
+            paymentDrawerCategory={paymentDrawerCategory}
             mobileProviders={mobileProviders}
             cardProviders={cardProviders}
-            selectedMethod={paymentMethod}
-            onSelect={setPaymentMethod}
-            mpesaPhone={mpesaPhone}
+            paymentMethod={paymentMethod}
+            setPaymentMethod={setPaymentMethod}
             setMpesaPhone={setMpesaPhone}
-            paymentPhoneError={paymentPhoneError}
-            validateProviderPhone={validateProviderPhone}
-            onStartPayment={handleStartPaymentFlow}
-            loading={loading}
           />
         </div>
       </div>

@@ -286,8 +286,8 @@ export function CargoStep({
       )}
 
       {/* Mobile action button - embedded */}
-       <div className="sm:hidden mt-6">
-          <Button
+      <div className="sm:hidden mt-6">
+        <Button
           onClick={() => handleNext()}
           variant="primary"
           size="xl"
@@ -295,19 +295,13 @@ export function CargoStep({
         >
           CONFIRM CARGO <ChevronRight className="w-5 h-5 ml-2" />
         </Button>
-        <button 
+        <button
           onClick={handleBack}
           className="w-full text-center py-2 text-[14px] font-bold text-[var(--color-text-muted)] hover:text-[var(--color-text-heading)]"
         >
           Back to Shipping
         </button>
       </div>
-
-      {error && !loadingQuote && (
-        <div className="text-red-500 text-[14px] font-medium bg-red-50 rounded-[8px] p-3">
-          {error}
-        </div>
-      )}
 
       {/* Desktop action buttons */}
       <div className="hidden sm:flex items-center justify-between gap-4 pt-6 border-t border-[var(--color-border)]">
